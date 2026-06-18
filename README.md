@@ -65,6 +65,18 @@ For production or public distribution, use a small backend proxy:
 - Expose only the mobile dashboard endpoints needed.
 - Add audit logs and rate limits.
 
+## Contributing
+
+Contributions are welcome. Please follow these rules to keep the app stable and useful:
+
+- Open an issue or discussion before large UI, architecture, or API changes.
+- Keep pull requests focused on one fix or feature.
+- Do not commit Shopware credentials, access keys, screenshots with secrets, provisioning profiles, or local build artifacts.
+- Match the existing SwiftUI style and keep the app usable on iPhone, iPad, and macOS where possible.
+- Test connection changes against a real Shopware integration when the change touches authentication, permissions, or Admin API requests.
+- Document any new Shopware permissions required by a feature in the permissions table above.
+- Explain the user impact and validation steps in the pull request description.
+
 ## License
 
 MIT

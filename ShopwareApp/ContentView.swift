@@ -61,7 +61,7 @@ struct ConnectView: View {
 
                     VStack(spacing: 16) {
                         FormField(title: "Shop URL", placeholder: "https://your-shop.com", text: $shopURL)
-                        FormField(title: "Access key", placeholder: "SWIA...", text: $accessKey)
+                        FormField(title: "Access key ID", placeholder: "SWIA...", text: $accessKey)
                         FormField(title: "Secret access key", placeholder: "Secret", text: $secretKey, isSecure: true)
                     }
 
@@ -2488,7 +2488,7 @@ final class ShopwareAdminClient {
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "grant_type": "client_credentials",
             "client_id": connection.accessKey.trimmingCharacters(in: .whitespacesAndNewlines),
-            "client_secret": connection.secretKey
+            "client_secret": connection.secretKey.trimmingCharacters(in: .whitespacesAndNewlines)
         ])
 
         let (data, response) = try await session.data(for: request)
@@ -2582,7 +2582,36 @@ enum ShopwareAPIError: LocalizedError {
 
 extension Error {
     var shopwareDisplayMessage: String {
-        (self as? LocalizedError)?.errorDescription ?? localizedDescription
+        if let urlError = self as? URLError {
+            return urlError.shopwareDisplayMessage
+        }
+        let nsError = self as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return URLError(URLError.Code(rawValue: nsError.code)).shopwareDisplayMessage
+        }
+        return (self as? LocalizedError)?.errorDescription ?? localizedDescription
+    }
+}
+
+extension URLError {
+    var shopwareDisplayMessage: String {
+        let failingURL = (self as NSError).userInfo[NSURLErrorFailingURLErrorKey] as? URL
+        let target = failingURL.map { "\nURL: \($0.absoluteString)" } ?? ""
+
+        switch code {
+        case .appTransportSecurityRequiresSecureConnection:
+            return "iOS blocked this connection because the shop is not using a valid HTTPS connection. Use an HTTPS Shopware URL with a trusted certificate.\(target)"
+        case .secureConnectionFailed, .serverCertificateUntrusted, .serverCertificateHasBadDate, .serverCertificateHasUnknownRoot, .serverCertificateNotYetValid:
+            return "iOS could not trust the shop's SSL certificate. This often works in the simulator if the certificate is trusted on the Mac, but fails on a real iPhone. Install a valid public HTTPS certificate for the shop.\(target)"
+        case .cannotFindHost, .dnsLookupFailed:
+            return "The iPhone could not find this shop domain. Check the domain, DNS, VPN, and whether the phone is on the same network as the shop.\(target)"
+        case .cannotConnectToHost, .networkConnectionLost, .timedOut:
+            return "The iPhone could not reach the shop server. If this is a local/dev shop, the phone must use the Mac's LAN IP or a public tunnel, not localhost. Also check firewall, VPN, and hosting/WAF rules.\(target)"
+        case .notConnectedToInternet:
+            return "The iPhone is not connected to the internet or iOS is blocking network access for this connection.\(target)"
+        default:
+            return "\(localizedDescription)\(target)"
+        }
     }
 }
 
@@ -2592,7 +2621,11 @@ private func errorMessage(from payload: Any, status: Int) -> String {
           let first = errors.first else {
         return "Shopware request failed with status \(status)."
     }
-    return first["detail"] as? String ?? first["title"] as? String ?? "Shopware request failed with status \(status)."
+    let message = first["detail"] as? String ?? first["title"] as? String ?? "Shopware request failed with status \(status)."
+    if message.localizedCaseInsensitiveContains("Client authentication failed") {
+        return "Client authentication failed. Use the exact Access key ID and Secret access key from the same saved Shopware integration. If you created a new integration or regenerated the secret, copy the new pair again."
+    }
+    return message
 }
 
 // Admin API rows are JSON:API ({"attributes": {...}}) or plain JSON depending on Accept handling
