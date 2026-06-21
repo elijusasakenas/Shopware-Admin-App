@@ -67,3 +67,22 @@
 "Payment status" = "Estado del pago";
 "Secret" = "Secreto";
 "Yesterday" = "Ayer";
+
+/* Order / payment / delivery state machine states (Shopware technicalName keys) */
+"state.open" = "Abierto";
+"state.in_progress" = "En proceso";
+"state.completed" = "Completado";
+"state.cancelled" = "Cancelado";
+"state.paid" = "Pagado";
+"state.paid_partially" = "Pagado parcialmente";
+"state.refunded" = "Reembolsado";
+"state.refunded_partially" = "Reembolsado parcialmente";
+"state.reminded" = "Recordado";
+"state.authorized" = "Autorizado";
+"state.chargeback" = "Contracargo";
+"state.unconfirmed" = "Sin confirmar";
+"state.failed" = "Fallido";
+"state.shipped" = "Enviado";
+"state.shipped_partially" = "Enviado parcialmente";
+"state.returned" = "Devuelto";
+"state.returned_partially" = "Devuelto parcialmente";

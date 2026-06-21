@@ -65,17 +65,30 @@ For production or public distribution, use a small backend proxy:
 - Expose only the mobile dashboard endpoints needed.
 - Add audit logs and rate limits.
 
+## Project structure
+
+The app is organized by responsibility under `ShopwareApp/`:
+
+| Folder | Contents |
+| --- | --- |
+| `App/` | App entry point and root routing view |
+| `Models/` | Plain data models (orders, products, customers, …) |
+| `Networking/` | `ShopwareAdminClient`, errors, JSON parsing helpers |
+| `Storage/` | Keychain credential storage |
+| `ViewModels/` | Observable state (`ShopwareDashboardViewModel`) |
+| `Views/` | SwiftUI screens, charts, and reusable components |
+| `Theme/` | Colors, button styles, animations |
+| `Extensions/` | Small Foundation/SwiftUI extensions |
+
+The Xcode project uses synchronized folder groups, so files added to these
+directories are picked up automatically.
+
 ## Contributing
 
-Contributions are welcome. Please follow these rules to keep the app stable and useful:
-
-- Open an issue or discussion before large UI, architecture, or API changes.
-- Keep pull requests focused on one fix or feature.
-- Do not commit Shopware credentials, access keys, screenshots with secrets, provisioning profiles, or local build artifacts.
-- Match the existing SwiftUI style and keep the app usable on iPhone, iPad, and macOS where possible.
-- Test connection changes against a real Shopware integration when the change touches authentication, permissions, or Admin API requests.
-- Document any new Shopware permissions required by a feature in the permissions table above.
-- Explain the user impact and validation steps in the pull request description.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for how to build,
+where code lives, and the pull request checklist. In short: open an issue before
+large changes, keep PRs focused, never commit secrets, and test Admin API changes
+against a real Shopware integration.
 
 ## License
 

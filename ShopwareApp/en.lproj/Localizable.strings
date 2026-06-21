@@ -67,3 +67,22 @@
 "Payment status" = "Payment status";
 "Secret" = "Secret";
 "Yesterday" = "Yesterday";
+
+/* Order / payment / delivery state machine states (Shopware technicalName keys) */
+"state.open" = "Open";
+"state.in_progress" = "In progress";
+"state.completed" = "Completed";
+"state.cancelled" = "Cancelled";
+"state.paid" = "Paid";
+"state.paid_partially" = "Partially paid";
+"state.refunded" = "Refunded";
+"state.refunded_partially" = "Partially refunded";
+"state.reminded" = "Reminded";
+"state.authorized" = "Authorized";
+"state.chargeback" = "Chargeback";
+"state.unconfirmed" = "Unconfirmed";
+"state.failed" = "Failed";
+"state.shipped" = "Shipped";
+"state.shipped_partially" = "Partially shipped";
+"state.returned" = "Returned";
+"state.returned_partially" = "Partially returned";
