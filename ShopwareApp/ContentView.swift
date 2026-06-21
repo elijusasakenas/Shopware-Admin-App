@@ -10,11 +10,18 @@ import Combine
 import Foundation
 import Security
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 // MARK: - Root
 
 struct ContentView: View {
     @StateObject private var viewModel = ShopwareDashboardViewModel()
+    @AppStorage(AppLanguage.storageKey) private var appLanguageCode = AppLanguage.system.rawValue
+    @AppStorage(AppAppearance.storageKey) private var appAppearanceCode = AppAppearance.system.rawValue
 
     var body: some View {
         Group {
@@ -29,9 +36,64 @@ struct ContentView: View {
                 DashboardView(viewModel: viewModel)
             }
         }
-        // The palette is light-only; forcing light mode keeps text readable in system dark mode
-        .preferredColorScheme(.light)
+        .preferredColorScheme(AppAppearance(rawValue: appAppearanceCode)?.colorScheme)
+        .environment(\.locale, AppLanguage(rawValue: appLanguageCode)?.locale ?? .autoupdatingCurrent)
         .task { await viewModel.boot() }
+    }
+}
+
+enum AppLanguage: String, CaseIterable, Identifiable {
+    static let storageKey = "appLanguage"
+
+    case system
+    case english = "en"
+    case spanish = "es"
+    case german = "de"
+
+    var id: String { rawValue }
+
+    var locale: Locale {
+        switch self {
+        case .system: return .autoupdatingCurrent
+        case .english: return Locale(identifier: "en")
+        case .spanish: return Locale(identifier: "es")
+        case .german: return Locale(identifier: "de")
+        }
+    }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .system: return "System language"
+        case .english: return "English"
+        case .spanish: return "Spanish"
+        case .german: return "German"
+        }
+    }
+}
+
+enum AppAppearance: String, CaseIterable, Identifiable {
+    static let storageKey = "appAppearance"
+
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
     }
 }
 
@@ -138,7 +200,7 @@ struct DashboardView: View {
                                 .font(.system(size: 16))
                                 .foregroundStyle(.white.opacity(0.85))
                                 .frame(width: 38, height: 38)
-                                .background(Color.white.opacity(0.08))
+                                .background(Color.inverseText.opacity(0.08))
                                 .clipShape(Circle())
                         }
                         .buttonStyle(PressableButtonStyle())
@@ -151,7 +213,7 @@ struct DashboardView: View {
                                 .font(.system(size: 15))
                                 .foregroundStyle(.white.opacity(0.85))
                                 .frame(width: 38, height: 38)
-                                .background(Color.white.opacity(0.08))
+                                .background(Color.inverseText.opacity(0.08))
                                 .clipShape(Circle())
                         }
                         .buttonStyle(PressableButtonStyle())
@@ -204,7 +266,7 @@ struct DashboardView: View {
                         .foregroundStyle(Color.primaryText)
                         .padding(.horizontal, 14)
                         .frame(minHeight: 46)
-                        .background(Color.white)
+                        .background(Color.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border, lineWidth: 1))
                     }
@@ -309,7 +371,7 @@ struct DashboardView: View {
                                 }
                             }
                         }
-                        .background(Color.white)
+                        .background(Color.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border, lineWidth: 1))
                     }
@@ -331,13 +393,19 @@ struct DashboardView: View {
                                         .foregroundStyle(Color.primaryText)
                                         .lineLimit(1)
                                     Spacer()
-                                    Text(product.stock == 0 ? "Out of stock" : "\(product.stock) left")
-                                        .font(.caption.weight(.bold))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(product.stock == 0 ? Color.red.opacity(0.12) : Color.amber.opacity(0.12))
-                                        .foregroundStyle(product.stock == 0 ? Color.red : Color.amber)
-                                        .clipShape(Capsule())
+                                    Group {
+                                        if product.stock == 0 {
+                                            Text("Out of stock")
+                                        } else {
+                                            Text("\(product.stock) left")
+                                        }
+                                    }
+                                    .font(.caption.weight(.bold))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(product.stock == 0 ? Color.red.opacity(0.12) : Color.amber.opacity(0.12))
+                                    .foregroundStyle(product.stock == 0 ? Color.red : Color.amber)
+                                    .clipShape(Capsule())
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -346,7 +414,7 @@ struct DashboardView: View {
                                 }
                             }
                         }
-                        .background(Color.white)
+                        .background(Color.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border, lineWidth: 1))
                     }
@@ -442,7 +510,7 @@ struct OrderDetailView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
-                    .background(Color.white)
+                    .background(Color.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
                 }
@@ -479,7 +547,7 @@ struct OrderDetailView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(16)
-                .background(Color.white)
+                .background(Color.surface)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
 
@@ -578,7 +646,7 @@ struct OrderDetailView: View {
 }
 
 struct StateTransitionCard: View {
-    let title: String
+    let title: LocalizedStringKey
     let currentState: String
     let transitions: [OrderTransition]
     let isBusy: Bool
@@ -610,7 +678,7 @@ struct StateTransitionCard: View {
                             .font(.caption2.weight(.bold))
                     }
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Color.white)
+                    .foregroundStyle(Color.inverseText)
                     .padding(.horizontal, 14)
                     .frame(minHeight: 40)
                     .background(Color.shopwareBlue)
@@ -620,7 +688,7 @@ struct StateTransitionCard: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
     }
@@ -631,17 +699,61 @@ struct StateTransitionCard: View {
 struct ShopSettingsView: View {
     @ObservedObject var viewModel: ShopwareDashboardViewModel
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(AppLanguage.storageKey) private var appLanguageCode = AppLanguage.system.rawValue
+    @AppStorage(AppAppearance.storageKey) private var appAppearanceCode = AppAppearance.system.rawValue
 
     @State private var promotions: [Promotion] = []
     @State private var recipients: [NewsletterRecipient] = []
+    @State private var visiblePromotionCount = 5
+    @State private var visibleRecipientCount = 5
     @State private var isLoading = true
     @State private var errorMessage: String?
+
+    private let listBatchSize = 10
+
+    private var visiblePromotions: [Promotion] {
+        Array(promotions.prefix(visiblePromotionCount))
+    }
+
+    private var visibleRecipients: [NewsletterRecipient] {
+        Array(recipients.prefix(visibleRecipientCount))
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     if let errorMessage { ErrorBanner(message: errorMessage) }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("App language")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.primaryText)
+                        Picker("App language", selection: $appLanguageCode) {
+                            ForEach(AppLanguage.allCases) { language in
+                                Text(language.title).tag(language.rawValue)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(.shopwareBlue)
+
+                        Divider()
+
+                        Text("Appearance")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.primaryText)
+                        Picker("Appearance", selection: $appAppearanceCode) {
+                            ForEach(AppAppearance.allCases) { appearance in
+                                Text(appearance.title).tag(appearance.rawValue)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(Color.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
 
                     if isLoading {
                         ProgressView()
@@ -665,7 +777,7 @@ struct ShopSettingsView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                        .background(Color.white)
+                        .background(Color.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
 
@@ -690,7 +802,7 @@ struct ShopSettingsView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(16)
-                        .background(Color.white)
+                        .background(Color.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
 
@@ -709,7 +821,7 @@ struct ShopSettingsView: View {
                                     .foregroundStyle(Color.secondaryText)
                                     .padding(.vertical, 8)
                             } else {
-                                ForEach(promotions) { promotion in
+                                ForEach(visiblePromotions) { promotion in
                                     Toggle(isOn: promotionBinding(for: promotion)) {
                                         VStack(alignment: .leading, spacing: 3) {
                                             Text(promotion.name)
@@ -725,11 +837,17 @@ struct ShopSettingsView: View {
                                     .tint(.shopwareBlue)
                                     .padding(.vertical, 4)
                                 }
+
+                                if visiblePromotionCount < promotions.count {
+                                    showMoreButton("Show more promotions") {
+                                        visiblePromotionCount = min(visiblePromotionCount + listBatchSize, promotions.count)
+                                    }
+                                }
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(16)
-                        .background(Color.white)
+                        .background(Color.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
 
@@ -748,7 +866,7 @@ struct ShopSettingsView: View {
                                     .foregroundStyle(Color.secondaryText)
                                     .padding(.vertical, 8)
                             } else {
-                                ForEach(recipients) { recipient in
+                                ForEach(visibleRecipients) { recipient in
                                     HStack(spacing: 12) {
                                         VStack(alignment: .leading, spacing: 3) {
                                             Text(recipient.email)
@@ -771,13 +889,19 @@ struct ShopSettingsView: View {
                                             .clipShape(Capsule())
                                     }
                                     .padding(.vertical, 5)
-                                    if recipient.id != recipients.last?.id { Divider() }
+                                    if recipient.id != visibleRecipients.last?.id { Divider() }
+                                }
+
+                                if visibleRecipientCount < recipients.count {
+                                    showMoreButton("Show more newsletter signups") {
+                                        visibleRecipientCount = min(visibleRecipientCount + listBatchSize, recipients.count)
+                                    }
                                 }
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(16)
-                        .background(Color.white)
+                        .background(Color.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
                     }
@@ -804,10 +928,34 @@ struct ShopSettingsView: View {
             async let news = viewModel.newsletterRecipients()
             promotions = try await promos
             recipients = try await news
+            visiblePromotionCount = min(visiblePromotionCount, max(promotions.count, 5))
+            visibleRecipientCount = min(visibleRecipientCount, max(recipients.count, 5))
         } catch {
             errorMessage = error.shopwareDisplayMessage
         }
         isLoading = false
+    }
+
+    private func showMoreButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                action()
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Text(title)
+                Image(systemName: "chevron.down")
+                    .font(.caption.weight(.bold))
+            }
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(Color.shopwareBlue)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(Color.shopwareBlue.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 4)
     }
 
     private func statusColor(_ status: String) -> Color {
@@ -852,7 +1000,7 @@ struct ShopSettingsView: View {
 
 struct SettingsRow: View {
     let icon: String
-    let title: String
+    let title: LocalizedStringKey
 
     var body: some View {
         HStack(spacing: 12) {
@@ -916,7 +1064,13 @@ struct NewCustomersView: View {
                                     }
                                 }
                                 Spacer()
-                                Text(customer.guest ? "Guest" : "Account")
+                                Group {
+                                    if customer.guest {
+                                        Text("Guest")
+                                    } else {
+                                        Text("Account")
+                                    }
+                                }
                                     .font(.caption.weight(.bold))
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
@@ -931,7 +1085,7 @@ struct NewCustomersView: View {
                             }
                         }
                     }
-                    .background(Color.white)
+                    .background(Color.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
                 }
@@ -987,7 +1141,7 @@ struct ShopStatusView: View {
                             .foregroundStyle(Color.shopwareBlue)
                     }
                     .padding(16)
-                    .background(Color.white)
+                    .background(Color.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
 
@@ -1032,7 +1186,7 @@ struct ShopStatusView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
-                    .background(Color.white)
+                    .background(Color.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
 
@@ -1076,7 +1230,7 @@ struct ShopStatusView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
-                    .background(Color.white)
+                    .background(Color.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
                 }
@@ -1127,7 +1281,7 @@ struct ShopStatusView: View {
 // MARK: - Chart card wrapper
 
 struct ChartCard<ChartContent: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     let ranges: [DateRange]
     @Binding var selectedRange: DateRange
     let isLoading: Bool
@@ -1172,7 +1326,7 @@ struct ChartCard<ChartContent: View>: View {
                     .foregroundStyle(Color.primaryText)
                     .padding(.horizontal, 12)
                     .frame(minHeight: 36)
-                    .background(Color.white)
+                    .background(Color.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Color.border, lineWidth: 1))
                 }
@@ -1183,7 +1337,7 @@ struct ChartCard<ChartContent: View>: View {
                 .frame(height: 190)
         }
         .padding(20)
-        .background(Color.white)
+        .background(Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border.opacity(0.7), lineWidth: 1))
     }
@@ -1319,7 +1473,7 @@ struct LanguageBreakdownCard: View {
                             .foregroundStyle(Color.primaryText)
                             .lineLimit(1)
                         Spacer()
-                        Text("\(stat.count) \(stat.count == 1 ? "order" : "orders")")
+                        Text(stat.count == 1 ? "1 order" : "\(stat.count) orders")
                             .font(.caption)
                             .foregroundStyle(Color.secondaryText)
                         Text(stat.amount.formatted(.currency(code: currency).precision(.fractionLength(0))))
@@ -1340,7 +1494,7 @@ struct LanguageBreakdownCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(Color.white)
+        .background(Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border.opacity(0.7), lineWidth: 1))
     }
@@ -1371,17 +1525,7 @@ enum DateRange: String, CaseIterable {
     case hours24 = "24Hours"
     case yesterday = "Yesterday"
 
-    var label: String {
-        switch self {
-        case .days30:    return "30 days"
-        case .days14:    return "14 days"
-        case .days7:     return "7 days"
-        case .hours24:   return "24 hours"
-        case .yesterday: return "Yesterday"
-        }
-    }
-
-    var menuLabel: String {
+    var menuLabel: LocalizedStringKey {
         switch self {
         case .days30:    return "Last 30 days"
         case .days14:    return "Last 14 days"
@@ -1442,8 +1586,8 @@ enum DateRange: String, CaseIterable {
 // MARK: - Sub-views
 
 struct FormField: View {
-    let title: String
-    let placeholder: String
+    let title: LocalizedStringKey
+    let placeholder: LocalizedStringKey
     @Binding var text: String
     var isSecure = false
 
@@ -1462,7 +1606,7 @@ struct FormField: View {
             .tint(Color.shopwareBlue)
             .padding(.horizontal, 14)
             .frame(minHeight: 52)
-            .background(Color.white)
+            .background(Color.surface)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border, lineWidth: 1))
         }
@@ -1470,7 +1614,7 @@ struct FormField: View {
 }
 
 struct MetricCard: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let accent: Color
 
@@ -1493,7 +1637,7 @@ struct MetricCard: View {
         }
         .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
         .padding(16)
-        .background(Color.white)
+        .background(Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border.opacity(0.7), lineWidth: 1))
     }
@@ -1506,11 +1650,17 @@ struct OrderList: View {
     var body: some View {
         VStack(spacing: 0) {
             if orders.isEmpty {
-                Text(isLoading ? "Loading..." : "No orders today.")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.secondaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(18)
+                Group {
+                    if isLoading {
+                        Text("Loading...")
+                    } else {
+                        Text("No orders today.")
+                    }
+                }
+                .font(.subheadline)
+                .foregroundStyle(Color.secondaryText)
+                .frame(maxWidth: .infinity)
+                .padding(18)
             } else {
                 ForEach(orders) { order in
                     NavigationLink(value: order) {
@@ -1546,7 +1696,7 @@ struct OrderList: View {
                 }
             }
         }
-        .background(Color.white)
+        .background(Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border, lineWidth: 1))
     }
@@ -1557,12 +1707,12 @@ struct ErrorBanner: View {
     var body: some View {
         Text(message)
             .font(.subheadline)
-            .foregroundStyle(Color(red: 0.56, green: 0.11, blue: 0.09))
+            .foregroundStyle(Color.errorText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
-            .background(Color(red: 1.0, green: 0.94, blue: 0.93))
+            .background(Color.errorBackground)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color(red: 0.95, green: 0.71, blue: 0.68), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.errorBorder, lineWidth: 1))
     }
 }
 
@@ -1570,7 +1720,7 @@ struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(maxWidth: .infinity, minHeight: 50)
-            .foregroundStyle(Color.white)
+            .foregroundStyle(Color.inverseText)
             .background(Color.shopwareBlue.opacity(configuration.isPressed ? 0.82 : 1))
             .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     }
@@ -1581,7 +1731,7 @@ struct IconButtonStyle: ButtonStyle {
         configuration.label
             .frame(width: 48, height: 44)
             .foregroundStyle(Color.primaryText)
-            .background(Color(red: 0.91, green: 0.94, blue: 0.96).opacity(configuration.isPressed ? 0.7 : 1))
+            .background(Color.controlBackground.opacity(configuration.isPressed ? 0.7 : 1))
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .scaleEffect(configuration.isPressed ? 0.95 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
@@ -1692,12 +1842,14 @@ final class ShopwareDashboardViewModel: ObservableObject {
             let client = ShopwareAdminClient(connection: nextConnection)
             try await client.testConnection()
             try credentialStore.save(nextConnection)
-            self.connection = nextConnection
             self.client = client
             salesChannels = (try? await client.fetchSalesChannels()) ?? []
             await loadAll()
+            self.connection = nextConnection
         } catch {
-            errorMessage = error.shopwareDisplayMessage
+            if !error.isCancellation {
+                errorMessage = error.shopwareDisplayMessage
+            }
             isLoading = false
         }
     }
@@ -1737,7 +1889,9 @@ final class ShopwareDashboardViewModel: ObservableObject {
             topProducts = (try? await tp) ?? []
             languageStats = (try? await lang) ?? []
         } catch {
-            errorMessage = error.shopwareDisplayMessage
+            if !error.isCancellation {
+                errorMessage = error.shopwareDisplayMessage
+            }
         }
         isLoading = false
     }
@@ -1747,7 +1901,11 @@ final class ShopwareDashboardViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do { orderBuckets = try await client.fetchHistory(paid: false, range: ordersRange, salesChannelID: selectedChannelID) }
-        catch { errorMessage = error.shopwareDisplayMessage }
+        catch {
+            if !error.isCancellation {
+                errorMessage = error.shopwareDisplayMessage
+            }
+        }
         isLoading = false
     }
 
@@ -1756,7 +1914,11 @@ final class ShopwareDashboardViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do { revenueBuckets = try await client.fetchHistory(paid: true, range: revenueRange, salesChannelID: selectedChannelID) }
-        catch { errorMessage = error.shopwareDisplayMessage }
+        catch {
+            if !error.isCancellation {
+                errorMessage = error.shopwareDisplayMessage
+            }
+        }
         isLoading = false
     }
 
@@ -2091,7 +2253,7 @@ final class ShopwareAdminClient {
 
     func fetchPromotions() async throws -> [Promotion] {
         let response = try await requestJSON(path: "/api/search/promotion", method: "POST", body: [
-            "limit": 25,
+            "limit": 100,
             "sort": [["field": "createdAt", "order": "DESC"]]
         ])
         return (response["data"] as? [[String: Any]] ?? []).compactMap { row in
@@ -2165,7 +2327,7 @@ final class ShopwareAdminClient {
 
     func fetchNewsletterRecipients() async throws -> [NewsletterRecipient] {
         let response = try await requestJSON(path: "/api/search/newsletter-recipient", method: "POST", body: [
-            "limit": 20,
+            "limit": 100,
             "sort": [["field": "createdAt", "order": "DESC"]]
         ])
         return (response["data"] as? [[String: Any]] ?? []).compactMap { row in
@@ -2581,6 +2743,15 @@ enum ShopwareAPIError: LocalizedError {
 }
 
 extension Error {
+    var isCancellation: Bool {
+        if self is CancellationError { return true }
+        if let urlError = self as? URLError {
+            return urlError.code == .cancelled
+        }
+        let nsError = self as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
+    }
+
     var shopwareDisplayMessage: String {
         if let urlError = self as? URLError {
             return urlError.shopwareDisplayMessage
@@ -2695,15 +2866,49 @@ extension ISO8601DateFormatter {
 
 // Palette matching the Shopware 6 administration (Meteor design system)
 extension Color {
-    static let appBackground = Color(red: 0.94, green: 0.95, blue: 0.96)  // #F0F2F5 admin background
-    static let border        = Color(red: 0.82, green: 0.85, blue: 0.88)  // #D1D9E0 card borders
-    static let primaryText   = Color(red: 0.08, green: 0.13, blue: 0.18)  // #14202E headlines
-    static let secondaryText = Color(red: 0.32, green: 0.40, blue: 0.48)  // #52667A muted text
-    static let shopwareBlue  = Color(red: 0.03, green: 0.44, blue: 1.0)   // #0870FF primary actions
-    static let swNavy        = Color(red: 0.10, green: 0.14, blue: 0.20)  // admin sidebar navy
-    static let amber         = Color(red: 0.72, green: 0.45, blue: 0.05)  // warning
-    static let blue          = Color(red: 0.42, green: 0.27, blue: 0.76)  // violet accent
-    static let red           = Color(red: 0.87, green: 0.16, blue: 0.30)  // #DE294C error
+    static let appBackground = dynamic(light: Color(red: 0.94, green: 0.95, blue: 0.96),
+                                       dark: Color(red: 0.06, green: 0.08, blue: 0.11))
+    static let surface       = dynamic(light: Color.white,
+                                       dark: Color(red: 0.11, green: 0.14, blue: 0.18))
+    static let controlBackground = dynamic(light: Color(red: 0.91, green: 0.94, blue: 0.96),
+                                           dark: Color(red: 0.16, green: 0.20, blue: 0.26))
+    static let border        = dynamic(light: Color(red: 0.82, green: 0.85, blue: 0.88),
+                                       dark: Color(red: 0.24, green: 0.29, blue: 0.36))
+    static let primaryText   = dynamic(light: Color(red: 0.08, green: 0.13, blue: 0.18),
+                                       dark: Color(red: 0.93, green: 0.96, blue: 0.98))
+    static let secondaryText = dynamic(light: Color(red: 0.32, green: 0.40, blue: 0.48),
+                                       dark: Color(red: 0.62, green: 0.70, blue: 0.78))
+    static let inverseText   = Color.white
+    static let shopwareBlue  = dynamic(light: Color(red: 0.03, green: 0.44, blue: 1.0),
+                                       dark: Color(red: 0.27, green: 0.58, blue: 1.0))
+    static let swNavy        = Color(red: 0.10, green: 0.14, blue: 0.20)
+    static let amber         = dynamic(light: Color(red: 0.72, green: 0.45, blue: 0.05),
+                                       dark: Color(red: 0.95, green: 0.67, blue: 0.24))
+    static let blue          = dynamic(light: Color(red: 0.42, green: 0.27, blue: 0.76),
+                                       dark: Color(red: 0.59, green: 0.48, blue: 0.96))
+    static let red           = dynamic(light: Color(red: 0.87, green: 0.16, blue: 0.30),
+                                       dark: Color(red: 1.0, green: 0.38, blue: 0.48))
+    static let errorText     = dynamic(light: Color(red: 0.56, green: 0.11, blue: 0.09),
+                                       dark: Color(red: 1.0, green: 0.62, blue: 0.58))
+    static let errorBackground = dynamic(light: Color(red: 1.0, green: 0.94, blue: 0.93),
+                                         dark: Color(red: 0.22, green: 0.08, blue: 0.08))
+    static let errorBorder   = dynamic(light: Color(red: 0.95, green: 0.71, blue: 0.68),
+                                       dark: Color(red: 0.58, green: 0.20, blue: 0.20))
+
+    private static func dynamic(light: Color, dark: Color) -> Color {
+        #if canImport(UIKit)
+        return Color(UIColor { traits in
+            traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+        })
+        #elseif canImport(AppKit)
+        return Color(NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            return isDark ? NSColor(dark) : NSColor(light)
+        })
+        #else
+        return light
+        #endif
+    }
 }
 
 #Preview { ContentView() }
