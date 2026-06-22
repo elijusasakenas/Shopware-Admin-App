@@ -220,6 +220,7 @@ struct DashboardView: View {
             }
             .sheet(isPresented: $showSettings) {
                 ShopSettingsView(viewModel: viewModel)
+                    .appAppearance()
             }
         }
     }

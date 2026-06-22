@@ -11,7 +11,6 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = ShopwareDashboardViewModel()
     @AppStorage(AppLanguage.storageKey) private var appLanguageCode = AppLanguage.system.rawValue
-    @AppStorage(AppAppearance.storageKey) private var appAppearanceCode = AppAppearance.system.rawValue
 
     var body: some View {
         Group {
@@ -28,10 +27,11 @@ struct ContentView: View {
                     // Adding another shop while one is active: present over it.
                     .sheet(isPresented: $viewModel.isAddingShop) {
                         ConnectView(viewModel: viewModel)
+                            .appAppearance()
                     }
             }
         }
-        .preferredColorScheme(AppAppearance(rawValue: appAppearanceCode)?.colorScheme)
+        .appAppearance()
         .environment(\.locale, AppLanguage(rawValue: appLanguageCode)?.locale ?? .autoupdatingCurrent)
         .task { await viewModel.boot() }
     }

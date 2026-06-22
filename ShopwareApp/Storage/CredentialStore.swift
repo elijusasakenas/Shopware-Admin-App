@@ -39,7 +39,14 @@ final class CredentialStore {
         ]
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-        if status == errSecItemNotFound { return [] }
+
+        // "Nothing saved yet" and a few non-fatal read failures should surface
+        // as an empty list, not a scary error on the first screen. Notably the
+        // iOS Simulator can return errSecMissingEntitlement (-34018) when no
+        // keychain item exists; treat that like "no shops".
+        let emptyStatuses: [OSStatus] = [errSecItemNotFound, errSecMissingEntitlement]
+        if emptyStatuses.contains(status) { return [] }
+
         guard status == errSecSuccess, let items = result as? [[String: Any]] else {
             throw ShopwareAPIError.message("Could not read saved shops from Keychain.")
         }
