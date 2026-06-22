@@ -2,21 +2,6 @@
 
 Open-source native iOS/macOS dashboard for the Shopware 6 Admin API, styled after the Shopware administration.
 
-## Screenshots
-
-<!--
-  Drop PNGs into docs/screenshots/ with these names and they'll show up here.
-  Recommended: 1290×2796 (iPhone 6.7") portrait, or trimmed device frames.
-  Use a demo shop — never commit screenshots that contain real customer data,
-  shop URLs, or API keys.
--->
-
-| Connect | Dashboard | Order detail | Shop switcher |
-| :---: | :---: | :---: | :---: |
-| ![Connect screen](docs/screenshots/connect.png) | ![Dashboard](docs/screenshots/dashboard.png) | ![Order detail](docs/screenshots/order-detail.png) | ![Shop switcher](docs/screenshots/shop-switcher.png) |
-
-> Screenshots are not committed yet. See [docs/screenshots/README.md](docs/screenshots/README.md) for how to add them.
-
 ## Features
 
 ### Dashboard
