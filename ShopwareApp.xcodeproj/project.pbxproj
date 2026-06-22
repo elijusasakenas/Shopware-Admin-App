@@ -6,19 +6,53 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0E5C48E0BAE57E768E9C0A06 /* JSONParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */; };
+		164778662EBB0A11E394ACA8 /* DateRangeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */; };
+		17C945967E748D94790BBB02 /* StateLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2B7A34E27E5F22B07E71E0 /* StateLocalizationTests.swift */; };
+		86F698E5A025F513633D1C68 /* ShopwareConnectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */; };
+		C1B6D28C8B624EA81267A824 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F1A50D857BD7915CABC4829 /* Cocoa.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F54C37B0BAF632DE90FDA9DE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C72949872FDB6B6A002A697B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C729498E2FDB6B6A002A697B;
+			remoteInfo = ShopwareApp;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0F1A50D857BD7915CABC4829 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		90058C3D868BD0CBE5024A45 /* ShopwareAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShopwareAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShopwareConnectionTests.swift; sourceTree = "<group>"; };
+		AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JSONParsingTests.swift; sourceTree = "<group>"; };
+		AF2B7A34E27E5F22B07E71E0 /* StateLocalizationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StateLocalizationTests.swift; sourceTree = "<group>"; };
 		C729498F2FDB6B6A002A697B /* ShopwareApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShopwareApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DateRangeTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C72949912FDB6B6A002A697B /* ShopwareApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = ShopwareApp;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2AF9425D1C753D390A119BF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1B6D28C8B624EA81267A824 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C729498C2FDB6B6A002A697B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -29,11 +63,33 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		370788F42893CB36CA8395CE /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				0F1A50D857BD7915CABC4829 /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		9669F0DD6C83191FB07BF1A8 /* ShopwareAppTests */ = {
+			isa = PBXGroup;
+			children = (
+				D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */,
+				AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */,
+				A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */,
+				AF2B7A34E27E5F22B07E71E0 /* StateLocalizationTests.swift */,
+			);
+			name = ShopwareAppTests;
+			path = ShopwareAppTests;
+			sourceTree = "<group>";
+		};
 		C72949862FDB6B6A002A697B = {
 			isa = PBXGroup;
 			children = (
 				C72949912FDB6B6A002A697B /* ShopwareApp */,
 				C72949902FDB6B6A002A697B /* Products */,
+				F66C5391E254606BAEC53FB1 /* Frameworks */,
+				9669F0DD6C83191FB07BF1A8 /* ShopwareAppTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -41,13 +97,40 @@
 			isa = PBXGroup;
 			children = (
 				C729498F2FDB6B6A002A697B /* ShopwareApp.app */,
+				90058C3D868BD0CBE5024A45 /* ShopwareAppTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		F66C5391E254606BAEC53FB1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				370788F42893CB36CA8395CE /* OS X */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		7706E6F323F1595BC2980ACC /* ShopwareAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 731DA22E18198257B8E86D19 /* Build configuration list for PBXNativeTarget "ShopwareAppTests" */;
+			buildPhases = (
+				1FE43DEC460D310921284569 /* Sources */,
+				2AF9425D1C753D390A119BF1 /* Frameworks */,
+				3F6E883368E14ECE175C37D4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F7924E0410787E5CAD2AE5C1 /* PBXTargetDependency */,
+			);
+			name = ShopwareAppTests;
+			productName = ShopwareAppTests;
+			productReference = 90058C3D868BD0CBE5024A45 /* ShopwareAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		C729498E2FDB6B6A002A697B /* ShopwareApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C729499A2FDB6B6A002A697B /* Build configuration list for PBXNativeTarget "ShopwareApp" */;
@@ -64,8 +147,6 @@
 				C72949912FDB6B6A002A697B /* ShopwareApp */,
 			);
 			name = ShopwareApp;
-			packageProductDependencies = (
-			);
 			productName = ShopwareApp;
 			productReference = C729498F2FDB6B6A002A697B /* ShopwareApp.app */;
 			productType = "com.apple.product-type.application";
@@ -102,11 +183,19 @@
 			projectRoot = "";
 			targets = (
 				C729498E2FDB6B6A002A697B /* ShopwareApp */,
+				7706E6F323F1595BC2980ACC /* ShopwareAppTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3F6E883368E14ECE175C37D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C729498D2FDB6B6A002A697B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -117,6 +206,17 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1FE43DEC460D310921284569 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				164778662EBB0A11E394ACA8 /* DateRangeTests.swift in Sources */,
+				0E5C48E0BAE57E768E9C0A06 /* JSONParsingTests.swift in Sources */,
+				86F698E5A025F513633D1C68 /* ShopwareConnectionTests.swift in Sources */,
+				17C945967E748D94790BBB02 /* StateLocalizationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C729498B2FDB6B6A002A697B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -126,7 +226,32 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		F7924E0410787E5CAD2AE5C1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ShopwareApp;
+			target = C729498E2FDB6B6A002A697B /* ShopwareApp */;
+			targetProxy = F54C37B0BAF632DE90FDA9DE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		96773CED02FFDC6E5DDCDB44 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asakenas.shopwareapp.tests;
+				PRODUCT_MODULE_NAME = ShopwareAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShopwareApp.app/Contents/MacOS/ShopwareApp";
+			};
+			name = Release;
+		};
 		C72949982FDB6B6A002A697B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -355,9 +480,34 @@
 			};
 			name = Release;
 		};
+		D6BE71FFF4010DE6750003E2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asakenas.shopwareapp.tests;
+				PRODUCT_MODULE_NAME = ShopwareAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShopwareApp.app/Contents/MacOS/ShopwareApp";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		731DA22E18198257B8E86D19 /* Build configuration list for PBXNativeTarget "ShopwareAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				96773CED02FFDC6E5DDCDB44 /* Release */,
+				D6BE71FFF4010DE6750003E2 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C729498A2FDB6B6A002A697B /* Build configuration list for PBXProject "ShopwareApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

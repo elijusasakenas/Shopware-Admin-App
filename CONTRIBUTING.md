@@ -57,14 +57,27 @@ To keep the app stable and useful, please:
   it to the permissions table in the [README](README.md#shopware-setup).
 - **Explain user impact and validation steps** in the pull request description.
 
+## Tests
+
+Pure, side-effect-free logic (JSON parsing, date math, state localization,
+model decoding) is covered by unit tests in `ShopwareAppTests/`. Run them with:
+
+```sh
+xcodebuild test -scheme ShopwareApp \
+  -destination 'platform=macOS' \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+CI runs the same command on every push and pull request. If you add or change
+parsing, date, or formatting logic, please add or update a test for it.
+
 ## Verifying your change
 
 Before opening a PR:
 
-- Make sure the project builds (`xcodebuild build` as shown above, or in Xcode).
+- Make sure the project builds and tests pass (`xcodebuild test` as shown
+  above, or ⌘U in Xcode).
 - Run the app and exercise the screens your change touches.
-- If you added pure, side-effect-free logic (parsing, date math, formatting),
-  consider adding a unit test for it.
 
 ## Reporting bugs
 
