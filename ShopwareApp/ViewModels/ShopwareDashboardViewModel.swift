@@ -237,13 +237,20 @@ final class ShopwareDashboardViewModel: ObservableObject {
         return try await client.searchProducts(term: term, salesChannelID: selectedChannelID)
     }
 
-    /// Load a single product's full editable state.
-    func productDetail(id: String) async throws -> ProductDetail {
+    /// Languages configured in the shop, for editing product translations.
+    func shopLanguages() async throws -> [ShopLanguage] {
         guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchProductDetail(id: id)
+        return try await client.fetchLanguages()
     }
 
-    /// Save edited product fields. Only non-nil values are written.
+    /// Load a single product's full editable state, in the given language.
+    func productDetail(id: String, languageID: String? = nil) async throws -> ProductDetail {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        return try await client.fetchProductDetail(id: id, languageID: languageID)
+    }
+
+    /// Save edited product fields. Only non-nil values are written. `languageID`
+    /// selects which translation the name is written into.
     func updateProduct(
         id: String,
         name: String? = nil,
@@ -251,12 +258,13 @@ final class ShopwareDashboardViewModel: ObservableObject {
         grossPrice: Decimal? = nil,
         taxRate: Decimal? = nil,
         currencyID: String? = nil,
-        active: Bool? = nil
+        active: Bool? = nil,
+        languageID: String? = nil
     ) async throws {
         guard let client else { throw ShopwareAPIError.message("Not connected.") }
         try await client.updateProduct(
             id: id, name: name, stock: stock, grossPrice: grossPrice,
-            taxRate: taxRate, currencyID: currencyID, active: active
+            taxRate: taxRate, currencyID: currencyID, active: active, languageID: languageID
         )
     }
 

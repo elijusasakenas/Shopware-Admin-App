@@ -322,7 +322,8 @@ final class ShopwareAdminClient {
     }
 
     /// Load a single product's full editable state for the edit sheet.
-    func fetchProductDetail(id: String) async throws -> ProductDetail {
+    /// `languageID` selects which translation of the name is returned.
+    func fetchProductDetail(id: String, languageID: String? = nil) async throws -> ProductDetail {
         let response = try await requestJSON(path: "/api/search/product", method: "POST", body: [
             "limit": 1,
             "filter": [["type": "equals", "field": "id", "value": id]],
@@ -330,7 +331,7 @@ final class ShopwareAdminClient {
                 "cover": ["associations": ["media": [:]]],
                 "tax": [:]
             ]
-        ])
+        ], languageID: languageID)
         guard let row = (response["data"] as? [[String: Any]])?.first else {
             throw ShopwareAPIError.message("Product not found.")
         }
@@ -402,6 +403,7 @@ final class ShopwareAdminClient {
 
     /// Patch a product's scalar fields. Only non-nil arguments are written.
     /// Writing a price requires `currencyID` so the price object stays valid.
+    /// `languageID` selects which translation the `name` is written into.
     func updateProduct(
         id: String,
         name: String? = nil,
@@ -409,7 +411,8 @@ final class ShopwareAdminClient {
         grossPrice: Decimal? = nil,
         taxRate: Decimal? = nil,
         currencyID: String? = nil,
-        active: Bool? = nil
+        active: Bool? = nil,
+        languageID: String? = nil
     ) async throws {
         var body: [String: Any] = [:]
         if let name { body["name"] = name }
@@ -427,7 +430,7 @@ final class ShopwareAdminClient {
             ]]
         }
         guard !body.isEmpty else { return }
-        _ = try await requestJSON(path: "/api/product/\(id)", method: "PATCH", body: body)
+        _ = try await requestJSON(path: "/api/product/\(id)", method: "PATCH", body: body, languageID: languageID)
     }
 
     /// Pulls the first gross value out of a product's `price` array
@@ -574,6 +577,20 @@ final class ShopwareAdminClient {
         .sorted { $0.count > $1.count }
     }
 
+    /// All languages configured in the shop, sorted by name, for the product
+    /// translation switcher.
+    func fetchLanguages() async throws -> [ShopLanguage] {
+        let response = try await requestJSON(path: "/api/search/language", method: "POST", body: [
+            "limit": 100,
+            "sort": [["field": "name", "order": "ASC"]]
+        ])
+        return (response["data"] as? [[String: Any]] ?? []).compactMap { row in
+            guard let id = row["id"] as? String else { return nil }
+            let attrs = entityAttributes(of: row)
+            return ShopLanguage(id: id, name: attrs["name"] as? String ?? "Unknown language")
+        }
+    }
+
     private func fetchLanguageNames() async throws -> [String: String] {
         let response = try await requestJSON(path: "/api/search/language", method: "POST", body: ["limit": 50])
         var names: [String: String] = [:]
@@ -700,7 +717,9 @@ final class ShopwareAdminClient {
         try await requestJSON(path: "/api/search/\(entity)", method: "POST", body: body)
     }
 
-    private func requestJSON(path: String, method: String, body: [String: Any]? = nil, queryItems: [URLQueryItem]? = nil, attempt: Int = 0) async throws -> [String: Any] {
+    /// `languageID`, when set, is sent as the Shopware `sw-language-id` header so
+    /// translatable fields are read/written in that language.
+    private func requestJSON(path: String, method: String, body: [String: Any]? = nil, queryItems: [URLQueryItem]? = nil, languageID: String? = nil, attempt: Int = 0) async throws -> [String: Any] {
         let accessToken = try await accessToken()
         var url = connection.normalizedBaseURL.appending(path: path)
         if let queryItems,
@@ -713,6 +732,7 @@ final class ShopwareAdminClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        if let languageID { request.setValue(languageID, forHTTPHeaderField: "sw-language-id") }
         if let body { request.httpBody = try JSONSerialization.data(withJSONObject: body) }
 
         let (data, response) = try await session.data(for: request)
@@ -720,12 +740,12 @@ final class ShopwareAdminClient {
 
         if status == 401 && attempt == 0 {
             token = nil
-            return try await requestJSON(path: path, method: method, body: body, queryItems: queryItems, attempt: 1)
+            return try await requestJSON(path: path, method: method, body: body, queryItems: queryItems, languageID: languageID, attempt: 1)
         }
 
         if [408, 429, 500, 502, 503, 504].contains(status), attempt < 2 {
             try await Task.sleep(for: .milliseconds(500 * (attempt + 1)))
-            return try await requestJSON(path: path, method: method, body: body, queryItems: queryItems, attempt: attempt + 1)
+            return try await requestJSON(path: path, method: method, body: body, queryItems: queryItems, languageID: languageID, attempt: attempt + 1)
         }
 
         return try parseJSONResponse(data: data, status: status)

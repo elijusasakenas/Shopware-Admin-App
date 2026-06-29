@@ -2,9 +2,10 @@
 //  ProductEditView.swift
 //  ShopwareApp
 //
-//  Edit sheet for a single product: name, price, stock, and active state are
-//  staged and saved together; the image gallery (add / set cover / delete /
-//  reorder) is written to Shopware immediately on each action.
+//  Edit sheet for a single product: name (per shop language), price, stock,
+//  and active state are staged and saved together; the image gallery (add /
+//  set cover / delete / reorder) is written to Shopware immediately on each
+//  action.
 //
 
 import PhotosUI
@@ -23,6 +24,12 @@ struct ProductEditView: View {
     @State private var priceText = ""
     @State private var stock = 0
     @State private var active = true
+
+    /// Shop languages and the one whose name translation is being edited.
+    @State private var languages: [ShopLanguage] = []
+    @State private var selectedLanguageID: String?
+    /// The name as loaded for the selected language, to detect a real edit.
+    @State private var loadedName = ""
 
     @State private var pickedItem: PhotosPickerItem?
 
@@ -67,6 +74,9 @@ struct ProductEditView: View {
         .onChange(of: pickedItem) { item in
             Task { await uploadPicked(item) }
         }
+        .onChange(of: selectedLanguageID) { _ in
+            Task { await loadName() }
+        }
     }
 
     private var form: some View {
@@ -110,6 +120,13 @@ struct ProductEditView: View {
                 LabeledContent("Product number") {
                     Text(detail?.productNumber ?? "—")
                         .foregroundStyle(Color.secondaryText)
+                }
+                if languages.count > 1 {
+                    Picker("Language", selection: $selectedLanguageID) {
+                        ForEach(languages) { language in
+                            Text(language.name).tag(Optional(language.id))
+                        }
+                    }
                 }
                 TextField("Name", text: $name)
                 Stepper("Stock: \(stock)", value: $stock, in: 0...1_000_000)
@@ -208,9 +225,15 @@ struct ProductEditView: View {
         isLoading = true
         errorMessage = nil
         do {
-            let d = try await viewModel.productDetail(id: productID)
+            // Load the shop's languages first; the default (first) one drives the
+            // initial product read so the name comes back in that language.
+            languages = (try? await viewModel.shopLanguages()) ?? []
+            if selectedLanguageID == nil { selectedLanguageID = languages.first?.id }
+
+            let d = try await viewModel.productDetail(id: productID, languageID: selectedLanguageID)
             detail = d
             name = d.name
+            loadedName = d.name
             stock = d.stock
             active = d.active
             coverID = d.coverID
@@ -222,6 +245,18 @@ struct ProductEditView: View {
             errorMessage = error.shopwareDisplayMessage
         }
         isLoading = false
+    }
+
+    /// Re-read just the name in the currently selected language (switching the
+    /// language picker). Price/stock/active/images are language-independent.
+    private func loadName() async {
+        do {
+            let d = try await viewModel.productDetail(id: productID, languageID: selectedLanguageID)
+            name = d.name
+            loadedName = d.name
+        } catch {
+            errorMessage = error.shopwareDisplayMessage
+        }
     }
 
     /// Reload just the gallery + cover from the server after an image change.
@@ -296,9 +331,11 @@ struct ProductEditView: View {
         isSaving = true
         errorMessage = nil
         do {
-            // Only send fields that actually changed.
+            // Only send fields that actually changed. The name is compared
+            // against the value loaded for the selected language, and written
+            // back into that same language.
             let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            let newName = trimmedName != detail.name && !trimmedName.isEmpty ? trimmedName : nil
+            let newName = trimmedName != loadedName && !trimmedName.isEmpty ? trimmedName : nil
             let newStock = stock != detail.stock ? stock : nil
 
             var newGross: Decimal?
@@ -314,7 +351,8 @@ struct ProductEditView: View {
                 grossPrice: newGross,
                 taxRate: detail.taxRate,
                 currencyID: detail.currencyID,
-                active: active != detail.active ? active : nil
+                active: active != detail.active ? active : nil,
+                languageID: selectedLanguageID
             )
 
             onSaved()
