@@ -35,7 +35,13 @@ struct ProductsView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
                 } else if products.isEmpty {
-                    Text(searchText.isEmpty ? "No products found." : "No products match “\(searchText)”.")
+                    Group {
+                        if searchText.isEmpty {
+                            Text("No products found.")
+                        } else {
+                            Text("No products match “\(searchText)”.")
+                        }
+                    }
                         .font(.subheadline)
                         .foregroundStyle(Color.secondaryText)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -147,7 +153,13 @@ private struct ProductRow: View {
     @ViewBuilder
     private var stockBadge: some View {
         let isOut = product.stock == 0
-        Text(isOut ? "Out of stock" : "\(product.stock) in stock")
+        Group {
+            if isOut {
+                Text("Out of stock")
+            } else {
+                Text("\(product.stock) in stock")
+            }
+        }
             .font(.caption.weight(.bold))
             .padding(.horizontal, 10)
             .padding(.vertical, 5)

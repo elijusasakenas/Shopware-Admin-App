@@ -86,3 +86,32 @@
 "state.shipped_partially" = "Partially shipped";
 "state.returned" = "Returned";
 "state.returned_partially" = "Partially returned";
+
+/* Products tab */
+"Search by name or number" = "Search by name or number";
+"No products found." = "No products found.";
+"No products match “%@”." = "No products match “%@”.";
+"%lld in stock" = "%lld in stock";
+"Unnamed product" = "Unnamed product";
+"Edit product" = "Edit product";
+"Cancel" = "Cancel";
+"Save" = "Save";
+"No images yet." = "No images yet.";
+"Add image" = "Add image";
+"Images" = "Images";
+"Tap an image to set it as the cover. Long-press for more." = "Tap an image to set it as the cover. Long-press for more.";
+"Details" = "Details";
+"Product number" = "Product number";
+"Language" = "Language";
+"Name" = "Name";
+"Stock: %lld" = "Stock: %lld";
+"Active" = "Active";
+"Price (gross)" = "Price (gross)";
+"Price (net)" = "Price (net)";
+"Price" = "Price";
+"Net is derived from gross at %@% tax." = "Net is derived from gross at %@% tax.";
+"Cover" = "Cover";
+"Set as cover" = "Set as cover";
+"Move left" = "Move left";
+"Move right" = "Move right";
+"Delete" = "Delete";

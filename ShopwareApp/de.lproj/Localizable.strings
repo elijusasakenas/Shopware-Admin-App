@@ -86,3 +86,32 @@
 "state.shipped_partially" = "Teilweise versendet";
 "state.returned" = "Retourniert";
 "state.returned_partially" = "Teilweise retourniert";
+
+/* Produkte-Tab */
+"Search by name or number" = "Nach Name oder Nummer suchen";
+"No products found." = "Keine Produkte gefunden.";
+"No products match “%@”." = "Keine Produkte für „%@“.";
+"%lld in stock" = "%lld auf Lager";
+"Unnamed product" = "Unbenanntes Produkt";
+"Edit product" = "Produkt bearbeiten";
+"Cancel" = "Abbrechen";
+"Save" = "Speichern";
+"No images yet." = "Noch keine Bilder.";
+"Add image" = "Bild hinzufügen";
+"Images" = "Bilder";
+"Tap an image to set it as the cover. Long-press for more." = "Tippe ein Bild an, um es als Titelbild festzulegen. Lange drücken für mehr.";
+"Details" = "Details";
+"Product number" = "Produktnummer";
+"Language" = "Sprache";
+"Name" = "Name";
+"Stock: %lld" = "Lagerbestand: %lld";
+"Active" = "Aktiv";
+"Price (gross)" = "Preis (brutto)";
+"Price (net)" = "Preis (netto)";
+"Price" = "Preis";
+"Net is derived from gross at %@% tax." = "Netto wird aus Brutto bei %@ % Steuer berechnet.";
+"Cover" = "Titelbild";
+"Set as cover" = "Als Titelbild festlegen";
+"Move left" = "Nach links";
+"Move right" = "Nach rechts";
+"Delete" = "Löschen";
