@@ -218,6 +218,15 @@ struct DashboardView: View {
             .navigationDestination(for: LatestOrder.self) { order in
                 OrderDetailView(viewModel: viewModel, order: order)
             }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        ProductsView(viewModel: viewModel)
+                    } label: {
+                        Label("Products", systemImage: "shippingbox")
+                    }
+                }
+            }
             .sheet(isPresented: $showSettings) {
                 ShopSettingsView(viewModel: viewModel)
                     .appAppearance()

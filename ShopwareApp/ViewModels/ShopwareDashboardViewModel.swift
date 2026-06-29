@@ -231,6 +231,67 @@ final class ShopwareDashboardViewModel: ObservableObject {
         }
     }
 
+    /// Search products for the products screen, scoped to the selected channel.
+    func searchProducts(term: String) async throws -> [ProductSummary] {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        return try await client.searchProducts(term: term, salesChannelID: selectedChannelID)
+    }
+
+    /// Load a single product's full editable state.
+    func productDetail(id: String) async throws -> ProductDetail {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        return try await client.fetchProductDetail(id: id)
+    }
+
+    /// Save edited product fields. Only non-nil values are written.
+    func updateProduct(
+        id: String,
+        name: String? = nil,
+        stock: Int? = nil,
+        grossPrice: Decimal? = nil,
+        taxRate: Decimal? = nil,
+        currencyID: String? = nil,
+        active: Bool? = nil
+    ) async throws {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        try await client.updateProduct(
+            id: id, name: name, stock: stock, grossPrice: grossPrice,
+            taxRate: taxRate, currencyID: currencyID, active: active
+        )
+    }
+
+    /// Load every image attached to a product, for the gallery.
+    func productImages(productID: String) async throws -> [ProductImage] {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        return try await client.fetchProductImages(productID: productID)
+    }
+
+    /// Upload and append an image to a product's gallery.
+    func addProductImage(productID: String, imageData: Data, position: Int, setAsCover: Bool) async throws {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        try await client.addProductImage(
+            productID: productID, imageData: imageData, position: position, setAsCover: setAsCover
+        )
+    }
+
+    /// Mark an existing product image as the cover.
+    func setProductCover(productID: String, productMediaID: String) async throws {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        try await client.setProductCover(productID: productID, productMediaID: productMediaID)
+    }
+
+    /// Remove an image from a product.
+    func deleteProductImage(productMediaID: String) async throws {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        try await client.deleteProductImage(productMediaID: productMediaID)
+    }
+
+    /// Persist a new gallery order.
+    func reorderProductImages(orderedIDs: [String]) async throws {
+        guard let client else { throw ShopwareAPIError.message("Not connected.") }
+        try await client.reorderProductImages(orderedIDs: orderedIDs)
+    }
+
     func orderLineItems(orderID: String) async throws -> [OrderLineItem] {
         guard let client else { throw ShopwareAPIError.message("Not connected.") }
         return try await client.fetchOrderLineItems(orderID: orderID)
