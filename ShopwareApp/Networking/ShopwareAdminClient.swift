@@ -577,20 +577,6 @@ final class ShopwareAdminClient {
         .sorted { $0.count > $1.count }
     }
 
-    /// All languages configured in the shop, sorted by name, for the product
-    /// translation switcher.
-    func fetchLanguages() async throws -> [ShopLanguage] {
-        let response = try await requestJSON(path: "/api/search/language", method: "POST", body: [
-            "limit": 100,
-            "sort": [["field": "name", "order": "ASC"]]
-        ])
-        return (response["data"] as? [[String: Any]] ?? []).compactMap { row in
-            guard let id = row["id"] as? String else { return nil }
-            let attrs = entityAttributes(of: row)
-            return ShopLanguage(id: id, name: attrs["name"] as? String ?? "Unknown language")
-        }
-    }
-
     private func fetchLanguageNames() async throws -> [String: String] {
         let response = try await requestJSON(path: "/api/search/language", method: "POST", body: ["limit": 50])
         var names: [String: String] = [:]

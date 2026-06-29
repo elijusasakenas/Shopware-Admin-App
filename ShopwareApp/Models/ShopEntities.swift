@@ -15,13 +15,6 @@ struct SalesChannel: Identifiable, Equatable {
     var maintenance: Bool = false
 }
 
-/// A language configured in the shop, used to read/write translatable fields
-/// in that language via the Admin API's `sw-language-id` header.
-struct ShopLanguage: Identifiable, Equatable, Hashable {
-    var id: String
-    var name: String
-}
-
 struct Promotion: Identifiable {
     var id: String
     var name: String

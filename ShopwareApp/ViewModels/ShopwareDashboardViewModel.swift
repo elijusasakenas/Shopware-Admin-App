@@ -237,12 +237,6 @@ final class ShopwareDashboardViewModel: ObservableObject {
         return try await client.searchProducts(term: term, salesChannelID: selectedChannelID)
     }
 
-    /// Languages configured in the shop, for editing product translations.
-    func shopLanguages() async throws -> [ShopLanguage] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchLanguages()
-    }
-
     /// Load a single product's full editable state, in the given language.
     func productDetail(id: String, languageID: String? = nil) async throws -> ProductDetail {
         guard let client else { throw ShopwareAPIError.message("Not connected.") }
