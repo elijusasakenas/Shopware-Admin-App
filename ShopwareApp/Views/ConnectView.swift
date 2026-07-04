@@ -31,6 +31,19 @@ struct ConnectView: View {
                             .font(.system(size: 36, weight: .semibold))
                             .foregroundStyle(Color.primaryText)
                             .fixedSize(horizontal: false, vertical: true)
+
+                        Link(destination: URL(string: "https://docs.shopware.com/en/shopware-6-en/settings/system/integrationen")!) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "questionmark.circle")
+                                Text("How to get your access keys")
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Image(systemName: "arrow.up.right")
+                                    .font(.caption2.weight(.bold))
+                            }
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.shopwareBlue)
+                        }
+                        .padding(.top, 4)
                     }
                     .padding(.top, isAddingAdditionalShop ? 12 : 36)
 
