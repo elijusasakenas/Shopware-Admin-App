@@ -1,0 +1,13 @@
+name = "shopware-ai-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[vars]
+APPLE_BUNDLE_ID = "com.asakenas.shopwareapp"
+SUBSCRIPTION_PRODUCT_ID = "com.asakenas.shopwareapp.ai.monthly"
+ANTHROPIC_MODEL = "claude-opus-4-8"
+# "true" skips App Store verification — local development ONLY.
+SKIP_ENTITLEMENT_CHECK = "false"
+
+# Secrets (never in this file):
+#   wrangler secret put ANTHROPIC_API_KEY

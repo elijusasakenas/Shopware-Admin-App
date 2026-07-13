@@ -115,3 +115,104 @@
 "Move right" = "Nach rechts";
 "Delete" = "Löschen";
 "How to get your access keys" = "So erhältst du deine Zugangsschlüssel";
+
+/* AI assistant */
+"AI Assistant" = "KI-Assistent";
+"AI Shop Assistant" = "KI-Shop-Assistent";
+"New chat" = "Neuer Chat";
+"Thinking..." = "Denkt nach ...";
+"Connect a shop first." = "Verbinde zuerst einen Shop.";
+"Ask me anything about your shop." = "Frag mich alles über deinen Shop.";
+"I can read your dashboard, search and update products, manage promotions, change order statuses, and toggle maintenance mode. Changes always need your approval first." = "Ich kann dein Dashboard lesen, Produkte suchen und aktualisieren, Aktionen verwalten, Bestellstatus ändern und den Wartungsmodus umschalten. Änderungen brauchen immer zuerst deine Freigabe.";
+"How did the shop do today?" = "Wie lief der Shop heute?";
+"Which products are low on stock?" = "Welche Produkte haben wenig Bestand?";
+"Activate the summer promotion" = "Aktiviere die Sommeraktion";
+"The assistant wants to change your shop" = "Der Assistent möchte deinen Shop ändern";
+"Approve" = "Freigeben";
+"Message your shop assistant" = "Nachricht an deinen Shop-Assistenten";
+"The assistant stopped after too many steps. Please refine your request." = "Der Assistent hat nach zu vielen Schritten gestoppt. Bitte formuliere deine Anfrage genauer.";
+"The AI service rejected the subscription. Try restoring purchases." = "Der KI-Dienst hat das Abo abgelehnt. Versuche, die Käufe wiederherzustellen.";
+"The AI service is busy. Please try again in a moment." = "Der KI-Dienst ist ausgelastet. Bitte versuche es gleich noch einmal.";
+"The AI service returned an error (%lld)." = "Der KI-Dienst hat einen Fehler zurückgegeben (%lld).";
+
+/* AI tool activity */
+"Reading dashboard" = "Dashboard wird gelesen";
+"Reading sales channels" = "Verkaufskanäle werden gelesen";
+"Reading latest orders" = "Neueste Bestellungen werden gelesen";
+"Reading order details" = "Bestelldetails werden gelesen";
+"Reading order status options" = "Statusoptionen werden gelesen";
+"Changing order status" = "Bestellstatus wird geändert";
+"Searching products" = "Produkte werden gesucht";
+"Reading product" = "Produkt wird gelesen";
+"Updating product" = "Produkt wird aktualisiert";
+"Checking low stock" = "Niedriger Bestand wird geprüft";
+"Reading promotions" = "Aktionen werden gelesen";
+"Switching promotion" = "Aktion wird umgeschaltet";
+"Switching maintenance mode" = "Wartungsmodus wird umgeschaltet";
+"Reading recent customers" = "Neueste Kunden werden gelesen";
+
+/* AI confirmation summaries */
+"name → %@" = "Name → %@";
+"stock → %lld" = "Bestand → %lld";
+"price → %@" = "Preis → %@";
+"set active" = "aktiv setzen";
+"set inactive" = "inaktiv setzen";
+"Update product %@: %@" = "Produkt %@ aktualisieren: %@";
+"Activate promotion %@" = "Aktion %@ aktivieren";
+"Deactivate promotion %@" = "Aktion %@ deaktivieren";
+"Enable maintenance mode" = "Wartungsmodus aktivieren";
+"Disable maintenance mode" = "Wartungsmodus deaktivieren";
+"Order %@: perform \"%@\"" = "Bestellung %@: \"%@\" ausführen";
+
+/* AI paywall */
+"Run your Shopware store by chatting. The assistant reads your data and makes changes for you — with your approval." = "Steuere deinen Shopware-Shop per Chat. Der Assistent liest deine Daten und nimmt Änderungen für dich vor – mit deiner Freigabe.";
+"Ask about your numbers" = "Frag nach deinen Zahlen";
+"Today's revenue, open orders, low stock, top products — just ask." = "Heutiger Umsatz, offene Bestellungen, niedriger Bestand, Top-Produkte – einfach fragen.";
+"Manage products by chatting" = "Produkte im Chat verwalten";
+"\"Set the stock of the blue hoodie to 50\" — done." = "\"Setze den Bestand des blauen Hoodies auf 50\" – erledigt.";
+"Promotions and orders" = "Aktionen und Bestellungen";
+"Activate promotions, ship orders, mark payments as paid." = "Aktiviere Aktionen, versende Bestellungen, markiere Zahlungen als bezahlt.";
+"You stay in control" = "Du behältst die Kontrolle";
+"Every change to your shop needs your approval before it runs." = "Jede Änderung an deinem Shop braucht deine Freigabe, bevor sie ausgeführt wird.";
+"Subscribe for %@" = "Abonnieren für %@";
+"Restore purchases" = "Käufe wiederherstellen";
+"Auto-renews monthly. Cancel anytime in your App Store settings." = "Verlängert sich monatlich automatisch. Jederzeit in den App-Store-Einstellungen kündbar.";
+"%@ / month" = "%@ / Monat";
+"10 € / month" = "10 € / Monat";
+
+"The subscription is currently unavailable. Please try again later." = "Das Abo ist derzeit nicht verfügbar. Bitte versuche es später erneut.";
+
+/* AI MCP requirement */
+"Shopware update required" = "Shopware-Update erforderlich";
+"MCP server is disabled" = "MCP-Server ist deaktiviert";
+"Couldn't check your shop" = "Shop konnte nicht geprüft werden";
+"Try again" = "Erneut versuchen";
+"The AI assistant needs Shopware %@ or newer. Your shop runs %@." = "Der KI-Assistent benötigt Shopware %@ oder neuer. Dein Shop läuft mit %@.";
+"Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again." = "Deine Shopware-Version unterstützt den KI-Assistenten, aber der MCP-Server ist ausgeschaltet. Aktiviere das Feature-Flag MCP_SERVER in deinem Shop und versuche es erneut.";
+"I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything." = "Ich arbeite über den MCP-Server deines Shops: Produkte, Bestellungen, Aktionen, Einstellungen und mehr. Vor jeder Änderung frage ich dich im Chat um Bestätigung.";
+
+/* AI bring-your-own-key */
+"or" = "oder";
+"Use your own API key" = "Eigenen API-Schlüssel verwenden";
+"Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use." = "Du hast einen Anthropic-API-Schlüssel? Nutze den Assistenten ohne Abo. Der Schlüssel wird im Schlüsselbund deines Geräts gespeichert und Anfragen gehen direkt an Anthropic – du zahlst dort nur, was du nutzt.";
+"Use my key" = "Meinen Schlüssel verwenden";
+"Remove API key" = "API-Schlüssel entfernen";
+"Options" = "Optionen";
+
+/* AI settings card */
+"Subscription" = "Abo";
+"Active" = "Aktiv";
+"Not subscribed" = "Kein Abo";
+"Own API key" = "Eigener API-Schlüssel";
+"Saved in Keychain" = "Im Schlüsselbund gespeichert";
+"Not set" = "Nicht hinterlegt";
+"Usage this month" = "Nutzung diesen Monat";
+"Requests" = "Anfragen";
+"Input tokens" = "Eingabe-Tokens";
+"Output tokens" = "Ausgabe-Tokens";
+"Counted on this device; resets monthly. With your own API key, billing lives in your Anthropic console." = "Wird auf diesem Gerät gezählt und monatlich zurückgesetzt. Mit eigenem API-Schlüssel findest du die Abrechnung in deiner Anthropic-Konsole.";
+"Manage subscription" = "Abo verwalten";
+
+/* AI paywall legal */
+"Terms of Use" = "Nutzungsbedingungen";
+"Privacy Policy" = "Datenschutzerklärung";

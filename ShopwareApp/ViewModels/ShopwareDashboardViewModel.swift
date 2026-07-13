@@ -40,6 +40,10 @@ final class ShopwareDashboardViewModel: ObservableObject {
     private let credentialStore = CredentialStore()
     private var client: ShopwareAdminClient?
 
+    /// The active shop's API client, for features that drive the Admin API
+    /// outside this view model (e.g. the AI assistant's tool bridge).
+    var apiClient: ShopwareAdminClient? { client }
+
     func boot() async {
         guard isBooting else { return }
         do {
