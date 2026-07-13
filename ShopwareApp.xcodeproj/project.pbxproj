@@ -11,7 +11,6 @@
 		164778662EBB0A11E394ACA8 /* DateRangeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */; };
 		17C945967E748D94790BBB02 /* StateLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2B7A34E27E5F22B07E71E0 /* StateLocalizationTests.swift */; };
 		86F698E5A025F513633D1C68 /* ShopwareConnectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */; };
-		C1B6D28C8B624EA81267A824 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F1A50D857BD7915CABC4829 /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,7 +24,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0F1A50D857BD7915CABC4829 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		90058C3D868BD0CBE5024A45 /* ShopwareAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShopwareAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShopwareConnectionTests.swift; sourceTree = "<group>"; };
 		AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JSONParsingTests.swift; sourceTree = "<group>"; };
@@ -47,7 +45,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C1B6D28C8B624EA81267A824 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -64,7 +61,6 @@
 		370788F42893CB36CA8395CE /* OS X */ = {
 			isa = PBXGroup;
 			children = (
-				0F1A50D857BD7915CABC4829 /* Cocoa.framework */,
 			);
 			name = "OS X";
 			sourceTree = "<group>";
@@ -240,13 +236,16 @@
 				CODE_SIGNING_ALLOWED = NO;
 				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.asakenas.shopwareapp.tests;
 				PRODUCT_MODULE_NAME = ShopwareAppTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShopwareApp.app/Contents/MacOS/ShopwareApp";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShopwareApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShopwareApp";
 			};
 			name = Release;
 		};
@@ -493,13 +492,16 @@
 				CODE_SIGNING_ALLOWED = NO;
 				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.asakenas.shopwareapp.tests;
 				PRODUCT_MODULE_NAME = ShopwareAppTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShopwareApp.app/Contents/MacOS/ShopwareApp";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShopwareApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShopwareApp";
 			};
 			name = Debug;
 		};
