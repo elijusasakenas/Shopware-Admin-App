@@ -1,0 +1,80 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "5F2C1A8E-3B7D-4E29-9C41-8A6D0F5B2E17",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "DEU",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "8D4B6C2A-1E9F-4A3B-B5D7-0C8E2F6A9D31",
+      "localizations" : [
+
+      ],
+      "name" : "AI Assistant",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "3.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A7E3F9C1-6B2D-4D58-8E04-3F1A5C7B9E62",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Manage your Shopware store by chatting with AI.",
+              "displayName" : "AI Shop Assistant",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "Verwalte deinen Shopware-Shop im Chat mit KI.",
+              "displayName" : "KI-Shop-Assistent",
+              "locale" : "de_DE"
+            },
+            {
+              "description" : "Gestiona tu tienda Shopware chateando con IA.",
+              "displayName" : "Asistente IA de tienda",
+              "locale" : "es_ES"
+            }
+          ],
+          "productID" : "com.asakenas.shopwareapp.ai.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "AI Assistant Monthly",
+          "subscriptionGroupID" : "8D4B6C2A-1E9F-4A3B-B5D7-0C8E2F6A9D31",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
