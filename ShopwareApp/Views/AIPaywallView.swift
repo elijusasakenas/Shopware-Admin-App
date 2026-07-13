@@ -149,7 +149,7 @@ struct AIPaywallView: View {
         if let product = subscriptions.product {
             return String(localized: "\(product.displayPrice) / month")
         }
-        return String(localized: "4 € / month")
+        return String(localized: "10 € / month")
     }
 
     private var header: some View {
