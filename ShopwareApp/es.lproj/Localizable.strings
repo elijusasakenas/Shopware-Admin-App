@@ -212,3 +212,7 @@
 "Output tokens" = "Tokens de salida";
 "Counted on this device; resets monthly. With your own API key, billing lives in your Anthropic console." = "Se cuenta en este dispositivo y se reinicia cada mes. Con tu propia clave API, la facturación está en tu consola de Anthropic.";
 "Manage subscription" = "Gestionar suscripción";
+
+/* AI paywall legal */
+"Terms of Use" = "Términos de uso";
+"Privacy Policy" = "Política de privacidad";

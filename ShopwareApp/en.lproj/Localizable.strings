@@ -212,3 +212,7 @@
 "Output tokens" = "Output tokens";
 "Counted on this device; resets monthly. With your own API key, billing lives in your Anthropic console." = "Counted on this device; resets monthly. With your own API key, billing lives in your Anthropic console.";
 "Manage subscription" = "Manage subscription";
+
+/* AI paywall legal */
+"Terms of Use" = "Terms of Use";
+"Privacy Policy" = "Privacy Policy";
