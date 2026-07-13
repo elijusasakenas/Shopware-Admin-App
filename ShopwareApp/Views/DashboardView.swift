@@ -84,6 +84,13 @@ struct DashboardView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
+                        AIChatScreen(viewModel: viewModel)
+                    } label: {
+                        Label("AI Assistant", systemImage: "sparkles")
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
                         ProductsView(viewModel: viewModel)
                     } label: {
                         Label("Products", systemImage: "shippingbox")

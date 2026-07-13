@@ -115,3 +115,104 @@
 "Move right" = "Mover a la derecha";
 "Delete" = "Eliminar";
 "How to get your access keys" = "Cómo obtener tus claves de acceso";
+
+/* AI assistant */
+"AI Assistant" = "Asistente IA";
+"AI Shop Assistant" = "Asistente IA de tienda";
+"New chat" = "Nuevo chat";
+"Thinking..." = "Pensando...";
+"Connect a shop first." = "Conecta primero una tienda.";
+"Ask me anything about your shop." = "Pregúntame lo que quieras sobre tu tienda.";
+"I can read your dashboard, search and update products, manage promotions, change order statuses, and toggle maintenance mode. Changes always need your approval first." = "Puedo leer tu panel, buscar y actualizar productos, gestionar promociones, cambiar estados de pedidos y activar el modo de mantenimiento. Los cambios siempre necesitan tu aprobación.";
+"How did the shop do today?" = "¿Qué tal fue la tienda hoy?";
+"Which products are low on stock?" = "¿Qué productos tienen poco stock?";
+"Activate the summer promotion" = "Activa la promoción de verano";
+"The assistant wants to change your shop" = "El asistente quiere modificar tu tienda";
+"Approve" = "Aprobar";
+"Message your shop assistant" = "Escribe a tu asistente de tienda";
+"The assistant stopped after too many steps. Please refine your request." = "El asistente se detuvo tras demasiados pasos. Concreta tu petición.";
+"The AI service rejected the subscription. Try restoring purchases." = "El servicio de IA rechazó la suscripción. Prueba a restaurar las compras.";
+"The AI service is busy. Please try again in a moment." = "El servicio de IA está ocupado. Inténtalo de nuevo en un momento.";
+"The AI service returned an error (%lld)." = "El servicio de IA devolvió un error (%lld).";
+
+/* AI tool activity */
+"Reading dashboard" = "Leyendo el panel";
+"Reading sales channels" = "Leyendo canales de venta";
+"Reading latest orders" = "Leyendo pedidos recientes";
+"Reading order details" = "Leyendo detalles del pedido";
+"Reading order status options" = "Leyendo opciones de estado";
+"Changing order status" = "Cambiando estado del pedido";
+"Searching products" = "Buscando productos";
+"Reading product" = "Leyendo producto";
+"Updating product" = "Actualizando producto";
+"Checking low stock" = "Comprobando stock bajo";
+"Reading promotions" = "Leyendo promociones";
+"Switching promotion" = "Cambiando promoción";
+"Switching maintenance mode" = "Cambiando modo de mantenimiento";
+"Reading recent customers" = "Leyendo clientes recientes";
+
+/* AI confirmation summaries */
+"name → %@" = "nombre → %@";
+"stock → %lld" = "stock → %lld";
+"price → %@" = "precio → %@";
+"set active" = "activar";
+"set inactive" = "desactivar";
+"Update product %@: %@" = "Actualizar producto %@: %@";
+"Activate promotion %@" = "Activar promoción %@";
+"Deactivate promotion %@" = "Desactivar promoción %@";
+"Enable maintenance mode" = "Activar modo de mantenimiento";
+"Disable maintenance mode" = "Desactivar modo de mantenimiento";
+"Order %@: perform \"%@\"" = "Pedido %@: ejecutar \"%@\"";
+
+/* AI paywall */
+"Run your Shopware store by chatting. The assistant reads your data and makes changes for you — with your approval." = "Gestiona tu tienda Shopware chateando. El asistente lee tus datos y hace cambios por ti, con tu aprobación.";
+"Ask about your numbers" = "Pregunta por tus cifras";
+"Today's revenue, open orders, low stock, top products — just ask." = "Ingresos de hoy, pedidos abiertos, stock bajo, productos top: solo pregunta.";
+"Manage products by chatting" = "Gestiona productos chateando";
+"\"Set the stock of the blue hoodie to 50\" — done." = "\"Pon el stock de la sudadera azul en 50\": hecho.";
+"Promotions and orders" = "Promociones y pedidos";
+"Activate promotions, ship orders, mark payments as paid." = "Activa promociones, envía pedidos, marca pagos como pagados.";
+"You stay in control" = "Tú mantienes el control";
+"Every change to your shop needs your approval before it runs." = "Cada cambio en tu tienda necesita tu aprobación antes de ejecutarse.";
+"Subscribe for %@" = "Suscribirse por %@";
+"Restore purchases" = "Restaurar compras";
+"Auto-renews monthly. Cancel anytime in your App Store settings." = "Se renueva cada mes automáticamente. Cancela cuando quieras en los ajustes del App Store.";
+"%@ / month" = "%@ / mes";
+"10 € / month" = "10 € / mes";
+
+"The subscription is currently unavailable. Please try again later." = "La suscripción no está disponible en este momento. Inténtalo más tarde.";
+
+/* AI MCP requirement */
+"Shopware update required" = "Se requiere actualizar Shopware";
+"MCP server is disabled" = "El servidor MCP está desactivado";
+"Couldn't check your shop" = "No se pudo comprobar tu tienda";
+"Try again" = "Reintentar";
+"The AI assistant needs Shopware %@ or newer. Your shop runs %@." = "El asistente IA necesita Shopware %@ o superior. Tu tienda usa %@.";
+"Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again." = "Tu versión de Shopware es compatible con el asistente IA, pero el servidor MCP está apagado. Activa el feature flag MCP_SERVER en tu tienda e inténtalo de nuevo.";
+"I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything." = "Trabajo a través del servidor MCP de tu tienda: productos, pedidos, promociones, ajustes y más. Siempre te pediré confirmación en el chat antes de cambiar nada.";
+
+/* AI bring-your-own-key */
+"or" = "o";
+"Use your own API key" = "Usa tu propia clave API";
+"Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use." = "¿Tienes una clave API de Anthropic? Usa el asistente sin suscripción. La clave se guarda en el llavero de tu dispositivo y las peticiones van directamente a Anthropic: pagas a Anthropic solo lo que uses.";
+"Use my key" = "Usar mi clave";
+"Remove API key" = "Eliminar clave API";
+"Options" = "Opciones";
+
+/* AI settings card */
+"Subscription" = "Suscripción";
+"Active" = "Activa";
+"Not subscribed" = "Sin suscripción";
+"Own API key" = "Clave API propia";
+"Saved in Keychain" = "Guardada en el llavero";
+"Not set" = "No configurada";
+"Usage this month" = "Uso este mes";
+"Requests" = "Peticiones";
+"Input tokens" = "Tokens de entrada";
+"Output tokens" = "Tokens de salida";
+"Counted on this device; resets monthly. With your own API key, billing lives in your Anthropic console." = "Se cuenta en este dispositivo y se reinicia cada mes. Con tu propia clave API, la facturación está en tu consola de Anthropic.";
+"Manage subscription" = "Gestionar suscripción";
+
+/* AI paywall legal */
+"Terms of Use" = "Términos de uso";
+"Privacy Policy" = "Política de privacidad";

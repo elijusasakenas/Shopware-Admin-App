@@ -115,3 +115,104 @@
 "Move right" = "Move right";
 "Delete" = "Delete";
 "How to get your access keys" = "How to get your access keys";
+
+/* AI assistant */
+"AI Assistant" = "AI Assistant";
+"AI Shop Assistant" = "AI Shop Assistant";
+"New chat" = "New chat";
+"Thinking..." = "Thinking...";
+"Connect a shop first." = "Connect a shop first.";
+"Ask me anything about your shop." = "Ask me anything about your shop.";
+"I can read your dashboard, search and update products, manage promotions, change order statuses, and toggle maintenance mode. Changes always need your approval first." = "I can read your dashboard, search and update products, manage promotions, change order statuses, and toggle maintenance mode. Changes always need your approval first.";
+"How did the shop do today?" = "How did the shop do today?";
+"Which products are low on stock?" = "Which products are low on stock?";
+"Activate the summer promotion" = "Activate the summer promotion";
+"The assistant wants to change your shop" = "The assistant wants to change your shop";
+"Approve" = "Approve";
+"Message your shop assistant" = "Message your shop assistant";
+"The assistant stopped after too many steps. Please refine your request." = "The assistant stopped after too many steps. Please refine your request.";
+"The AI service rejected the subscription. Try restoring purchases." = "The AI service rejected the subscription. Try restoring purchases.";
+"The AI service is busy. Please try again in a moment." = "The AI service is busy. Please try again in a moment.";
+"The AI service returned an error (%lld)." = "The AI service returned an error (%lld).";
+
+/* AI tool activity */
+"Reading dashboard" = "Reading dashboard";
+"Reading sales channels" = "Reading sales channels";
+"Reading latest orders" = "Reading latest orders";
+"Reading order details" = "Reading order details";
+"Reading order status options" = "Reading order status options";
+"Changing order status" = "Changing order status";
+"Searching products" = "Searching products";
+"Reading product" = "Reading product";
+"Updating product" = "Updating product";
+"Checking low stock" = "Checking low stock";
+"Reading promotions" = "Reading promotions";
+"Switching promotion" = "Switching promotion";
+"Switching maintenance mode" = "Switching maintenance mode";
+"Reading recent customers" = "Reading recent customers";
+
+/* AI confirmation summaries */
+"name → %@" = "name → %@";
+"stock → %lld" = "stock → %lld";
+"price → %@" = "price → %@";
+"set active" = "set active";
+"set inactive" = "set inactive";
+"Update product %@: %@" = "Update product %@: %@";
+"Activate promotion %@" = "Activate promotion %@";
+"Deactivate promotion %@" = "Deactivate promotion %@";
+"Enable maintenance mode" = "Enable maintenance mode";
+"Disable maintenance mode" = "Disable maintenance mode";
+"Order %@: perform \"%@\"" = "Order %@: perform \"%@\"";
+
+/* AI paywall */
+"Run your Shopware store by chatting. The assistant reads your data and makes changes for you — with your approval." = "Run your Shopware store by chatting. The assistant reads your data and makes changes for you — with your approval.";
+"Ask about your numbers" = "Ask about your numbers";
+"Today's revenue, open orders, low stock, top products — just ask." = "Today's revenue, open orders, low stock, top products — just ask.";
+"Manage products by chatting" = "Manage products by chatting";
+"\"Set the stock of the blue hoodie to 50\" — done." = "\"Set the stock of the blue hoodie to 50\" — done.";
+"Promotions and orders" = "Promotions and orders";
+"Activate promotions, ship orders, mark payments as paid." = "Activate promotions, ship orders, mark payments as paid.";
+"You stay in control" = "You stay in control";
+"Every change to your shop needs your approval before it runs." = "Every change to your shop needs your approval before it runs.";
+"Subscribe for %@" = "Subscribe for %@";
+"Restore purchases" = "Restore purchases";
+"Auto-renews monthly. Cancel anytime in your App Store settings." = "Auto-renews monthly. Cancel anytime in your App Store settings.";
+"%@ / month" = "%@ / month";
+"10 € / month" = "10 € / month";
+
+"The subscription is currently unavailable. Please try again later." = "The subscription is currently unavailable. Please try again later.";
+
+/* AI MCP requirement */
+"Shopware update required" = "Shopware update required";
+"MCP server is disabled" = "MCP server is disabled";
+"Couldn't check your shop" = "Couldn't check your shop";
+"Try again" = "Try again";
+"The AI assistant needs Shopware %@ or newer. Your shop runs %@." = "The AI assistant needs Shopware %@ or newer. Your shop runs %@.";
+"Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again." = "Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again.";
+"I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything." = "I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything.";
+
+/* AI bring-your-own-key */
+"or" = "or";
+"Use your own API key" = "Use your own API key";
+"Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use." = "Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use.";
+"Use my key" = "Use my key";
+"Remove API key" = "Remove API key";
+"Options" = "Options";
+
+/* AI settings card */
+"Subscription" = "Subscription";
+"Active" = "Active";
+"Not subscribed" = "Not subscribed";
+"Own API key" = "Own API key";
+"Saved in Keychain" = "Saved in Keychain";
+"Not set" = "Not set";
+"Usage this month" = "Usage this month";
+"Requests" = "Requests";
+"Input tokens" = "Input tokens";
+"Output tokens" = "Output tokens";
+"Counted on this device; resets monthly. With your own API key, billing lives in your Anthropic console." = "Counted on this device; resets monthly. With your own API key, billing lives in your Anthropic console.";
+"Manage subscription" = "Manage subscription";
+
+/* AI paywall legal */
+"Terms of Use" = "Terms of Use";
+"Privacy Policy" = "Privacy Policy";
