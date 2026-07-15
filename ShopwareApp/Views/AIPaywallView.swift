@@ -30,6 +30,10 @@ struct AIPaywallView: View {
                             detail: "Every change to your shop needs your approval before it runs.")
                 }
 
+                Text("AI messages and relevant shop data are processed by Anthropic. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived.")
+                    .font(.caption)
+                    .foregroundStyle(Color.secondaryText)
+
                 if let message = subscriptions.errorMessage {
                     ErrorBanner(message: message)
                 }
@@ -103,7 +107,7 @@ struct AIPaywallView: View {
             Text("Use your own API key")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(Color.primaryText)
-            Text("Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use.")
+            Text("Have an Anthropic API key? Use the assistant without a subscription. The key stays in your device's keychain and model requests go directly to Anthropic. Shop tool calls still pass through the approval gateway so writes require native confirmation.")
                 .font(.footnote)
                 .foregroundStyle(Color.secondaryText)
 

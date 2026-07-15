@@ -22,14 +22,14 @@ Open-source native iOS/macOS dashboard for the Shopware 6 Admin API, styled afte
   [Shopware's built-in MCP server](https://developer.shopware.com/docs/products/tools/mcp-server/)
 - Reads and manages products, orders, promotions, media, and configuration
   using Shopware's own tools — every request is checked against Shopware ACL,
-  and the assistant dry-runs and confirms in chat before committing writes
+  and writes need an exact, one-time native approval before they can commit
 - Requires **Shopware 6.7.11.0+** with the `MCP_SERVER` feature flag enabled;
   the app detects this and guides the merchant otherwise
 - Two ways to use it: a monthly auto-renewable subscription (StoreKit 2, model
   calls go through a small proxy you deploy — see
   [server/ai-proxy](server/ai-proxy/README.md)), **or** the merchant brings
-  their own Anthropic API key — stored in the device Keychain, requests go
-  directly from the device to Anthropic, no subscription or proxy involved
+  their own Anthropic API key — stored in the device Keychain; model requests
+  go directly to Anthropic while MCP calls still use the approval gateway
 
 ### Shop settings
 - Maintenance mode toggle per sales channel
@@ -83,9 +83,10 @@ For production or public distribution, use a small backend proxy:
 
 **Shop requirements:** Shopware **6.7.11.0 or newer** with the MCP server
 enabled (`MCP_SERVER=1` in the shop's `.env`). The shop must be reachable from
-the internet — the Anthropic MCP connector calls its `/api/_mcp` endpoint
-directly, authenticated with a short-lived Admin API token minted on the
-device. The integration's Shopware permissions bound what the assistant can do.
+the internet. MCP calls pass through a short-lived Cloudflare approval gateway,
+which authenticates to the shop with an Admin API token minted on the device.
+The integration's Shopware permissions bound what the assistant can do, and
+write calls are blocked until the exact tool arguments receive native approval.
 
 The AI chat also needs two things you own:
 
@@ -95,14 +96,15 @@ The AI chat also needs two things you own:
    The key never ships in the app; the worker verifies the caller's App Store
    subscription before forwarding any request.
 2. **The subscription** — create an auto-renewable subscription with product id
-   `com.asakenas.shopwareapp.ai.monthly` in App Store Connect (pick the €4
-   price point). For simulator testing, select
+   `com.asakenas.shopwareapp.ai.monthly` in App Store Connect (the fallback UI
+   price is €10/month; StoreKit displays the configured regional price). For simulator testing, select
    `ShopwareApp/Configuration/ShopwareAI.storekit` under
    Edit Scheme → Run → Options → StoreKit Configuration, and purchases work
    locally without App Store Connect.
 
-The assistant's Shopware tool calls run on-device against the merchant's own
-Admin API credentials — the proxy only relays the conversation.
+AI messages and relevant Shopware results are processed by Anthropic. The
+gateway does not persist conversations or credentials; it stores only
+per-subscription usage/approval counters. Shop tokens are short-lived.
 
 ## Project structure
 
@@ -110,7 +112,7 @@ The app is organized by responsibility under `ShopwareApp/`:
 
 | Folder | Contents |
 | --- | --- |
-| `AI/` | AI assistant: tool bridge, chat models, proxy client |
+| `AI/` | AI assistant: chat models, proxy/gateway client |
 | `App/` | App entry point and root routing view |
 | `Models/` | Plain data models (orders, products, customers, …) |
 | `Networking/` | `ShopwareAdminClient`, errors, JSON parsing helpers |

@@ -41,7 +41,7 @@ final class ShopwareDashboardViewModel: ObservableObject {
     private var client: ShopwareAdminClient?
 
     /// The active shop's API client, for features that drive the Admin API
-    /// outside this view model (e.g. the AI assistant's tool bridge).
+    /// outside this view model (e.g. the AI assistant's MCP gateway).
     var apiClient: ShopwareAdminClient? { client }
 
     func boot() async {

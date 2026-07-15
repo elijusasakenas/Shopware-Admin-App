@@ -15,6 +15,7 @@ struct AIAssistantSettingsCard: View {
     @StateObject private var aiKey = AIKeyStore()
     @State private var usage = AIUsage.snapshot()
     @State private var showManageSubscriptions = false
+    @State private var keyError: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -61,13 +62,19 @@ struct AIAssistantSettingsCard: View {
             }
             if aiKey.hasKey {
                 Button(role: .destructive) {
-                    try? aiKey.clear()
+                    do {
+                        try aiKey.clear()
+                        keyError = nil
+                    } catch {
+                        keyError = error.shopwareDisplayMessage
+                    }
                 } label: {
                     Text("Remove API key")
                         .font(.subheadline)
                         .foregroundStyle(Color.red)
                 }
             }
+            if let keyError { ErrorBanner(message: keyError) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)

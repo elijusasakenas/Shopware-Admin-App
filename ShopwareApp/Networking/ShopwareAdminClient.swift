@@ -693,6 +693,9 @@ final class ShopwareAdminClient {
     func mcpAvailability() async -> MCPAvailability {
         let requiredVersion = "6.7.11.0"
         do {
+            guard mcpEndpointURL.scheme == "https" else {
+                return .failed("The AI assistant requires a Shopware connection secured with HTTPS.")
+            }
             let accessToken = try await accessToken()
             var request = URLRequest(url: mcpEndpointURL)
             request.httpMethod = "POST"
@@ -717,9 +720,22 @@ final class ShopwareAdminClient {
             print("MCP availability check: status=\(status) body=\(body.prefix(500))")
             #endif
 
-            // Any response other than "route not found" means the endpoint is
-            // registered; auth/permission problems surface later in the chat.
-            if status != 404 { return .available }
+            if (200...299).contains(status) {
+                guard data.count <= 256_000 else {
+                    return .failed("The shop's MCP endpoint returned an unexpectedly large response.")
+                }
+                guard body.contains("\"jsonrpc\"") && body.contains("\"result\"") else {
+                    return .failed("The shop did not return a valid MCP initialize response.")
+                }
+                return .available
+            }
+
+            if status == 401 || status == 403 {
+                return .failed("The shop rejected MCP access (HTTP \(status)). Check the integration's Admin API privileges.")
+            }
+            if status != 404 {
+                return .failed("The shop's MCP endpoint returned HTTP \(status): \(body.prefix(300))")
+            }
 
             // A real "flag off" 404 is Symfony's routing error. Any other 404
             // body (e.g. an MCP session error) means the endpoint exists but

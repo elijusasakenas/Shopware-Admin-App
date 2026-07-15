@@ -17,6 +17,7 @@ struct AIChatScreen: View {
     @StateObject private var subscriptions = AISubscriptionManager()
     @StateObject private var aiKey = AIKeyStore()
     @State private var mcpAvailability: ShopwareAdminClient.MCPAvailability?
+    @State private var serviceAvailability: AIChatService.Availability?
 
     var body: some View {
         Group {
@@ -24,6 +25,16 @@ struct AIChatScreen: View {
                 loadingView
             } else if !subscriptions.isSubscribed && !aiKey.hasKey {
                 AIPaywallView(subscriptions: subscriptions, aiKey: aiKey)
+            } else if serviceAvailability == nil {
+                loadingView.task { serviceAvailability = await AIChatService().availability() }
+            } else if serviceAvailability == .disabled {
+                requirementView(
+                    icon: "pause.circle",
+                    title: "AI assistant unavailable",
+                    message: String(localized: "The AI assistant is temporarily disabled. Please try again later.")
+                )
+            } else if case .failed(let message) = serviceAvailability {
+                requirementView(icon: "wifi.exclamationmark", title: "Couldn't reach the AI service", message: message)
             } else if let client = viewModel.apiClient {
                 switch mcpAvailability {
                 case .none:
@@ -77,7 +88,8 @@ struct AIChatScreen: View {
                 .foregroundStyle(Color.secondaryText)
                 .multilineTextAlignment(.center)
             Button {
-                mcpAvailability = nil // re-runs the check
+                mcpAvailability = nil
+                serviceAvailability = nil
             } label: {
                 Text("Try again")
                     .font(.subheadline.weight(.bold))
@@ -94,6 +106,7 @@ struct AIChatView: View {
     @StateObject private var chat: AIChatViewModel
     @ObservedObject private var aiKey: AIKeyStore
     @State private var draft = ""
+    @State private var keyError: String?
     @FocusState private var inputFocused: Bool
 
     init(client: ShopwareAdminClient, subscriptions: AISubscriptionManager, aiKey: AIKeyStore) {
@@ -111,20 +124,53 @@ struct AIChatView: View {
             inputBar
         }
         .background(Color.appBackground)
+        .confirmationDialog(
+            "Approve shop changes?",
+            isPresented: Binding(
+                get: { chat.pendingApproval != nil },
+                set: { if !$0, chat.pendingApproval != nil { chat.declinePendingChange() } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Approve exact change") { chat.approvePendingChange() }
+            Button("Decline", role: .cancel) { chat.declinePendingChange() }
+        } message: {
+            Text(chat.pendingApproval?.displaySummary ?? "")
+        }
+        .alert("Could not remove API key", isPresented: Binding(
+            get: { keyError != nil },
+            set: { if !$0 { keyError = nil } }
+        )) {
+            Button("OK", role: .cancel) { keyError = nil }
+        } message: {
+            Text(keyError ?? "")
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    chat.reset()
-                } label: {
-                    Label("New chat", systemImage: "square.and.pencil")
+                if chat.isThinking {
+                    Button(role: .cancel) {
+                        chat.cancel()
+                    } label: {
+                        Label("Stop", systemImage: "stop.circle")
+                    }
+                } else {
+                    Button {
+                        chat.reset()
+                    } label: {
+                        Label("New chat", systemImage: "square.and.pencil")
+                    }
+                    .disabled(chat.entries.isEmpty)
                 }
-                .disabled(chat.entries.isEmpty)
             }
             if aiKey.hasKey {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button(role: .destructive) {
-                            try? aiKey.clear()
+                            do {
+                                try aiKey.clear()
+                            } catch {
+                                keyError = error.shopwareDisplayMessage
+                            }
                         } label: {
                             Label("Remove API key", systemImage: "key.slash")
                         }
@@ -179,7 +225,7 @@ struct AIChatView: View {
             Text("Ask me anything about your shop.")
                 .font(.headline)
                 .foregroundStyle(Color.primaryText)
-            Text("I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything.")
+            Text("I work through your shop's own MCP server: products, orders, promotions, settings and more. Every write needs a separate native approval before it can reach your shop.")
                 .font(.subheadline)
                 .foregroundStyle(Color.secondaryText)
             VStack(alignment: .leading, spacing: 6) {

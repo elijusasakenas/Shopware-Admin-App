@@ -190,11 +190,13 @@
 "The AI assistant needs Shopware %@ or newer. Your shop runs %@." = "The AI assistant needs Shopware %@ or newer. Your shop runs %@.";
 "Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again." = "Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again.";
 "I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything." = "I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything.";
+"I work through your shop's own MCP server: products, orders, promotions, settings and more. Every write needs a separate native approval before it can reach your shop." = "I work through your shop's own MCP server: products, orders, promotions, settings and more. Every write needs a separate native approval before it can reach your shop.";
 
 /* AI bring-your-own-key */
 "or" = "or";
 "Use your own API key" = "Use your own API key";
 "Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use." = "Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use.";
+"Have an Anthropic API key? Use the assistant without a subscription. The key stays in your device's keychain and model requests go directly to Anthropic. Shop tool calls still pass through the approval gateway so writes require native confirmation." = "Have an Anthropic API key? Use the assistant without a subscription. The key stays in your device's keychain and model requests go directly to Anthropic. Shop tool calls still pass through the approval gateway so writes require native confirmation.";
 "Use my key" = "Use my key";
 "Remove API key" = "Remove API key";
 "Options" = "Options";
@@ -216,3 +218,17 @@
 /* AI paywall legal */
 "Terms of Use" = "Terms of Use";
 "Privacy Policy" = "Privacy Policy";
+"AI messages and relevant shop data are processed by Anthropic. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived." = "AI messages and relevant shop data are processed by Anthropic. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived.";
+"Approve shop changes?" = "Approve shop changes?";
+"Approve exact change" = "Approve exact change";
+"Decline" = "Decline";
+"Approved the proposed change." = "Approved the proposed change.";
+"Declined the proposed change." = "Declined the proposed change.";
+"Request cancelled." = "Request cancelled.";
+"Stop" = "Stop";
+"AI assistant unavailable" = "AI assistant unavailable";
+"The AI assistant is temporarily disabled. Please try again later." = "The AI assistant is temporarily disabled. Please try again later.";
+"Couldn't reach the AI service" = "Couldn't reach the AI service";
+"The approval expired. Ask the assistant to prepare the change again." = "The approval expired. Ask the assistant to prepare the change again.";
+"This conversation is too large. Start a new chat." = "This conversation is too large. Start a new chat.";
+"Your AI usage limit was reached. Please try again later." = "Your AI usage limit was reached. Please try again later.";

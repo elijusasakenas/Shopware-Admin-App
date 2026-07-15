@@ -14,6 +14,7 @@ import Foundation
 /// whose shape is decided by the model at runtime.
 enum JSONValue: Codable, Equatable {
     case string(String)
+    case integer(Int64)
     case number(Double)
     case bool(Bool)
     case object([String: JSONValue])
@@ -26,6 +27,8 @@ enum JSONValue: Codable, Equatable {
             self = .null
         } else if let value = try? container.decode(Bool.self) {
             self = .bool(value)
+        } else if let value = try? container.decode(Int64.self) {
+            self = .integer(value)
         } else if let value = try? container.decode(Double.self) {
             self = .number(value)
         } else if let value = try? container.decode(String.self) {
@@ -43,6 +46,7 @@ enum JSONValue: Codable, Equatable {
         var container = encoder.singleValueContainer()
         switch self {
         case .string(let value): try container.encode(value)
+        case .integer(let value): try container.encode(value)
         case .number(let value): try container.encode(value)
         case .bool(let value): try container.encode(value)
         case .object(let value): try container.encode(value)
@@ -69,13 +73,21 @@ enum JSONValue: Codable, Equatable {
 
     var doubleValue: Double? {
         switch self {
+        case .integer(let value): return Double(value)
         case .number(let value): return value
         case .string(let value): return Double(value)
         default: return nil
         }
     }
 
-    var intValue: Int? { doubleValue.map { Int($0) } }
+    var intValue: Int? {
+        switch self {
+        case .integer(let value): return Int(exactly: value)
+        case .number(let value) where value.rounded() == value: return Int(exactly: value)
+        case .string(let value): return Int(value)
+        default: return nil
+        }
+    }
 }
 
 // MARK: - Messages API shapes
@@ -154,20 +166,59 @@ struct AIChatResponse: Decodable {
     struct Usage: Decodable {
         let inputTokens: Int?
         let outputTokens: Int?
+        let cacheCreationInputTokens: Int?
+        let cacheReadInputTokens: Int?
 
         private enum CodingKeys: String, CodingKey {
             case inputTokens = "input_tokens"
             case outputTokens = "output_tokens"
+            case cacheCreationInputTokens = "cache_creation_input_tokens"
+            case cacheReadInputTokens = "cache_read_input_tokens"
+        }
+
+        var totalInputTokens: Int {
+            (inputTokens ?? 0) + (cacheCreationInputTokens ?? 0) + (cacheReadInputTokens ?? 0)
         }
     }
 
     let content: [AIContentBlock]
     let stopReason: String?
     let usage: Usage?
+    let approval: AIApprovalChallenge?
 
     private enum CodingKeys: String, CodingKey {
-        case content, usage
+        case content, usage, approval
         case stopReason = "stop_reason"
+    }
+
+    init(content: [AIContentBlock], stopReason: String?, usage: Usage?, approval: AIApprovalChallenge?) {
+        self.content = content
+        self.stopReason = stopReason
+        self.usage = usage
+        self.approval = approval
+    }
+}
+
+struct AIApprovalChallenge: Decodable, Equatable {
+    struct Action: Decodable, Equatable, Identifiable {
+        let fingerprint: String
+        let tool: String
+        let summary: String
+
+        var id: String { fingerprint }
+    }
+
+    let token: String
+    let actions: [Action]
+    let expiresAt: Int64
+
+    private enum CodingKeys: String, CodingKey {
+        case token, actions
+        case expiresAt = "expires_at"
+    }
+
+    var displaySummary: String {
+        actions.map(\.summary).joined(separator: "\n\n")
     }
 }
 

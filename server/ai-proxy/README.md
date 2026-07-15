@@ -1,87 +1,108 @@
 # shopware-ai-proxy
 
-Cloudflare Worker that powers the app's **AI Shop Assistant**. It keeps the
-Anthropic API key server-side, verifies that the caller has an active App
-Store subscription, and forwards the conversation to Claude.
+Cloudflare Worker for the app's AI Shop Assistant. It verifies StoreKit
+subscriptions, applies persistent usage limits, calls Anthropic for subscribed
+users, and acts as a capability-based gateway in front of Shopware MCP.
 
-```
-iOS app ──(messages + shop MCP URL + short-lived token + signed transaction)──▶ this worker
-                                                                                    │
-                                              Anthropic API ◀──────────────────────┘
-                                                    │ (MCP connector)
-                                          merchant shop /api/_mcp
-                                          (Shopware 6.7.11+, MCP_SERVER=1)
+```text
+iOS app ── messages/JWS ──> /v1/chat ──> Anthropic
+                                      └─ encrypted 5-minute MCP capability
+Anthropic ── MCP call ──> /v1/mcp ──> merchant /api/_mcp
+                              └─ unapproved writes are blocked
 ```
 
-The model operates the shop through [Shopware's built-in MCP server](https://developer.shopware.com/docs/products/tools/mcp-server/):
-this worker hands the shop's `/api/_mcp` URL and a short-lived Admin API
-bearer token (minted on the device, ~10 min lifetime) to the Anthropic MCP
-connector, which talks to the shop directly. The shop must be publicly
-reachable. The worker validates that `mcp_url` is an https `.../api/_mcp`
-endpoint so the connector can't be pointed anywhere else.
+BYOK model requests go from the device directly to Anthropic. The device gets
+only a short-lived MCP capability from `/v1/capability`; its Anthropic API key
+is never sent to this Worker.
+
+## Security model
+
+- Production StoreKit JWS claims must match the Apple environment, bundle ID,
+  App Store app ID, product, active expiry, and original transaction ID.
+- The certificate chain is bounded, validity-checked, Apple-extension-checked,
+  signature-checked, and anchored to the pinned Apple Root CA G3.
+- Every Shopware endpoint must be public-looking HTTPS, end in `/api/_mcp`, and
+  pass a real MCP `initialize` preflight.
+- MCP capabilities are AES-GCM encrypted, expire after five minutes, and hide
+  the upstream Shopware token from the model provider.
+- Read tools pass through. Unknown or write-like tools fail closed. Explicit
+  dry-runs may run, but commits require an exact name/argument fingerprint from
+  the native confirmation. Approval is bound to the client, shop, entitlement,
+  and is consumed once through a Durable Object.
+- One Durable Object per original transaction enforces minute/day request and
+  monthly token limits. It stores counters, not conversations or credentials.
+- Request bodies and upstream responses are size-bounded. Logs contain request
+  metadata and IDs, never prompts, Shopware tokens, or API keys.
+- `AI_FEATURE_ENABLED=false` is the production kill switch.
+
+The gateway is an additional boundary, not a substitute for least-privilege
+Shopware integration roles, short-lived tokens, Cloudflare account security,
+and monitoring.
 
 ## Endpoints
 
-| Method | Path | Description |
+| Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/chat` | Body `{ messages, mcp_url, mcp_token }`. Requires header `X-App-Transaction` with the StoreKit 2 signed transaction (JWS). Returns `{ content, stop_reason }`. |
-| `GET` | `/health` | Liveness check. |
+| `POST` | `/v1/chat` | Subscription model request. Requires `X-App-Transaction`. |
+| `POST` | `/v1/capability` | Creates a BYOK MCP capability; never receives the Anthropic key. |
+| `POST` | `/v1/approval` | Converts proposed BYOK MCP actions into a native approval challenge. |
+| `GET/POST/DELETE` | `/v1/mcp` | Capability-authenticated Streamable HTTP MCP gateway. |
+| `GET` | `/v1/config` | Remote feature flag. |
+| `GET` | `/health` | Liveness and enabled state. |
 
-## Subscription verification
+Chat bodies include `messages`, `mcp_url`, `mcp_token`, `client_id`, and an
+optional `approval_token`. Successful chat responses include `content`,
+`stop_reason`, `usage`, and an optional `approval` challenge.
 
-The `X-App-Transaction` JWS is verified end-to-end in the worker:
-
-1. Each certificate in the `x5c` chain is signature-checked against its issuer.
-2. The chain must terminate in the pinned **Apple Root CA - G3**.
-3. The JWS signature is verified with the leaf certificate's key.
-4. The payload must match `APPLE_BUNDLE_ID` + `SUBSCRIPTION_PRODUCT_ID`, be
-   unrevoked, and not expired.
-
-Transactions signed by Xcode's **local StoreKit configuration** (simulator
-testing) are *not* signed by Apple's chain, so for local development set
-`SKIP_ENTITLEMENT_CHECK = "true"` in `wrangler.toml` (or `wrangler dev --var`).
-Never deploy with the check disabled.
-
-## Deploy
+## Configure and deploy
 
 ```bash
 cd server/ai-proxy
-npm install
+npm ci
 npx wrangler login
-npx wrangler secret put ANTHROPIC_API_KEY   # paste your key from console.anthropic.com
+npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler secret put CAPABILITY_SECRET
+npx wrangler secret put APPLE_APP_ID
+npm run typecheck
+npm run types:check
+npm test
+npx wrangler deploy --dry-run
 npx wrangler deploy
 ```
 
-The deploy prints your worker URL, e.g.
-`https://shopware-ai-proxy.<your-subdomain>.workers.dev`. Put that URL into
-`AIProxyConfig.defaultURLString` in
-`ShopwareApp/AI/AIChatService.swift` before shipping the app.
+Generate `CAPABILITY_SECRET` with at least 32 random bytes and enter it only at
+Wrangler's interactive prompt. `APPLE_APP_ID` is the numeric App Store Connect
+app ID. It is configured as a secret so deploys cannot accidentally remove a
+dashboard-only variable. Never put either value in the repository.
+
+`wrangler.jsonc` defines the bundle/product IDs, production StoreKit
+environment, model, quotas, observability, Durable Object binding, and initial
+SQLite migration. Review these before deployment. A first deployment creates
+the `UsageLimiter` Durable Object class.
+
+After deployment, set `AIProxyConfig.defaultURLString` in
+`ShopwareApp/AI/AIChatService.swift` to the Worker URL.
 
 ## Local development
+
+Use `.dev.vars` for fake/local secrets (it is gitignored), then run:
 
 ```bash
 npx wrangler dev --var SKIP_ENTITLEMENT_CHECK:true
 ```
 
-Then point the app at your machine: in the app's UserDefaults set
-`aiProxyURL` to `http://localhost:8787` (e.g. via a breakpoint or a debug
-build tweak), or temporarily change `AIProxyConfig.defaultURLString`.
+Debug builds may set the `aiProxyURL` UserDefaults key to
+`http://localhost:8787`. Release builds ignore that override and always require
+the compiled HTTPS Worker URL. Never deploy with `SKIP_ENTITLEMENT_CHECK=true`.
 
-## Configuration
+## Verification
 
-| Variable | Where | Purpose |
-| --- | --- | --- |
-| `ANTHROPIC_API_KEY` | secret | Your Anthropic API key — pays for the model usage your subscribers generate. |
-| `APPLE_BUNDLE_ID` | `wrangler.toml` | Must match the app's bundle id. |
-| `SUBSCRIPTION_PRODUCT_ID` | `wrangler.toml` | Must match the auto-renewable product id. |
-| `ANTHROPIC_MODEL` | `wrangler.toml` | Defaults to `claude-opus-4-8`. |
-| `SKIP_ENTITLEMENT_CHECK` | `wrangler.toml` | Dev only. |
+```bash
+npm run typecheck
+npm test
+npx wrangler deploy --dry-run
+```
 
-## Cost & abuse notes
-
-- The system prompt is sent with `cache_control` so repeated requests hit the
-  prompt cache.
-- `max_tokens` is capped at 4096 and conversations at 200 messages / request.
-- Consider adding [Cloudflare rate limiting](https://developers.cloudflare.com/waf/rate-limiting-rules/)
-  per IP in front of `/v1/chat` before launch, and monitor usage in the
-  Anthropic console so a heavy subscriber can't outspend their 4 €.
+The MCP integration targets Shopware 6.7.11+ and remains dependent on its
+experimental `MCP_SERVER` feature flag. Keep the remote kill switch available
+and test against each Shopware update before enabling it broadly.

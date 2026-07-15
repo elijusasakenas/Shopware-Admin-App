@@ -216,3 +216,19 @@
 /* AI paywall legal */
 "Terms of Use" = "Nutzungsbedingungen";
 "Privacy Policy" = "Datenschutzerklärung";
+"I work through your shop's own MCP server: products, orders, promotions, settings and more. Every write needs a separate native approval before it can reach your shop." = "Ich arbeite über den MCP-Server deines Shops mit Produkten, Bestellungen, Aktionen, Einstellungen und mehr. Jeder Schreibvorgang braucht eine separate native Freigabe, bevor er deinen Shop erreicht.";
+"Have an Anthropic API key? Use the assistant without a subscription. The key stays in your device's keychain and model requests go directly to Anthropic. Shop tool calls still pass through the approval gateway so writes require native confirmation." = "Du hast einen Anthropic-API-Schlüssel? Nutze den Assistenten ohne Abo. Der Schlüssel bleibt im Schlüsselbund deines Geräts und Modell-Anfragen gehen direkt an Anthropic. Shop-Werkzeugaufrufe laufen weiterhin über das Freigabe-Gateway, damit Schreibvorgänge eine native Bestätigung brauchen.";
+"AI messages and relevant shop data are processed by Anthropic. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived." = "KI-Nachrichten und relevante Shop-Daten werden von Anthropic verarbeitet. Das Cloudflare-Freigabe-Gateway leitet MCP-Aufrufe weiter und speichert nur Nutzungszähler; Unterhaltungen und Shopware-Zugangsdaten werden dort nicht gespeichert. Shop-Zugriffstoken sind kurzlebig.";
+"Approve shop changes?" = "Shop-Änderungen freigeben?";
+"Approve exact change" = "Exakte Änderung freigeben";
+"Decline" = "Ablehnen";
+"Approved the proposed change." = "Vorgeschlagene Änderung freigegeben.";
+"Declined the proposed change." = "Vorgeschlagene Änderung abgelehnt.";
+"Request cancelled." = "Anfrage abgebrochen.";
+"Stop" = "Stoppen";
+"AI assistant unavailable" = "KI-Assistent nicht verfügbar";
+"The AI assistant is temporarily disabled. Please try again later." = "Der KI-Assistent ist vorübergehend deaktiviert. Bitte versuche es später erneut.";
+"Couldn't reach the AI service" = "KI-Dienst nicht erreichbar";
+"The approval expired. Ask the assistant to prepare the change again." = "Die Freigabe ist abgelaufen. Bitte den Assistenten, die Änderung erneut vorzubereiten.";
+"This conversation is too large. Start a new chat." = "Diese Unterhaltung ist zu groß. Starte einen neuen Chat.";
+"Your AI usage limit was reached. Please try again later." = "Dein KI-Nutzungslimit ist erreicht. Bitte versuche es später erneut.";

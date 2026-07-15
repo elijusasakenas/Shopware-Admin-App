@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5A9E2D8C1F734B6A90C2E411 /* AIChatModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9E2D8C1F734B6A90C2E412 /* AIChatModelsTests.swift */; };
 		0E5C48E0BAE57E768E9C0A06 /* JSONParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */; };
 		164778662EBB0A11E394ACA8 /* DateRangeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */; };
 		17C945967E748D94790BBB02 /* StateLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2B7A34E27E5F22B07E71E0 /* StateLocalizationTests.swift */; };
@@ -24,6 +25,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5A9E2D8C1F734B6A90C2E412 /* AIChatModelsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIChatModelsTests.swift; sourceTree = "<group>"; };
 		90058C3D868BD0CBE5024A45 /* ShopwareAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShopwareAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShopwareConnectionTests.swift; sourceTree = "<group>"; };
 		AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JSONParsingTests.swift; sourceTree = "<group>"; };
@@ -68,6 +70,7 @@
 		9669F0DD6C83191FB07BF1A8 /* ShopwareAppTests */ = {
 			isa = PBXGroup;
 			children = (
+				5A9E2D8C1F734B6A90C2E412 /* AIChatModelsTests.swift */,
 				D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */,
 				AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */,
 				A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */,
@@ -203,6 +206,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5A9E2D8C1F734B6A90C2E411 /* AIChatModelsTests.swift in Sources */,
 				164778662EBB0A11E394ACA8 /* DateRangeTests.swift in Sources */,
 				0E5C48E0BAE57E768E9C0A06 /* JSONParsingTests.swift in Sources */,
 				86F698E5A025F513633D1C68 /* ShopwareConnectionTests.swift in Sources */,

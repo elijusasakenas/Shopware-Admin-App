@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "shopware-ai-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "USAGE_LIMITER", "class_name": "UsageLimiter" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["UsageLimiter"] }
+  ],
+  "vars": {
+    "APPLE_BUNDLE_ID": "com.asakenas.shopwareapp",
+    "APPLE_ENVIRONMENT": "Production",
+    "SUBSCRIPTION_PRODUCT_ID": "com.asakenas.shopwareapp.ai.monthly",
+    "ANTHROPIC_MODEL": "claude-opus-4-8",
+    "AI_FEATURE_ENABLED": "true",
+    "MAX_REQUESTS_PER_MINUTE": "20",
+    "MAX_REQUESTS_PER_DAY": "500",
+    "MAX_TOKENS_PER_MONTH": "2000000",
+    "SKIP_ENTITLEMENT_CHECK": "false"
+  }
+}

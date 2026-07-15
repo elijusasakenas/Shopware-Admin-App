@@ -2,9 +2,8 @@
 //  AIKeyStore.swift
 //  ShopwareApp
 //
-//  Keychain-backed storage for the user's own Anthropic API key. When a key
-//  is saved, the AI assistant talks to the Anthropic API directly from the
-//  device (no subscription, no proxy) — the user pays Anthropic themselves.
+//  Keychain-backed storage for the user's own Anthropic API key. Model calls
+//  go directly to Anthropic; MCP calls still use the native-approval gateway.
 //
 
 import Combine
@@ -25,13 +24,9 @@ final class AIKeyStore: ObservableObject {
     }
 
     func read() -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
+        var query = baseQuery
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
         var item: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
               let data = item as? Data,
@@ -46,31 +41,36 @@ final class AIKeyStore: ObservableObject {
         guard !trimmed.isEmpty else {
             throw ShopwareAPIError.message("The API key is empty.")
         }
-        try? clear()
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+        let values: [String: Any] = [
             kSecValueData as String: Data(trimmed.utf8),
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
-        guard SecItemAdd(query as CFDictionary, nil) == errSecSuccess else {
+        let updateStatus = SecItemUpdate(baseQuery as CFDictionary, values as CFDictionary)
+        let status: OSStatus
+        if updateStatus == errSecItemNotFound {
+            status = SecItemAdd(baseQuery.merging(values) { _, new in new } as CFDictionary, nil)
+        } else {
+            status = updateStatus
+        }
+        guard status == errSecSuccess else {
             throw ShopwareAPIError.message("Could not save the API key to Keychain.")
         }
         hasKey = true
     }
 
     func clear() throws {
-        let query: [String: Any] = [
+        let status = SecItemDelete(baseQuery as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw ShopwareAPIError.message("Could not remove the API key from Keychain.")
+        }
+        hasKey = false
+    }
+
+    private var baseQuery: [String: Any] {
+        [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
-        let status = SecItemDelete(query as CFDictionary)
-        let acceptable: [OSStatus] = [errSecSuccess, errSecItemNotFound, errSecMissingEntitlement]
-        guard acceptable.contains(status) else {
-            throw ShopwareAPIError.message("Could not remove the API key from Keychain.")
-        }
-        hasKey = false
     }
 }
