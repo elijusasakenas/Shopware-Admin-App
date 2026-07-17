@@ -45,8 +45,12 @@ export async function verifyMcpEndpoint(mcpURL: string, token: string): Promise<
         clientInfo: { name: "ShopwareApp AI gateway", version: "1.0" },
       },
     }),
-    redirect: "error",
+    // Workers does not implement RequestRedirect "error". Manual mode keeps
+    // redirects visible so the gateway can reject them without forwarding a
+    // Shopware bearer token to a different destination.
+    redirect: "manual",
   });
+  if (isRedirect(response.status)) throw new HTTPError(400, "The Shopware MCP endpoint must not redirect.");
   const text = await readResponseText(response);
   if (!response.ok) throw new HTTPError(400, `Shopware MCP preflight failed (${response.status}).`);
   if (!text.includes('"jsonrpc"') || !text.includes('"result"')) {
@@ -93,8 +97,12 @@ export async function handleMcpGateway(request: Request, env: Env): Promise<Resp
     method: request.method,
     headers,
     body,
-    redirect: "error",
+    redirect: "manual",
   });
+  if (isRedirect(upstream.status)) {
+    await upstream.body?.cancel();
+    throw new HTTPError(502, "The Shopware MCP endpoint attempted to redirect.");
+  }
   const responseHeaders = new Headers();
   for (const name of ["content-type", "mcp-session-id", "retry-after"]) {
     const value = upstream.headers.get(name);
@@ -102,6 +110,10 @@ export async function handleMcpGateway(request: Request, env: Env): Promise<Resp
   }
   for (const [key, value] of Object.entries(securityHeaders())) responseHeaders.set(key, value);
   return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
+}
+
+function isRedirect(status: number): boolean {
+  return status >= 300 && status < 400;
 }
 
 function blockedToolResponse(id: unknown, name: string): Response {
