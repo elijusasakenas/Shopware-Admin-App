@@ -1,4 +1,4 @@
-import { Environment, SignedDataVerifier } from "@apple/app-store-server-library";
+import type { SignedDataVerifier as AppleSignedDataVerifier } from "@apple/app-store-server-library";
 import { Buffer } from "node:buffer";
 import type { Env } from "./types";
 
@@ -7,7 +7,19 @@ import type { Env } from "./types";
 // library's verification examples.
 const APPLE_ROOT_CA_G3_BASE64 = "MIICQzCCAcmgAwIBAgIILcX8iNLFS5UwCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9vdCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMTQwNDMwMTgxOTA2WhcNMzkwNDMwMTgxOTA2WjBnMRswGQYDVQQDDBJBcHBsZSBSb290IENBIC0gRzMxJjAkBgNVBAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJbmMuMQswCQYDVQQGEwJVUzB2MBAGByqGSM49AgEGBSuBBAAiA2IABJjpLz1AcqTtkyJygRMc3RCV8cWjTnHcFBbZDuWmBSp3ZHtfTjjTuxxEtX/1H7YyYl3J6YRbTzBPEVoA/VhYDKX1DyxNB0cTddqXl5dvMVztK517IDvYuVTZXpmkOlEKMaNCMEAwHQYDVR0OBBYEFLuw3qFYM4iapIqZ3r6966/ayySrMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQCD6cHEFl4aXTQY2e3v9GwOAEZLuN+yRhHFD/3meoyhpmvOwgPUnPWTxnS4at+qIxUCMG1mihDK1A3UT82NQz60imOlM27jbdoXt2QfyFMm+YhidDkLF1vLUagM6BgD56KyKA==";
 const MAX_JWS_LENGTH = 32_768;
-const verifierCache = new Map<string, SignedDataVerifier>();
+const verifierCache = new Map<string, AppleSignedDataVerifier>();
+let appleLibraryPromise: Promise<typeof import("@apple/app-store-server-library")> | undefined;
+
+/**
+ * The Apple library loads jsrsasign, which performs random initialization at
+ * module evaluation time. Workers prohibit that operation in global scope,
+ * so defer evaluation until an actual request is being handled. The promise
+ * is safe to reuse across requests because it contains no request data.
+ */
+function appleLibrary(): Promise<typeof import("@apple/app-store-server-library")> {
+  appleLibraryPromise ??= import("@apple/app-store-server-library");
+  return appleLibraryPromise;
+}
 
 export interface VerifiedTransaction {
   subject: string;
@@ -21,6 +33,7 @@ export async function verifyAppStoreTransaction(jws: string, env: Env): Promise<
   const cacheKey = `${environment}:${env.APPLE_BUNDLE_ID}:${appAppleID ?? "sandbox"}`;
   let verifier = verifierCache.get(cacheKey);
   if (!verifier) {
+    const { Environment, SignedDataVerifier } = await appleLibrary();
     verifier = new SignedDataVerifier(
       [Buffer.from(APPLE_ROOT_CA_G3_BASE64, "base64")],
       true,
