@@ -2,8 +2,7 @@ import { HTTPError } from "./http";
 
 const encoder = new TextEncoder();
 
-export async function sealToken(payload: object, secret: string): Promise<string> {
-  if (secret.length < 32) throw new HTTPError(503, "Capability secret is not configured securely.");
+export async function sealToken(payload: object, secret: string | undefined): Promise<string> {
   const key = await deriveKey(secret);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const plaintext = encoder.encode(JSON.stringify(payload));
@@ -11,7 +10,7 @@ export async function sealToken(payload: object, secret: string): Promise<string
   return `v1.${base64URL(iv)}.${base64URL(new Uint8Array(encrypted))}`;
 }
 
-export async function openToken<T>(token: string, secret: string): Promise<T> {
+export async function openToken<T>(token: string, secret: string | undefined): Promise<T> {
   const parts = token.split(".");
   if (parts.length !== 3 || parts[0] !== "v1" || token.length > 20_000) {
     throw new HTTPError(401, "Invalid capability token.");
@@ -30,7 +29,10 @@ export async function openToken<T>(token: string, secret: string): Promise<T> {
   }
 }
 
-async function deriveKey(secret: string): Promise<CryptoKey> {
+async function deriveKey(secret: string | undefined): Promise<CryptoKey> {
+  if (typeof secret !== "string" || secret.length < 32) {
+    throw new HTTPError(503, "Capability secret is not configured securely.");
+  }
   const digest = await crypto.subtle.digest("SHA-256", encoder.encode(secret));
   return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
