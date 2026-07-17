@@ -194,8 +194,13 @@
 /* AI bring-your-own-key */
 "or" = "oder";
 "Use your own API key" = "Eigenen API-Schlüssel verwenden";
+"Use your own Anthropic API key" = "Eigenen Anthropic-API-Schlüssel verwenden";
+"Use an Anthropic API key with or without a subscription. A saved key takes priority for model requests and stays in your device's keychain. Shop tool calls still pass through the approval gateway so writes require native confirmation." = "Verwende einen Anthropic-API-Schlüssel mit oder ohne Abo. Ein gespeicherter Schlüssel hat für Modell-Anfragen Vorrang und bleibt im Schlüsselbund deines Geräts. Shop-Werkzeugaufrufe laufen weiterhin über das Freigabe-Gateway, damit Schreibvorgänge eine native Bestätigung brauchen.";
+"Optional with or without a subscription. When a key is saved, the assistant uses it for model requests instead of subscription usage. Remove it anytime to use your active subscription again." = "Optional mit oder ohne Abo. Wenn ein Schlüssel gespeichert ist, verwendet der Assistent ihn für Modell-Anfragen statt des Abo-Kontingents. Entferne ihn jederzeit, um wieder dein aktives Abo zu verwenden.";
 "Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use." = "Du hast einen Anthropic-API-Schlüssel? Nutze den Assistenten ohne Abo. Der Schlüssel wird im Schlüsselbund deines Geräts gespeichert und Anfragen gehen direkt an Anthropic – du zahlst dort nur, was du nutzt.";
 "Use my key" = "Meinen Schlüssel verwenden";
+"Save API key" = "API-Schlüssel speichern";
+"Replace API key" = "API-Schlüssel ersetzen";
 "Remove API key" = "API-Schlüssel entfernen";
 "Options" = "Optionen";
 
@@ -219,6 +224,16 @@
 "I work through your shop's own MCP server: products, orders, promotions, settings and more. Every write needs a separate native approval before it can reach your shop." = "Ich arbeite über den MCP-Server deines Shops mit Produkten, Bestellungen, Aktionen, Einstellungen und mehr. Jeder Schreibvorgang braucht eine separate native Freigabe, bevor er deinen Shop erreicht.";
 "Have an Anthropic API key? Use the assistant without a subscription. The key stays in your device's keychain and model requests go directly to Anthropic. Shop tool calls still pass through the approval gateway so writes require native confirmation." = "Du hast einen Anthropic-API-Schlüssel? Nutze den Assistenten ohne Abo. Der Schlüssel bleibt im Schlüsselbund deines Geräts und Modell-Anfragen gehen direkt an Anthropic. Shop-Werkzeugaufrufe laufen weiterhin über das Freigabe-Gateway, damit Schreibvorgänge eine native Bestätigung brauchen.";
 "AI messages and relevant shop data are processed by Anthropic. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived." = "KI-Nachrichten und relevante Shop-Daten werden von Anthropic verarbeitet. Das Cloudflare-Freigabe-Gateway leitet MCP-Aufrufe weiter und speichert nur Nutzungszähler; Unterhaltungen und Shopware-Zugangsdaten werden dort nicht gespeichert. Shop-Zugriffstoken sind kurzlebig.";
+"Automatic" = "Automatisch";
+"Saved" = "Gespeichert";
+"AI provider" = "KI-Anbieter";
+"Paste API key" = "API-Schlüssel einfügen";
+"Use your own AI provider key" = "Eigenen Schlüssel eines KI-Anbieters verwenden";
+"Use an Anthropic, OpenAI, or Gemini key with or without a subscription. A saved key takes priority for model requests. Remove it anytime to use your active subscription again." = "Verwende einen Schlüssel von Anthropic, OpenAI oder Gemini mit oder ohne Abo. Ein gespeicherter Schlüssel hat für Modell-Anfragen Vorrang. Entferne ihn jederzeit, um wieder dein aktives Abo zu verwenden.";
+"Counted on this device; resets monthly. With your own API key, billing lives in your selected provider's console." = "Wird auf diesem Gerät gezählt und monatlich zurückgesetzt. Mit eigenem API-Schlüssel findest du die Abrechnung in der Konsole des gewählten Anbieters.";
+"Use an Anthropic, OpenAI, or Gemini API key with or without a subscription. A saved key takes priority for model requests and stays in your device's keychain. Shop tool calls still pass through the approval gateway so writes require native confirmation." = "Verwende einen API-Schlüssel von Anthropic, OpenAI oder Gemini mit oder ohne Abo. Ein gespeicherter Schlüssel hat für Modell-Anfragen Vorrang und bleibt im Schlüsselbund deines Geräts. Shop-Werkzeugaufrufe laufen weiterhin über das Freigabe-Gateway, damit Schreibvorgänge eine native Bestätigung brauchen.";
+"With a subscription, AI messages and relevant shop data are processed by Anthropic. With your own key, they are processed by your selected AI provider. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived." = "Mit einem Abo werden KI-Nachrichten und relevante Shop-Daten von Anthropic verarbeitet. Mit deinem eigenen Schlüssel verarbeitet sie der gewählte KI-Anbieter. Das Cloudflare-Freigabe-Gateway leitet MCP-Aufrufe weiter und speichert nur Nutzungszähler; Unterhaltungen und Shopware-Zugangsdaten werden dort nicht gespeichert. Shop-Zugriffstoken sind kurzlebig.";
+"The AI provider rejected the API key. Check the key and its billing access." = "Der KI-Anbieter hat den API-Schlüssel abgelehnt. Prüfe den Schlüssel und seinen Abrechnungszugang.";
 "Approve shop changes?" = "Shop-Änderungen freigeben?";
 "Approve exact change" = "Exakte Änderung freigeben";
 "Decline" = "Ablehnen";

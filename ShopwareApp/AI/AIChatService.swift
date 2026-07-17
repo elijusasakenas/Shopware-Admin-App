@@ -2,9 +2,10 @@
 //  AIChatService.swift
 //  ShopwareApp
 //
-//  Subscription requests use the AI proxy. BYOK requests call Anthropic
-//  directly, but still use the proxy's short-lived MCP approval gateway so a
-//  model can never commit a Shopware write without native user approval.
+//  Subscription requests use the AI proxy. BYOK requests call the selected
+//  AI provider directly, but still use the proxy's short-lived MCP approval
+//  gateway so a model can never commit a Shopware write without native user
+//  approval.
 //
 
 import Foundation
@@ -43,7 +44,9 @@ struct AIChatService {
         case failed(String)
     }
 
-    static let directModel = "claude-opus-4-8"
+    static let anthropicModel = "claude-opus-4-8"
+    static let openAIModel = "gpt-5.6"
+    static let geminiModel = "gemini-3.5-flash"
     static let directSystemPrompt = """
     You are the AI assistant inside a Shopware merchant app. Use the connected Shopware MCP server instead of guessing and look up entities before acting.
 
@@ -54,13 +57,44 @@ struct AIChatService {
 
     func availability() async -> Availability {
         struct Configuration: Decodable { let enabled: Bool }
+        struct LegacyHealth: Decodable {
+            let ok: Bool
+            let enabled: Bool?
+        }
+
         guard let baseURL = AIProxyConfig.baseURL else { return .failed("The AI service URL is not configured securely.") }
         var request = URLRequest(url: baseURL.appending(path: "/v1/config"))
         request.timeoutInterval = 15
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         do {
-            let configuration = try await perform(request, as: Configuration.self)
-            return configuration.enabled ? .enabled : .disabled
+            let (data, response) = try await session.data(for: request)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            if (200...299).contains(status) {
+                guard let configuration = try? JSONDecoder().decode(Configuration.self, from: data) else {
+                    throw ShopwareAPIError.message("The AI service returned an invalid response.")
+                }
+                return configuration.enabled ? .enabled : .disabled
+            }
+
+            // Workers deployed before the remote feature flag was introduced
+            // expose only /health. Keep those deployments usable while making
+            // /v1/config the authoritative endpoint for current versions.
+            guard status == 404 else {
+                throw ShopwareAPIError.message(errorMessage(from: data, status: status))
+            }
+            var healthRequest = URLRequest(url: baseURL.appending(path: "/health"))
+            healthRequest.timeoutInterval = 15
+            healthRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+            let (healthData, healthResponse) = try await session.data(for: healthRequest)
+            let healthStatus = (healthResponse as? HTTPURLResponse)?.statusCode ?? 0
+            guard (200...299).contains(healthStatus) else {
+                throw ShopwareAPIError.message(errorMessage(from: healthData, status: healthStatus))
+            }
+            guard let health = try? JSONDecoder().decode(LegacyHealth.self, from: healthData) else {
+                throw ShopwareAPIError.message("The AI service returned an invalid response.")
+            }
+            let enabled = health.enabled ?? health.ok
+            return enabled ? .enabled : .disabled
         } catch {
             return .failed(error.shopwareDisplayMessage)
         }
@@ -71,18 +105,18 @@ struct AIChatService {
         mcpURL: URL,
         mcpToken: String,
         entitlementJWS: String?,
-        apiKey: String? = nil,
+        credential: AIProviderCredential? = nil,
         approvalToken: String? = nil
     ) async throws -> AIChatResponse {
         guard mcpURL.scheme == "https" else {
             throw ShopwareAPIError.message("The Shopware MCP endpoint must use HTTPS.")
         }
-        if let apiKey {
+        if let credential {
             return try await sendDirect(
                 messages: messages,
                 mcpURL: mcpURL,
                 mcpToken: mcpToken,
-                apiKey: apiKey,
+                credential: credential,
                 approvalToken: approvalToken
             )
         }
@@ -134,6 +168,41 @@ struct AIChatService {
         messages: [AIMessage],
         mcpURL: URL,
         mcpToken: String,
+        credential: AIProviderCredential,
+        approvalToken: String?
+    ) async throws -> AIChatResponse {
+        switch credential.provider {
+        case .anthropic:
+            return try await sendAnthropic(
+                messages: messages,
+                mcpURL: mcpURL,
+                mcpToken: mcpToken,
+                apiKey: credential.key,
+                approvalToken: approvalToken
+            )
+        case .openAI:
+            return try await sendOpenAI(
+                messages: messages,
+                mcpURL: mcpURL,
+                mcpToken: mcpToken,
+                apiKey: credential.key,
+                approvalToken: approvalToken
+            )
+        case .gemini:
+            return try await sendGemini(
+                messages: messages,
+                mcpURL: mcpURL,
+                mcpToken: mcpToken,
+                apiKey: credential.key,
+                approvalToken: approvalToken
+            )
+        }
+    }
+
+    private func sendAnthropic(
+        messages: [AIMessage],
+        mcpURL: URL,
+        mcpToken: String,
         apiKey: String,
         approvalToken: String?
     ) async throws -> AIChatResponse {
@@ -152,7 +221,7 @@ struct AIChatService {
 
         let messagesJSON = try JSONSerialization.jsonObject(with: JSONEncoder().encode(messages))
         request.httpBody = try JSONSerialization.data(withJSONObject: [
-            "model": Self.directModel,
+            "model": Self.anthropicModel,
             "max_tokens": 4096,
             "system": [[
                 "type": "text",
@@ -169,7 +238,11 @@ struct AIChatService {
             "messages": messagesJSON
         ])
 
-        let response = try await perform(request, as: AIChatResponse.self)
+        let response = try await perform(
+            request,
+            as: AIChatResponse.self,
+            unauthorizedMessage: providerKeyError(.anthropic)
+        )
         let approval = try await directApproval(
             content: response.content,
             mcpURL: mcpURL,
@@ -181,6 +254,137 @@ struct AIChatService {
             usage: response.usage,
             approval: approval
         )
+    }
+
+    private func sendOpenAI(
+        messages: [AIMessage],
+        mcpURL: URL,
+        mcpToken: String,
+        apiKey: String,
+        approvalToken: String?
+    ) async throws -> AIChatResponse {
+        let capability = try await gatewayCapability(
+            mcpURL: mcpURL,
+            mcpToken: mcpToken,
+            approvalToken: approvalToken
+        )
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 120
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "model": Self.openAIModel,
+            "instructions": Self.directSystemPrompt,
+            "input": providerTranscript(messages),
+            "tools": [[
+                "type": "mcp",
+                "server_label": "shopware",
+                "server_url": capability.url,
+                "authorization": capability.token,
+                "require_approval": "never"
+            ]]
+        ])
+
+        let raw = try await perform(
+            request,
+            as: JSONValue.self,
+            unauthorizedMessage: providerKeyError(.openAI)
+        )
+        return try await normalizedResponse(
+            AIProviderResponseNormalizer.openAI(raw),
+            mcpURL: mcpURL,
+            approvalToken: approvalToken
+        )
+    }
+
+    private func sendGemini(
+        messages: [AIMessage],
+        mcpURL: URL,
+        mcpToken: String,
+        apiKey: String,
+        approvalToken: String?
+    ) async throws -> AIChatResponse {
+        let capability = try await gatewayCapability(
+            mcpURL: mcpURL,
+            mcpToken: mcpToken,
+            approvalToken: approvalToken
+        )
+        var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/interactions")!)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 120
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "model": Self.geminiModel,
+            "system_instruction": Self.directSystemPrompt,
+            "store": false,
+            "input": providerTranscript(messages),
+            "tools": [[
+                "type": "mcp_server",
+                "name": "shopware",
+                "url": capability.url,
+                "headers": ["Authorization": "Bearer \(capability.token)"]
+            ]]
+        ])
+
+        let raw = try await perform(
+            request,
+            as: JSONValue.self,
+            unauthorizedMessage: providerKeyError(.gemini)
+        )
+        return try await normalizedResponse(
+            AIProviderResponseNormalizer.gemini(raw),
+            mcpURL: mcpURL,
+            approvalToken: approvalToken
+        )
+    }
+
+    private func normalizedResponse(
+        _ result: AIProviderResult,
+        mcpURL: URL,
+        approvalToken: String?
+    ) async throws -> AIChatResponse {
+        let approval = try await directApproval(
+            content: result.content,
+            mcpURL: mcpURL,
+            previousApprovalToken: approvalToken
+        )
+        return AIChatResponse(
+            content: result.content,
+            stopReason: result.stopReason,
+            usage: result.usage,
+            approval: approval
+        )
+    }
+
+    /// Both Responses and Interactions accept plain text input. Replaying a
+    /// compact transcript keeps BYOK turns stateless and preserves the exact
+    /// MCP arguments the model must retry after native approval.
+    private func providerTranscript(_ messages: [AIMessage]) -> String {
+        messages.map { message in
+            let content = message.content.compactMap(providerTranscriptBlock).joined(separator: "\n")
+            return "\(message.role.uppercased()):\n\(content)"
+        }.joined(separator: "\n\n")
+    }
+
+    private func providerTranscriptBlock(_ block: AIContentBlock) -> String? {
+        switch block {
+        case .text(let text):
+            return text
+        case .toolUse(let id, let name, let input):
+            return "[Tool call \(id): \(name), arguments: \(jsonString(input))]"
+        case .toolResult(let id, let content, let isError):
+            return "[Tool result \(id)\(isError ? " failed" : ""): \(content)]"
+        case .other(let raw):
+            let type = raw["type"]?.stringValue ?? "provider event"
+            return "[\(type): \(jsonString(raw))]"
+        }
+    }
+
+    private func jsonString(_ value: JSONValue) -> String {
+        guard let data = try? JSONEncoder().encode(value) else { return "{}" }
+        return String(data: data, encoding: .utf8) ?? "{}"
     }
 
     private struct GatewayCapability: Decodable {
@@ -251,10 +455,17 @@ struct AIChatService {
         return request
     }
 
-    private func perform<T: Decodable>(_ request: URLRequest, as type: T.Type) async throws -> T {
+    private func perform<T: Decodable>(
+        _ request: URLRequest,
+        as type: T.Type,
+        unauthorizedMessage: String? = nil
+    ) async throws -> T {
         let (data, response) = try await session.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200...299).contains(status) else {
+            if status == 401, let unauthorizedMessage {
+                throw ShopwareAPIError.message(unauthorizedMessage)
+            }
             throw ShopwareAPIError.message(errorMessage(from: data, status: status))
         }
         do {
@@ -262,6 +473,10 @@ struct AIChatService {
         } catch {
             throw ShopwareAPIError.message("The AI service returned an invalid response.")
         }
+    }
+
+    private func providerKeyError(_ provider: AIProvider) -> String {
+        "\(provider.displayName): \(String(localized: "The AI provider rejected the API key. Check the key and its billing access."))"
     }
 
     private func errorMessage(from data: Data, status: Int) -> String {

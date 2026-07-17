@@ -195,9 +195,14 @@
 /* AI bring-your-own-key */
 "or" = "or";
 "Use your own API key" = "Use your own API key";
+"Use your own Anthropic API key" = "Use your own Anthropic API key";
+"Use an Anthropic API key with or without a subscription. A saved key takes priority for model requests and stays in your device's keychain. Shop tool calls still pass through the approval gateway so writes require native confirmation." = "Use an Anthropic API key with or without a subscription. A saved key takes priority for model requests and stays in your device's keychain. Shop tool calls still pass through the approval gateway so writes require native confirmation.";
+"Optional with or without a subscription. When a key is saved, the assistant uses it for model requests instead of subscription usage. Remove it anytime to use your active subscription again." = "Optional with or without a subscription. When a key is saved, the assistant uses it for model requests instead of subscription usage. Remove it anytime to use your active subscription again.";
 "Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use." = "Have an Anthropic API key? Use the assistant without a subscription. The key is stored in your device's keychain and requests go directly to Anthropic — you pay Anthropic for what you use.";
 "Have an Anthropic API key? Use the assistant without a subscription. The key stays in your device's keychain and model requests go directly to Anthropic. Shop tool calls still pass through the approval gateway so writes require native confirmation." = "Have an Anthropic API key? Use the assistant without a subscription. The key stays in your device's keychain and model requests go directly to Anthropic. Shop tool calls still pass through the approval gateway so writes require native confirmation.";
 "Use my key" = "Use my key";
+"Save API key" = "Save API key";
+"Replace API key" = "Replace API key";
 "Remove API key" = "Remove API key";
 "Options" = "Options";
 
@@ -219,6 +224,16 @@
 "Terms of Use" = "Terms of Use";
 "Privacy Policy" = "Privacy Policy";
 "AI messages and relevant shop data are processed by Anthropic. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived." = "AI messages and relevant shop data are processed by Anthropic. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived.";
+"Automatic" = "Automatic";
+"Saved" = "Saved";
+"AI provider" = "AI provider";
+"Paste API key" = "Paste API key";
+"Use your own AI provider key" = "Use your own AI provider key";
+"Use an Anthropic, OpenAI, or Gemini key with or without a subscription. A saved key takes priority for model requests. Remove it anytime to use your active subscription again." = "Use an Anthropic, OpenAI, or Gemini key with or without a subscription. A saved key takes priority for model requests. Remove it anytime to use your active subscription again.";
+"Counted on this device; resets monthly. With your own API key, billing lives in your selected provider's console." = "Counted on this device; resets monthly. With your own API key, billing lives in your selected provider's console.";
+"Use an Anthropic, OpenAI, or Gemini API key with or without a subscription. A saved key takes priority for model requests and stays in your device's keychain. Shop tool calls still pass through the approval gateway so writes require native confirmation." = "Use an Anthropic, OpenAI, or Gemini API key with or without a subscription. A saved key takes priority for model requests and stays in your device's keychain. Shop tool calls still pass through the approval gateway so writes require native confirmation.";
+"With a subscription, AI messages and relevant shop data are processed by Anthropic. With your own key, they are processed by your selected AI provider. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived." = "With a subscription, AI messages and relevant shop data are processed by Anthropic. With your own key, they are processed by your selected AI provider. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived.";
+"The AI provider rejected the API key. Check the key and its billing access." = "The AI provider rejected the API key. Check the key and its billing access.";
 "Approve shop changes?" = "Approve shop changes?";
 "Approve exact change" = "Approve exact change";
 "Decline" = "Decline";

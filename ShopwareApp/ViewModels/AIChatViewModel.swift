@@ -22,10 +22,10 @@ final class AIChatViewModel: ObservableObject {
     private let client: ShopwareAdminClient
     /// Returns the signed App Store transaction proving the subscription.
     private let entitlementProvider: () async -> String?
-    /// Returns the user's own Anthropic API key, if they brought one — that
-    /// routes model requests directly to Anthropic; MCP still uses the
-    /// approval gateway.
-    private let apiKeyProvider: () -> String?
+    /// Returns the user's own provider credential, if they brought one. Model
+    /// requests go directly to that provider; MCP still uses the approval
+    /// gateway.
+    private let credentialProvider: () -> AIProviderCredential?
     /// Safety cap on continuation round trips per user message ("pause_turn").
     private let maxTurns = 8
     private var activeTask: Task<Void, Never>?
@@ -34,12 +34,12 @@ final class AIChatViewModel: ObservableObject {
     init(
         client: ShopwareAdminClient,
         entitlementProvider: @escaping () async -> String?,
-        apiKeyProvider: @escaping () -> String? = { nil },
+        credentialProvider: @escaping () -> AIProviderCredential? = { nil },
         service: AIChatService? = nil
     ) {
         self.client = client
         self.entitlementProvider = entitlementProvider
-        self.apiKeyProvider = apiKeyProvider
+        self.credentialProvider = credentialProvider
         self.service = service ?? AIChatService()
     }
 
@@ -120,9 +120,9 @@ final class AIChatViewModel: ObservableObject {
                 // A fresh Admin API token per round trip; Shopware's MCP
                 // server accepts standard bearer tokens (~10 min lifetime).
                 let mcpToken = try await client.currentAccessToken()
-                let apiKey = apiKeyProvider()
+                let credential = credentialProvider()
                 // The subscription proof is only needed on the proxy path.
-                let jws = apiKey == nil ? await entitlementProvider() : nil
+                let jws = credential == nil ? await entitlementProvider() : nil
                 try Task.checkCancellation()
                 guard conversationID == id else { return }
                 response = try await service.send(
@@ -130,7 +130,7 @@ final class AIChatViewModel: ObservableObject {
                     mcpURL: client.mcpEndpointURL,
                     mcpToken: mcpToken,
                     entitlementJWS: jws,
-                    apiKey: apiKey,
+                    credential: credential,
                     approvalToken: nextApprovalToken
                 )
                 nextApprovalToken = nil // approval grants are one-time

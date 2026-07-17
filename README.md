@@ -28,8 +28,13 @@ Open-source native iOS/macOS dashboard for the Shopware 6 Admin API, styled afte
 - Two ways to use it: a monthly auto-renewable subscription (StoreKit 2, model
   calls go through a small proxy you deploy — see
   [server/ai-proxy](server/ai-proxy/README.md)), **or** the merchant brings
-  their own Anthropic API key — stored in the device Keychain; model requests
-  go directly to Anthropic while MCP calls still use the approval gateway
+  their own Anthropic, OpenAI, or Gemini API key — stored with the selected
+  provider in the device Keychain; model requests go directly to that provider
+  while MCP calls still use the approval gateway. Prefixes are detected when
+  possible, and the provider can always be selected manually.
+  A personal key can also be saved by a subscriber and takes priority until it
+  is removed, so merchants can switch between their own billing and the
+  subscription without cancelling either one
 
 ### Shop settings
 - Maintenance mode toggle per sales channel
@@ -102,9 +107,11 @@ The AI chat also needs two things you own:
    Edit Scheme → Run → Options → StoreKit Configuration, and purchases work
    locally without App Store Connect.
 
-AI messages and relevant Shopware results are processed by Anthropic. The
-gateway does not persist conversations or credentials; it stores only
-per-subscription usage/approval counters. Shop tokens are short-lived.
+For subscriptions, AI messages and relevant Shopware results are processed by
+Anthropic. With a personal key, they are processed directly by the merchant's
+selected provider (Anthropic, OpenAI, or Gemini). The gateway does not persist
+conversations or credentials; it stores only usage/approval counters. Shop
+tokens are short-lived.
 
 ## Project structure
 

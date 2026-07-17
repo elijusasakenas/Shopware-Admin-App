@@ -10,8 +10,8 @@
 
 import SwiftUI
 
-/// Entry point pushed from the dashboard. Shows the paywall until the
-/// subscription is active, verifies the shop's MCP server, then the chat.
+/// Entry point pushed from the dashboard. A personal key works with or without
+/// a subscription and takes priority when both are available.
 struct AIChatScreen: View {
     @ObservedObject var viewModel: ShopwareDashboardViewModel
     @StateObject private var subscriptions = AISubscriptionManager()
@@ -23,7 +23,7 @@ struct AIChatScreen: View {
         Group {
             if !subscriptions.hasLoadedEntitlements {
                 loadingView
-            } else if !subscriptions.isSubscribed && !aiKey.hasKey {
+            } else if accessMode == .unavailable {
                 AIPaywallView(subscriptions: subscriptions, aiKey: aiKey)
             } else if serviceAvailability == nil {
                 loadingView.task { serviceAvailability = await AIChatService().availability() }
@@ -67,6 +67,13 @@ struct AIChatScreen: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+    }
+
+    private var accessMode: AIAssistantAccessMode {
+        AIAssistantAccessMode(
+            isSubscribed: subscriptions.isSubscribed,
+            hasPersonalKey: aiKey.hasKey
+        )
     }
 
     private var loadingView: some View {
@@ -114,7 +121,7 @@ struct AIChatView: View {
         _chat = StateObject(wrappedValue: AIChatViewModel(
             client: client,
             entitlementProvider: { await subscriptions.entitlementJWS() },
-            apiKeyProvider: { aiKey.read() }
+            credentialProvider: { aiKey.read() }
         ))
     }
 

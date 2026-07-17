@@ -12,6 +12,7 @@ struct AIPaywallView: View {
     @ObservedObject var subscriptions: AISubscriptionManager
     @ObservedObject var aiKey: AIKeyStore
     @State private var keyDraft = ""
+    @State private var providerSelection = AIProviderSelection.automatic
     @State private var keyError: String?
 
     var body: some View {
@@ -30,7 +31,7 @@ struct AIPaywallView: View {
                             detail: "Every change to your shop needs your approval before it runs.")
                 }
 
-                Text("AI messages and relevant shop data are processed by Anthropic. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived.")
+                Text("With a subscription, AI messages and relevant shop data are processed by Anthropic. With your own key, they are processed by your selected AI provider. The Cloudflare approval gateway relays MCP calls and keeps only usage counters; conversations and Shopware credentials are not stored there. Shop access tokens are short-lived.")
                     .font(.caption)
                     .foregroundStyle(Color.secondaryText)
 
@@ -90,10 +91,15 @@ struct AIPaywallView: View {
         }
         .background(Color.appBackground)
         .task { await subscriptions.refresh() }
+        .onAppear {
+            if let provider = aiKey.provider {
+                providerSelection = AIProviderSelection(provider: provider)
+            }
+        }
     }
 
-    /// Alternative to the subscription: the user brings their own Anthropic
-    /// API key and pays Anthropic directly for what they use.
+    /// A personal key works both as an alternative to a subscription and for
+    /// subscribers who prefer to use their own provider billing.
     private var ownKeySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -107,7 +113,7 @@ struct AIPaywallView: View {
             Text("Use your own API key")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(Color.primaryText)
-            Text("Have an Anthropic API key? Use the assistant without a subscription. The key stays in your device's keychain and model requests go directly to Anthropic. Shop tool calls still pass through the approval gateway so writes require native confirmation.")
+            Text("Use an Anthropic, OpenAI, or Gemini API key with or without a subscription. A saved key takes priority for model requests and stays in your device's keychain. Shop tool calls still pass through the approval gateway so writes require native confirmation.")
                 .font(.footnote)
                 .foregroundStyle(Color.secondaryText)
 
@@ -115,7 +121,14 @@ struct AIPaywallView: View {
                 ErrorBanner(message: keyError)
             }
 
-            SecureField("sk-ant-...", text: $keyDraft)
+            Picker("AI provider", selection: $providerSelection) {
+                ForEach(AIProviderSelection.allCases) { option in
+                    Text(option.displayName).tag(option)
+                }
+            }
+            .pickerStyle(.menu)
+
+            SecureField("Paste API key", text: $keyDraft)
                 #if os(iOS)
                 .textInputAutocapitalization(.never)
                 #endif
@@ -131,7 +144,10 @@ struct AIPaywallView: View {
 
             Button {
                 do {
-                    try aiKey.save(keyDraft)
+                    try aiKey.save(keyDraft, provider: providerSelection.provider)
+                    if let provider = aiKey.provider {
+                        providerSelection = AIProviderSelection(provider: provider)
+                    }
                     keyDraft = ""
                     keyError = nil
                 } catch {
