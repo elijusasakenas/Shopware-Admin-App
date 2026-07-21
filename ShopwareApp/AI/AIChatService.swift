@@ -152,15 +152,33 @@ struct AIChatService {
             }
         }
 
-        var request = try proxyRequest(path: "/v1/chat")
-        if let entitlementJWS { request.setValue(entitlementJWS, forHTTPHeaderField: "X-App-Transaction") }
-        request.httpBody = try JSONEncoder().encode(Body(
+        guard let entitlementJWS else {
+            throw ShopwareAPIError.message("A verified subscription is required to use the included AI service.")
+        }
+        guard let baseURL = AIProxyConfig.baseURL else {
+            throw ShopwareAPIError.message("The AI service URL is not configured securely.")
+        }
+        let clientID = AIProxyConfig.clientID
+        let body = try JSONEncoder().encode(Body(
             messages: messages,
             mcpURL: mcpURL.absoluteString,
             mcpToken: mcpToken,
-            clientID: AIProxyConfig.clientID,
+            clientID: clientID,
             approvalToken: approvalToken
         ))
+        let appAttest = try await AppAttestManager.shared.headers(
+            baseURL: baseURL,
+            body: body,
+            entitlementJWS: entitlementJWS,
+            clientID: clientID,
+            session: session
+        )
+        var request = try proxyRequest(path: "/v1/chat")
+        request.setValue(entitlementJWS, forHTTPHeaderField: "X-App-Transaction")
+        request.setValue(appAttest.keyID, forHTTPHeaderField: "X-App-Attest-Key-ID")
+        request.setValue(appAttest.challenge, forHTTPHeaderField: "X-App-Attest-Challenge")
+        request.setValue(appAttest.assertion, forHTTPHeaderField: "X-App-Attest-Assertion")
+        request.httpBody = body
         return try await perform(request, as: AIChatResponse.self)
     }
 

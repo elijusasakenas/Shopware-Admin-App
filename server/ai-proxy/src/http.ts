@@ -27,6 +27,13 @@ export function securityHeaders(requestID?: string): Record<string, string> {
 }
 
 export async function readJSON<T>(request: Request, maxBytes = 1_048_576): Promise<T> {
+  return (await readJSONWithBytes<T>(request, maxBytes)).value;
+}
+
+export async function readJSONWithBytes<T>(
+  request: Request,
+  maxBytes = 1_048_576,
+): Promise<{ value: T; bytes: Uint8Array }> {
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.toLowerCase().startsWith("application/json")) {
     throw new HTTPError(415, "Content-Type must be application/json.");
@@ -36,7 +43,7 @@ export async function readJSON<T>(request: Request, maxBytes = 1_048_576): Promi
   const bytes = new Uint8Array(await request.arrayBuffer());
   if (bytes.byteLength > maxBytes) throw new HTTPError(413, "Request body is too large.");
   try {
-    return JSON.parse(new TextDecoder().decode(bytes)) as T;
+    return { value: JSON.parse(new TextDecoder().decode(bytes)) as T, bytes };
   } catch {
     throw new HTTPError(400, "Invalid JSON body.");
   }
