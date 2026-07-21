@@ -216,6 +216,56 @@ struct AIApprovalChallenge: Decodable, Equatable {
         let summary: String
 
         var id: String { fingerprint }
+
+        var displayName: String {
+            tool.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+                .map { $0.prefix(1).uppercased() + String($0.dropFirst()) }
+                .joined(separator: " ")
+        }
+
+        var localizedTitle: String {
+            let words = Set(tool.lowercased()
+                .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+                .map(String.init))
+
+            if words.contains("product") { return String(localized: "Product change") }
+            if words.contains("order") { return String(localized: "Order change") }
+            if words.contains("promotion") { return String(localized: "Promotion change") }
+            if words.contains("customer") { return String(localized: "Customer change") }
+            if words.contains("media") || words.contains("image") { return String(localized: "Media change") }
+            if words.contains("setting") || words.contains("settings") || words.contains("configure") {
+                return String(localized: "Settings change")
+            }
+            if words.contains("maintenance") { return String(localized: "Maintenance-mode change") }
+            return String(localized: "Shop data change")
+        }
+
+        var formattedDetails: String {
+            let prefix = "\(tool):"
+            let rawDetails = summary.hasPrefix(prefix)
+                ? String(summary.dropFirst(prefix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+                : summary
+
+            guard let data = rawDetails.data(using: .utf8),
+                  let object = try? JSONSerialization.jsonObject(with: data),
+                  JSONSerialization.isValidJSONObject(object),
+                  let formatted = try? JSONSerialization.data(
+                    withJSONObject: object,
+                    options: [.prettyPrinted, .sortedKeys]
+                  ),
+                  let string = String(data: formatted, encoding: .utf8) else {
+                return rawDetails
+            }
+            return string
+        }
+
+        var isDestructive: Bool {
+            let destructiveWords = Set(["clear", "deactivate", "delete", "remove"])
+            let toolWords = tool.lowercased()
+                .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+                .map(String.init)
+            return toolWords.contains(where: destructiveWords.contains)
+        }
     }
 
     let token: String
@@ -229,6 +279,14 @@ struct AIApprovalChallenge: Decodable, Equatable {
 
     var displaySummary: String {
         actions.map(\.summary).joined(separator: "\n\n")
+    }
+
+    var expirationDate: Date {
+        Date(timeIntervalSince1970: TimeInterval(expiresAt) / 1_000)
+    }
+
+    func isExpired(at date: Date = .now) -> Bool {
+        expirationDate <= date
     }
 }
 
