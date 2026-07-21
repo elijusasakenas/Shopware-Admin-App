@@ -1,8 +1,10 @@
 import { extractApprovalActions } from "./approvals";
+import { appAttestPayload, appAttestRequired, type AppAttestPurpose } from "./app-attest";
 import { verifyAppStoreTransaction } from "./app-store";
 import { openToken, sealToken, sha256 } from "./crypto-tokens";
-import { errorResponse, HTTPError, jsonResponse, logEvent, readJSON, readResponseText } from "./http";
+import { errorResponse, HTTPError, jsonResponse, logEvent, readJSON, readJSONWithBytes, readResponseText } from "./http";
 import { handleMcpGateway, validateMcpURL, verifyMcpEndpoint } from "./mcp-gateway";
+import { estimatedTokenReservation } from "./quota";
 import type { ApprovalChallenge, ApprovalPayload, CapabilityPayload, Env } from "./types";
 export { UsageLimiter } from "./usage-limiter";
 
@@ -37,6 +39,19 @@ interface ApprovalBody {
   approval_token?: unknown;
 }
 
+interface AppAttestChallengeBody {
+  client_id?: unknown;
+  purpose?: unknown;
+  key_id?: unknown;
+}
+
+interface AppAttestRegistrationBody {
+  client_id?: unknown;
+  key_id?: unknown;
+  challenge?: unknown;
+  attestation?: unknown;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const requestID = crypto.randomUUID();
@@ -45,9 +60,13 @@ export default {
     try {
       const url = new URL(request.url);
       if (request.method === "GET" && url.pathname === "/health") {
-        response = jsonResponse({ ok: true, enabled: featureEnabled(env) }, {}, requestID);
+        response = jsonResponse({ ok: true, enabled: featureEnabled(env), app_attest_required: appAttestRequired(env) }, {}, requestID);
       } else if (request.method === "GET" && url.pathname === "/v1/config") {
-        response = jsonResponse({ enabled: featureEnabled(env) }, {}, requestID);
+        response = jsonResponse({ enabled: featureEnabled(env), app_attest_required: appAttestRequired(env) }, {}, requestID);
+      } else if (request.method === "POST" && url.pathname === "/v1/app-attest/challenge") {
+        response = await handleAppAttestChallenge(request, env, requestID);
+      } else if (request.method === "POST" && url.pathname === "/v1/app-attest/register") {
+        response = await handleAppAttestRegistration(request, env, requestID);
       } else if (request.method === "POST" && url.pathname === "/v1/chat") {
         response = await handleChat(request, env, requestID);
       } else if (request.method === "POST" && url.pathname === "/v1/capability") {
@@ -78,86 +97,158 @@ export default {
 
 async function handleChat(request: Request, env: Env, requestID: string): Promise<Response> {
   assertFeatureEnabled(env);
-  const body = await readJSON<ChatBody>(request);
+  const parsed = await readJSONWithBytes<ChatBody>(request);
+  const body = parsed.value;
   const validated = validateCommonBody(body);
   assertMessages(body.messages);
 
   const subject = await entitlementSubject(request, env, validated.clientID);
   const limiter = env.USAGE_LIMITER.getByName(await sha256(subject));
-  const reservation = await limiter.reserve(Date.now(), {
+  const keyID = request.headers.get("X-App-Attest-Key-ID");
+  const challenge = request.headers.get("X-App-Attest-Challenge");
+  const assertion = request.headers.get("X-App-Attest-Assertion");
+  if (appAttestRequired(env) || keyID || challenge || assertion) {
+    if (!keyID || !challenge || !assertion) {
+      throw new HTTPError(401, "This request needs verification from a genuine copy of the app.");
+    }
+    const payload = await appAttestPayload(request.method, new URL(request.url).pathname, challenge, parsed.bytes);
+    const verified = await limiter.verifyAppAttestAssertion(
+      validated.clientID,
+      keyID,
+      challenge,
+      assertion,
+      payload,
+      Date.now(),
+    );
+    if (!verified) throw new HTTPError(401, "App verification failed. Please try again.");
+  }
+  const limits = {
     perMinute: envNumber(env.MAX_REQUESTS_PER_MINUTE, 20, 1, 300),
     perDay: envNumber(env.MAX_REQUESTS_PER_DAY, 500, 1, 50_000),
     tokensPerMonth: envNumber(env.MAX_TOKENS_PER_MONTH, 2_000_000, 1_000, 100_000_000),
-  });
+  };
+  const reservation = await limiter.reserve(Date.now(), {
+    ...limits,
+  }, estimatedTokenReservation(parsed.bytes.byteLength, env.MAX_TOKENS_PER_REQUEST_RESERVATION));
   if (!reservation.allowed) {
     return Response.json(
       { error: { message: reservation.reason ?? "Usage limit reached.", request_id: requestID } },
       { status: 429, headers: { "Cache-Control": "no-store", "Retry-After": String(reservation.retryAfter) } },
     );
   }
-
-  await verifyMcpEndpoint(validated.mcpURL, validated.mcpToken);
-  const approvalGrants = await resolveApproval(
-    body.approval_token,
-    env,
-    validated.clientID,
-    new URL(validated.mcpURL).host,
-    subject,
-  );
-  const capability = await createCapability(request, env, validated, subject, approvalGrants);
-  const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "anthropic-beta": "mcp-client-2025-11-20",
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-      "x-api-key": env.ANTHROPIC_API_KEY,
-    },
-    body: JSON.stringify({
-      model: env.ANTHROPIC_MODEL || "claude-opus-4-8",
-      max_tokens: 4096,
-      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-      mcp_servers: [{
-        type: "url",
-        name: "shopware",
-        url: capability.url,
-        authorization_token: capability.token,
-      }],
-      tools: [{ type: "mcp_toolset", mcp_server_name: "shopware" }],
-      messages: body.messages,
-    }),
-  });
-  const responseText = await readResponseText(anthropicResponse, 2_097_152);
-  let result: Record<string, unknown>;
+  if (!reservation.reservationID) throw new HTTPError(503, "Unable to reserve AI usage.");
+  let settled = false;
   try {
-    result = JSON.parse(responseText) as Record<string, unknown>;
-  } catch {
-    throw new HTTPError(502, "The model returned an invalid response.");
-  }
-  if (!anthropicResponse.ok) {
-    const upstreamMessage = isRecord(result.error) && typeof result.error.message === "string"
-      ? result.error.message : "Upstream model error.";
-    throw new HTTPError([429, 529].includes(anthropicResponse.status) ? 429 : 502, upstreamMessage);
-  }
+    await verifyMcpEndpoint(validated.mcpURL, validated.mcpToken);
+    const approvalGrants = await resolveApproval(
+      body.approval_token,
+      env,
+      validated.clientID,
+      new URL(validated.mcpURL).host,
+      subject,
+    );
+    const capability = await createCapability(request, env, validated, subject, approvalGrants);
+    const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "anthropic-beta": "mcp-client-2025-11-20",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+        "x-api-key": env.ANTHROPIC_API_KEY,
+      },
+      body: JSON.stringify({
+        model: env.ANTHROPIC_MODEL || "claude-opus-4-8",
+        max_tokens: 4096,
+        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        mcp_servers: [{
+          type: "url",
+          name: "shopware",
+          url: capability.url,
+          authorization_token: capability.token,
+        }],
+        tools: [{ type: "mcp_toolset", mcp_server_name: "shopware" }],
+        messages: body.messages,
+      }),
+    });
+    const responseText = await readResponseText(anthropicResponse, 2_097_152);
+    let result: Record<string, unknown>;
+    try {
+      result = JSON.parse(responseText) as Record<string, unknown>;
+    } catch {
+      throw new HTTPError(502, "The model returned an invalid response.");
+    }
+    if (!anthropicResponse.ok) {
+      const upstreamMessage = isRecord(result.error) && typeof result.error.message === "string"
+        ? result.error.message : "Upstream model error.";
+      throw new HTTPError([429, 529].includes(anthropicResponse.status) ? 429 : 502, upstreamMessage);
+    }
 
-  const usage = isRecord(result.usage) ? result.usage : {};
-  const totalTokens = tokenNumber(usage.input_tokens) + tokenNumber(usage.output_tokens) +
-    tokenNumber(usage.cache_creation_input_tokens) + tokenNumber(usage.cache_read_input_tokens);
-  await limiter.recordTokens(Date.now(), totalTokens);
-  const approval = await createApprovalChallenge(
-    result.content,
-    env,
-    validated.clientID,
-    new URL(validated.mcpURL).host,
-    subject,
-    new Set(Object.keys(approvalGrants)),
-  );
+    const usage = isRecord(result.usage) ? result.usage : {};
+    const totalTokens = tokenNumber(usage.input_tokens) + tokenNumber(usage.output_tokens) +
+      tokenNumber(usage.cache_creation_input_tokens) + tokenNumber(usage.cache_read_input_tokens);
+    settled = await limiter.settleTokens(reservation.reservationID, totalTokens);
+    if (!settled) throw new HTTPError(503, "Unable to record AI usage safely.");
+    const approval = await createApprovalChallenge(
+      result.content,
+      env,
+      validated.clientID,
+      new URL(validated.mcpURL).host,
+      subject,
+      new Set(Object.keys(approvalGrants)),
+    );
+    return jsonResponse({
+      content: result.content,
+      stop_reason: result.stop_reason ?? null,
+      usage: result.usage ?? null,
+      approval,
+    }, {}, requestID);
+  } finally {
+    if (!settled) await limiter.settleTokens(reservation.reservationID, 0);
+  }
+}
+
+async function handleAppAttestChallenge(request: Request, env: Env, requestID: string): Promise<Response> {
+  assertFeatureEnabled(env);
+  const body = await readJSON<AppAttestChallengeBody>(request, 4_096);
+  const clientID = validateClientID(body.client_id);
+  if (!isAppAttestPurpose(body.purpose)) throw new HTTPError(400, "Invalid App Attest purpose.");
+  const subject = await entitlementSubject(request, env, clientID);
+  const limiter = env.USAGE_LIMITER.getByName(await sha256(subject));
+  if (body.purpose === "chat") {
+    if (typeof body.key_id !== "string") {
+      return jsonResponse({ challenge: null, key_registered: false }, {}, requestID);
+    }
+    const keyRegistered = await limiter.hasAppAttestKey(clientID, body.key_id);
+    if (!keyRegistered) return jsonResponse({ challenge: null, key_registered: false }, {}, requestID);
+  } else if (body.key_id != null) {
+    throw new HTTPError(400, "key_id is not valid for an attestation challenge.");
+  }
+  const issued = await limiter.issueAppAttestChallenge(clientID, body.purpose, Date.now());
   return jsonResponse({
-    content: result.content,
-    stop_reason: result.stop_reason ?? null,
-    usage: result.usage ?? null,
-    approval,
+    challenge: issued.challenge,
+    expires_at: issued.expiresAt,
+    ...(body.purpose === "chat" ? { key_registered: true } : {}),
   }, {}, requestID);
+}
+
+async function handleAppAttestRegistration(request: Request, env: Env, requestID: string): Promise<Response> {
+  assertFeatureEnabled(env);
+  const body = await readJSON<AppAttestRegistrationBody>(request, 131_072);
+  const clientID = validateClientID(body.client_id);
+  if (typeof body.key_id !== "string" || typeof body.challenge !== "string" || typeof body.attestation !== "string") {
+    throw new HTTPError(400, "Invalid App Attest registration.");
+  }
+  const subject = await entitlementSubject(request, env, clientID);
+  const limiter = env.USAGE_LIMITER.getByName(await sha256(subject));
+  const verified = await limiter.registerAppAttestKey(
+    clientID,
+    body.key_id,
+    body.challenge,
+    body.attestation,
+    Date.now(),
+  );
+  if (!verified) throw new HTTPError(401, "App registration failed. Please try again.");
+  return jsonResponse({ registered: true }, {}, requestID);
 }
 
 /** BYOK requests keep the Anthropic key on-device; this endpoint only creates
@@ -224,11 +315,17 @@ function validateCommonBody(body: CapabilityBody): { mcpURL: string; mcpToken: s
   if (typeof body.mcp_token !== "string" || body.mcp_token.length < 1 || body.mcp_token.length > MAX_MCP_TOKEN) {
     throw new HTTPError(400, "Invalid mcp_token.");
   }
-  if (typeof body.client_id !== "string" || body.client_id.length < 16 || body.client_id.length > MAX_CLIENT_ID ||
-      !/^[A-Za-z0-9._-]+$/.test(body.client_id)) {
-    throw new HTTPError(400, "Invalid client_id.");
-  }
-  return { mcpURL, mcpToken: body.mcp_token, clientID: body.client_id };
+  return { mcpURL, mcpToken: body.mcp_token, clientID: validateClientID(body.client_id) };
+}
+
+function validateClientID(value: unknown): string {
+  if (typeof value !== "string" || value.length < 16 || value.length > MAX_CLIENT_ID ||
+      !/^[A-Za-z0-9._-]+$/.test(value)) throw new HTTPError(400, "Invalid client_id.");
+  return value;
+}
+
+function isAppAttestPurpose(value: unknown): value is AppAttestPurpose {
+  return value === "attestation" || value === "chat";
 }
 
 function assertMessages(messages: unknown): void {

@@ -18,13 +18,17 @@
   ],
   "vars": {
     "APPLE_BUNDLE_ID": "com.asakenas.shopwareapp",
+    "APPLE_TEAM_ID": "ZHVUYJ68S9",
     "APPLE_ENVIRONMENT": "Production",
+    "APP_ATTEST_REQUIRED": "true",
+    "APP_ATTEST_ALLOW_DEVELOPMENT": "false",
     "SUBSCRIPTION_PRODUCT_ID": "com.asakenas.shopwareapp.ai.monthly",
     "ANTHROPIC_MODEL": "claude-opus-4-8",
     "AI_FEATURE_ENABLED": "true",
     "MAX_REQUESTS_PER_MINUTE": "20",
     "MAX_REQUESTS_PER_DAY": "500",
     "MAX_TOKENS_PER_MONTH": "2000000",
+    "MAX_TOKENS_PER_REQUEST_RESERVATION": "250000",
     "SKIP_ENTITLEMENT_CHECK": "false"
   }
 }

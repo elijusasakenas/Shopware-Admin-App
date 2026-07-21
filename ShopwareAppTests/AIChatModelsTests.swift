@@ -15,6 +15,21 @@ final class AIChatModelsTests: XCTestCase {
         XCTAssertEqual(try JSONEncoder().encode(value), source)
     }
 
+    func testAppAttestPayloadBindsTheExactChatBody() {
+        let payload = AppAttestManager.assertionPayload(
+            method: "post",
+            path: "/v1/chat",
+            challenge: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            body: Data("{}".utf8)
+        )
+        XCTAssertEqual(
+            String(decoding: payload, as: UTF8.self),
+            "shopware-ai-app-attest-v1\nPOST\n/v1/chat\n" +
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n" +
+            "RBNvo1WzZ4oRRq0W9-hknpT7T8If536DEMBg9hyq_4o"
+        )
+    }
+
     func testChatResponseDecodesCacheUsageAndApproval() throws {
         let data = Data("""
         {
