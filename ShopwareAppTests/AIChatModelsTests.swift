@@ -63,6 +63,35 @@ final class AIChatModelsTests: XCTestCase {
         XCTAssertEqual(AIChatViewModel.displayName(forTool: "product_stock-update"), "product stock update")
     }
 
+    func testApprovalActionFormatsToolAndExactDetails() throws {
+        let data = Data(#"""
+        {
+          "fingerprint":"abc",
+          "tool":"product_stock-update",
+          "summary":"product_stock-update: {\"stock\":4,\"id\":\"p1\"}"
+        }
+        """#.utf8)
+        let action = try JSONDecoder().decode(AIApprovalChallenge.Action.self, from: data)
+
+        XCTAssertEqual(action.displayName, "Product Stock Update")
+        XCTAssertEqual(action.localizedTitle, String(localized: "Product change"))
+        XCTAssertEqual(action.formattedDetails, "{\n  \"id\" : \"p1\",\n  \"stock\" : 4\n}")
+        XCTAssertFalse(action.isDestructive)
+    }
+
+    func testApprovalActionHighlightsDestructiveTools() throws {
+        let data = Data(#"""
+        {
+          "fingerprint":"abc",
+          "tool":"product-delete",
+          "summary":"product-delete: {\"id\":\"p1\"}"
+        }
+        """#.utf8)
+        let action = try JSONDecoder().decode(AIApprovalChallenge.Action.self, from: data)
+
+        XCTAssertTrue(action.isDestructive)
+    }
+
     func testAssistantAccessSupportsEverySubscriptionAndKeyCombination() {
         XCTAssertEqual(
             AIAssistantAccessMode(isSubscribed: false, hasPersonalKey: false),

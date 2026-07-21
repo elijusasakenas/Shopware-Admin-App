@@ -131,18 +131,14 @@ struct AIChatView: View {
             inputBar
         }
         .background(Color.appBackground)
-        .confirmationDialog(
-            "Approve shop changes?",
-            isPresented: Binding(
-                get: { chat.pendingApproval != nil },
-                set: { if !$0, chat.pendingApproval != nil { chat.declinePendingChange() } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("Approve exact change") { chat.approvePendingChange() }
-            Button("Decline", role: .cancel) { chat.declinePendingChange() }
-        } message: {
-            Text(chat.pendingApproval?.displaySummary ?? "")
+        .sheet(isPresented: approvalPresented) {
+            if let approval = chat.pendingApproval {
+                AIApprovalReviewSheet(
+                    approval: approval,
+                    approve: chat.approvePendingChange,
+                    decline: chat.declinePendingChange
+                )
+            }
         }
         .alert("Could not remove API key", isPresented: Binding(
             get: { keyError != nil },
@@ -337,9 +333,231 @@ struct AIChatView: View {
         chat.canSend && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var approvalPresented: Binding<Bool> {
+        Binding(
+            get: { chat.pendingApproval != nil },
+            set: { isPresented in
+                if !isPresented, chat.pendingApproval != nil {
+                    chat.declinePendingChange()
+                }
+            }
+        )
+    }
+
     private func sendDraft() {
         guard canSend else { return }
         chat.send(draft)
         draft = ""
+    }
+}
+
+private struct AIApprovalReviewSheet: View {
+    let approval: AIApprovalChallenge
+    let approve: () -> Void
+    let decline: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    header
+                    actionList
+                    exactApprovalNotice
+                }
+                .padding(20)
+                .padding(.bottom, 8)
+            }
+            .background(Color.appBackground)
+            .safeAreaInset(edge: .bottom) {
+                actionBar
+            }
+            .navigationTitle("Review AI changes")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+        }
+        .interactiveDismissDisabled()
+        #if os(iOS)
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        #else
+        .frame(minWidth: 540, idealWidth: 580, minHeight: 620, idealHeight: 700)
+        #endif
+    }
+
+    private var header: some View {
+        VStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.shopwareBlue.opacity(0.12))
+                    .frame(width: 72, height: 72)
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.system(size: 34, weight: .semibold))
+                    .foregroundStyle(Color.shopwareBlue)
+                    .accessibilityHidden(true)
+            }
+
+            VStack(spacing: 6) {
+                Text("Your approval is required")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(Color.primaryText)
+                Text("Nothing will be changed in your shop until you review and approve the exact actions below.")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Label(expiryText(at: context.date), systemImage: approval.isExpired(at: context.date) ? "clock.badge.xmark" : "clock")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(approval.isExpired(at: context.date) ? Color.red : Color.amber)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background((approval.isExpired(at: context.date) ? Color.red : Color.amber).opacity(0.1))
+                    .clipShape(Capsule())
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var actionList: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(approval.actions.count == 1
+                 ? String(localized: "PROPOSED CHANGE")
+                 : String(localized: "PROPOSED CHANGES"))
+                .font(.caption.weight(.bold))
+                .tracking(0.8)
+                .foregroundStyle(Color.secondaryText)
+
+            ForEach(Array(approval.actions.enumerated()), id: \.element.id) { index, action in
+                approvalActionCard(action, number: index + 1)
+            }
+        }
+    }
+
+    private func approvalActionCard(_ action: AIApprovalChallenge.Action, number: Int) -> some View {
+        let accent = action.isDestructive ? Color.red : Color.amber
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(accent.opacity(0.12))
+                        .frame(width: 42, height: 42)
+                    Image(systemName: action.isDestructive ? "trash.fill" : "wand.and.stars")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(accent)
+                        .accessibilityHidden(true)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(action.localizedTitle)
+                        .font(.headline)
+                        .foregroundStyle(Color.primaryText)
+                    Text(action.isDestructive
+                         ? String(localized: "Destructive action")
+                         : String(localized: "Shop data change"))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(accent)
+                }
+                Spacer(minLength: 8)
+                Text("#\(number)")
+                    .font(.caption.monospacedDigit().weight(.semibold))
+                    .foregroundStyle(Color.secondaryText)
+            }
+
+            Divider()
+
+            Text(String(localized: "Technical action: \(action.tool)"))
+                .font(.caption2.monospaced())
+                .foregroundStyle(Color.secondaryText)
+                .textSelection(.enabled)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Exact details")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color.secondaryText)
+                Text(action.formattedDetails)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(Color.primaryText)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16)
+        .background(Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(accent.opacity(0.35), lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    private var exactApprovalNotice: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "lock.shield.fill")
+                .font(.title3)
+                .foregroundStyle(Color.shopwareBlue)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("One-time, exact approval")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Color.primaryText)
+                Text("This approval can be used once and only for the actions shown above. Any changed arguments or later action will require a new approval.")
+                    .font(.caption)
+                    .foregroundStyle(Color.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .background(Color.shopwareBlue.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var actionBar: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            VStack(spacing: 10) {
+                Divider()
+                Button(action: approve) {
+                    Label(
+                        approval.actions.count == 1
+                            ? String(localized: "Approve and apply")
+                            : String(localized: "Approve \(approval.actions.count) changes"),
+                        systemImage: "checkmark.shield.fill"
+                    )
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .foregroundStyle(Color.inverseText)
+                    .background(Color.shopwareBlue.opacity(approval.isExpired(at: context.date) ? 0.4 : 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(PressableButtonStyle())
+                .disabled(approval.isExpired(at: context.date))
+
+                Button(role: .cancel, action: decline) {
+                    Text("Do not apply")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.primaryText)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Color.controlBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(PressableButtonStyle())
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 12)
+            .background(.regularMaterial)
+        }
+    }
+
+    private func expiryText(at date: Date) -> String {
+        let seconds = max(0, Int(approval.expirationDate.timeIntervalSince(date)))
+        guard seconds > 0 else { return String(localized: "Approval expired") }
+        let minutes = seconds / 60
+        let remainder = seconds % 60
+        return minutes > 0
+            ? String(localized: "Expires in \(minutes)m \(remainder)s")
+            : String(localized: "Expires in \(remainder)s")
     }
 }
