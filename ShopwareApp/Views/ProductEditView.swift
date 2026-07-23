@@ -11,7 +11,7 @@ import PhotosUI
 import SwiftUI
 
 struct ProductEditView: View {
-    @ObservedObject var viewModel: ShopwareDashboardViewModel
+    @ObservedObject var viewModel: ProductsViewModel
     let productID: String
     /// Called after a successful save so the list can refresh.
     var onSaved: () -> Void
@@ -41,7 +41,7 @@ struct ProductEditView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
-    private var currencyCode: String { viewModel.metrics?.currencyCode ?? "EUR" }
+    private var currencyCode: String { viewModel.currencyCode }
 
     var body: some View {
         NavigationStack {

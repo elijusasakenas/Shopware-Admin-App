@@ -9,7 +9,8 @@
 import SwiftUI
 
 struct ShopSettingsView: View {
-    @ObservedObject var viewModel: ShopwareDashboardViewModel
+    @ObservedObject var session: ShopwareDashboardViewModel
+    @ObservedObject var settings: ShopSettingsViewModel
     @Environment(\.dismiss) private var dismiss
     @AppStorage(AppLanguage.storageKey) private var appLanguageCode = AppLanguage.system.rawValue
     @AppStorage(AppAppearance.storageKey) private var appAppearanceCode = AppAppearance.system.rawValue
@@ -78,14 +79,14 @@ struct ShopSettingsView: View {
                         // Subpages
                         VStack(spacing: 0) {
                             NavigationLink {
-                                NewCustomersView(viewModel: viewModel)
+                                NewCustomersView(settings: settings)
                             } label: {
                                 SettingsRow(icon: "person.crop.circle.badge.plus", title: "New customer registrations")
                             }
                             .buttonStyle(.plain)
                             Divider().padding(.leading, 52)
                             NavigationLink {
-                                ShopStatusView(viewModel: viewModel)
+                                ShopStatusView(settings: settings)
                             } label: {
                                 SettingsRow(icon: "waveform.path.ecg", title: "Shop status & log")
                             }
@@ -104,7 +105,7 @@ struct ShopSettingsView: View {
                                 .font(.caption)
                                 .foregroundStyle(Color.secondaryText)
 
-                            ForEach(viewModel.salesChannels) { channel in
+                            ForEach(session.salesChannels) { channel in
                                 Toggle(isOn: maintenanceBinding(for: channel)) {
                                     Text(channel.name)
                                         .font(.subheadline.weight(.semibold))
@@ -238,8 +239,8 @@ struct ShopSettingsView: View {
 
     private func load() async {
         do {
-            async let promos = viewModel.promotions()
-            async let news = viewModel.newsletterRecipients()
+            async let promos = settings.promotions()
+            async let news = settings.newsletterRecipients()
             promotions = try await promos
             recipients = try await news
             visiblePromotionCount = min(visiblePromotionCount, max(promotions.count, 5))
@@ -287,7 +288,7 @@ struct ShopSettingsView: View {
             set: { newValue in
                 Task {
                     do {
-                        try await viewModel.setPromotionActive(promotionID: promotion.id, active: newValue)
+                        try await settings.setPromotionActive(promotionID: promotion.id, active: newValue)
                         if let index = promotions.firstIndex(where: { $0.id == promotion.id }) {
                             promotions[index].active = newValue
                         }
@@ -301,10 +302,10 @@ struct ShopSettingsView: View {
 
     private func maintenanceBinding(for channel: SalesChannel) -> Binding<Bool> {
         Binding(
-            get: { viewModel.salesChannels.first { $0.id == channel.id }?.maintenance ?? false },
+            get: { session.salesChannels.first { $0.id == channel.id }?.maintenance ?? false },
             set: { newValue in
                 Task {
-                    do { try await viewModel.setMaintenance(channelID: channel.id, enabled: newValue) }
+                    do { try await session.setMaintenance(channelID: channel.id, enabled: newValue) }
                     catch { errorMessage = error.shopwareDisplayMessage }
                 }
             }

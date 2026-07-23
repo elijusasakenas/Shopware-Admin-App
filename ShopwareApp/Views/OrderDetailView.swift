@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct OrderDetailView: View {
-    @ObservedObject var viewModel: ShopwareDashboardViewModel
+    @ObservedObject var viewModel: OrderDetailViewModel
     let order: LatestOrder
 
     @State private var lineItems: [OrderLineItem] = []
@@ -27,7 +27,7 @@ struct OrderDetailView: View {
     @State private var isTransitioning = false
     @State private var errorMessage: String?
 
-    init(viewModel: ShopwareDashboardViewModel, order: LatestOrder) {
+    init(viewModel: OrderDetailViewModel, order: LatestOrder) {
         self.viewModel = viewModel
         self.order = order
         _orderState = State(initialValue: order.state)
@@ -208,7 +208,6 @@ struct OrderDetailView: View {
             default:
                 break
             }
-            await viewModel.refresh()
         } catch {
             errorMessage = error.shopwareDisplayMessage
         }

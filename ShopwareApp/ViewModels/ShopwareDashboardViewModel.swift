@@ -2,8 +2,9 @@
 //  ShopwareDashboardViewModel.swift
 //  ShopwareApp
 //
-//  Observable state for the dashboard: owns the API client and credential
-//  store, drives connect/refresh/disconnect, and exposes per-screen reads.
+//  Session + dashboard state: credentials, shop switching, KPIs, charts, and
+//  sales-channel selection. Feature screens use ProductsViewModel,
+//  OrderDetailViewModel, and ShopSettingsViewModel with `apiClient`.
 //
 
 import Combine
@@ -41,7 +42,7 @@ final class ShopwareDashboardViewModel: ObservableObject {
     private var client: ShopwareAdminClient?
 
     /// The active shop's API client, for features that drive the Admin API
-    /// outside this view model (e.g. the AI assistant's MCP gateway).
+    /// outside this view model (products, orders, settings, AI).
     var apiClient: ShopwareAdminClient? { client }
 
     func boot() async {
@@ -192,140 +193,13 @@ final class ShopwareDashboardViewModel: ObservableObject {
         isLoading = false
     }
 
-    func promotions() async throws -> [Promotion] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchPromotions()
-    }
-
-    func setPromotionActive(promotionID: String, active: Bool) async throws {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        try await client.setPromotionActive(promotionID: promotionID, active: active)
-    }
-
-    func newsletterRecipients() async throws -> [NewsletterRecipient] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchNewsletterRecipients()
-    }
-
-    func recentCustomers() async throws -> [CustomerRegistration] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchRecentCustomers()
-    }
-
-    func logEntries() async throws -> [LogEntry] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchLogEntries()
-    }
-
-    func domainURLs() async throws -> [String] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchDomainURLs()
-    }
-
-    func shopwareVersion() async throws -> String {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchShopwareVersion()
-    }
-
+    /// Toggle maintenance for a sales channel and update the live channel list.
     func setMaintenance(channelID: String, enabled: Bool) async throws {
         guard let client else { throw ShopwareAPIError.message("Not connected.") }
         try await client.setMaintenance(salesChannelID: channelID, enabled: enabled)
         if let index = salesChannels.firstIndex(where: { $0.id == channelID }) {
             salesChannels[index].maintenance = enabled
         }
-    }
-
-    /// Search products for the products screen, scoped to the selected channel.
-    func searchProducts(term: String) async throws -> [ProductSummary] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.searchProducts(term: term, salesChannelID: selectedChannelID)
-    }
-
-    /// Load a single product's full editable state, in the given language.
-    func productDetail(id: String, languageID: String? = nil) async throws -> ProductDetail {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchProductDetail(id: id, languageID: languageID)
-    }
-
-    /// Save edited product fields. Only non-nil values are written. `languageID`
-    /// selects which translation the name is written into.
-    func updateProduct(
-        id: String,
-        name: String? = nil,
-        stock: Int? = nil,
-        grossPrice: Decimal? = nil,
-        taxRate: Decimal? = nil,
-        currencyID: String? = nil,
-        active: Bool? = nil,
-        languageID: String? = nil
-    ) async throws {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        try await client.updateProduct(
-            id: id, name: name, stock: stock, grossPrice: grossPrice,
-            taxRate: taxRate, currencyID: currencyID, active: active, languageID: languageID
-        )
-    }
-
-    /// Load every image attached to a product, for the gallery.
-    func productImages(productID: String) async throws -> [ProductImage] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchProductImages(productID: productID)
-    }
-
-    /// Upload and append an image to a product's gallery.
-    func addProductImage(productID: String, imageData: Data, position: Int, setAsCover: Bool) async throws {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        try await client.addProductImage(
-            productID: productID, imageData: imageData, position: position, setAsCover: setAsCover
-        )
-    }
-
-    /// Mark an existing product image as the cover.
-    func setProductCover(productID: String, productMediaID: String) async throws {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        try await client.setProductCover(productID: productID, productMediaID: productMediaID)
-    }
-
-    /// Remove an image from a product.
-    func deleteProductImage(productMediaID: String) async throws {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        try await client.deleteProductImage(productMediaID: productMediaID)
-    }
-
-    /// Persist a new gallery order.
-    func reorderProductImages(orderedIDs: [String]) async throws {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        try await client.reorderProductImages(orderedIDs: orderedIDs)
-    }
-
-    func orderLineItems(orderID: String) async throws -> [OrderLineItem] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchOrderLineItems(orderID: orderID)
-    }
-
-    func orderCustomer(orderID: String) async throws -> (name: String, email: String)? {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchOrderCustomer(orderID: orderID)
-    }
-
-    func stateTransitions(entityName: String, entityID: String) async throws -> [OrderTransition] {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchStateTransitions(entityName: entityName, entityID: entityID)
-    }
-
-    func performTransition(entityName: String, entityID: String, action: String) async throws {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        try await client.performStateTransition(entityName: entityName, entityID: entityID, action: action)
-    }
-
-    func orderTransaction(orderID: String) async throws -> (id: String, state: String)? {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchOrderSubEntity("order-transaction", orderID: orderID)
-    }
-
-    func orderDelivery(orderID: String) async throws -> (id: String, state: String)? {
-        guard let client else { throw ShopwareAPIError.message("Not connected.") }
-        return try await client.fetchOrderSubEntity("order-delivery", orderID: orderID)
     }
 
     /// Sign out of every shop and return to the connect screen.

@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct ProductsView: View {
-    @ObservedObject var viewModel: ShopwareDashboardViewModel
+    @ObservedObject var viewModel: ProductsViewModel
 
     @State private var searchText = ""
     @State private var products: [ProductSummary] = []
@@ -20,7 +20,7 @@ struct ProductsView: View {
     /// The product whose edit sheet is currently presented, if any.
     @State private var editingProduct: ProductSummary?
 
-    private var currencyCode: String { viewModel.metrics?.currencyCode ?? "EUR" }
+    private var currencyCode: String { viewModel.currencyCode }
 
     var body: some View {
         ScrollView {
