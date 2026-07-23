@@ -79,7 +79,14 @@ struct DashboardView: View {
             .refreshable { await viewModel.refresh() }
             .task { await viewModel.refresh() }
             .navigationDestination(for: LatestOrder.self) { order in
-                OrderDetailView(viewModel: viewModel, order: order)
+                if let client = viewModel.apiClient {
+                    OrderDetailView(
+                        viewModel: OrderDetailViewModel(client: client) {
+                            await viewModel.refresh()
+                        },
+                        order: order
+                    )
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -91,15 +98,28 @@ struct DashboardView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
-                        ProductsView(viewModel: viewModel)
+                        if let client = viewModel.apiClient {
+                            ProductsView(
+                                viewModel: ProductsViewModel(
+                                    client: client,
+                                    salesChannelID: viewModel.selectedChannelID,
+                                    currencyCode: viewModel.metrics?.currencyCode ?? "EUR"
+                                )
+                            )
+                        }
                     } label: {
                         Label("Products", systemImage: "shippingbox")
                     }
                 }
             }
             .sheet(isPresented: $showSettings) {
-                ShopSettingsView(viewModel: viewModel)
+                if let client = viewModel.apiClient {
+                    ShopSettingsView(
+                        session: viewModel,
+                        settings: ShopSettingsViewModel(client: client)
+                    )
                     .appAppearance()
+                }
             }
         }
     }

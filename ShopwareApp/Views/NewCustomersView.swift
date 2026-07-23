@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct NewCustomersView: View {
-    @ObservedObject var viewModel: ShopwareDashboardViewModel
+    @ObservedObject var settings: ShopSettingsViewModel
 
     @State private var customers: [CustomerRegistration] = []
     @State private var isLoading = true
@@ -81,7 +81,7 @@ struct NewCustomersView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .task {
-            do { customers = try await viewModel.recentCustomers() }
+            do { customers = try await settings.recentCustomers() }
             catch { errorMessage = error.shopwareDisplayMessage }
             isLoading = false
         }

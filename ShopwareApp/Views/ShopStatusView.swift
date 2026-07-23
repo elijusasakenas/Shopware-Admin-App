@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct ShopStatusView: View {
-    @ObservedObject var viewModel: ShopwareDashboardViewModel
+    @ObservedObject var settings: ShopSettingsViewModel
 
     @State private var version = ""
     @State private var domains: [DomainStatus] = []
@@ -148,9 +148,9 @@ struct ShopStatusView: View {
 
     private func load() async {
         do {
-            version = (try? await viewModel.shopwareVersion()) ?? "Unknown"
-            logEntries = (try? await viewModel.logEntries()) ?? []
-            let urls = try await viewModel.domainURLs()
+            version = (try? await settings.shopwareVersion()) ?? "Unknown"
+            logEntries = (try? await settings.logEntries()) ?? []
+            let urls = try await settings.domainURLs()
             var results: [DomainStatus] = []
             for url in urls {
                 results.append(await checkDomain(url))
