@@ -60,19 +60,6 @@
             ReferencedContainer = "container:ShopwareApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <CommandLineArguments>
-         <CommandLineArgument
-            argument = "-aiProxyURL http://localhost:8787"
-            isEnabled = "YES">
-         </CommandLineArgument>
-      </CommandLineArguments>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "-aiProxyURL http://localhost:8787"
-            value = ""
-            isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
       <StoreKitConfigurationFileReference
          identifier = "../../ShopwareApp/Configuration/ShopwareAI.storekit">
       </StoreKitConfigurationFileReference>
