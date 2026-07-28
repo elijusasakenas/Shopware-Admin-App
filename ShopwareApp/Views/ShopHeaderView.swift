@@ -1,153 +1,80 @@
-//
-//  ShopHeaderView.swift
-//  ShopwareApp
-//
-//  Dashboard header identity block. Tapping the shop name opens a switcher
-//  to change between saved shops, add another, or remove the current one.
-//
-
 import SwiftUI
 
 struct ShopHeaderView: View {
     @ObservedObject var viewModel: ShopwareDashboardViewModel
-    @Binding var showSettings: Bool
-
-    @State private var confirmRemoval = false
-
-    private let accent = Color(red: 0.47, green: 0.71, blue: 1.0)
-    private let subtitleColor = Color(red: 0.62, green: 0.69, blue: 0.78)
-
-    private var hasMultipleShops: Bool { viewModel.savedConnections.count > 1 }
+    @AppStorage(AppAppearance.storageKey) private var appearance = AppAppearance.system.rawValue
 
     var body: some View {
-        HStack(spacing: 14) {
-            Menu {
-                shopSwitcherMenu
-            } label: {
-                switcherLabel
-            }
-            .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel("Switch shop")
-
-            Spacer()
-
+        HStack(spacing: 10) {
             Button {
-                showSettings = true
-            } label: {
-                headerIcon("gearshape.fill", size: 16)
-            }
-            .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel("Shop settings")
-
-            Button {
-                Task { await viewModel.disconnect() }
-            } label: {
-                headerIcon("rectangle.portrait.and.arrow.right", size: 15)
-            }
-            .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel("Sign out of all shops")
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .background(
-            LinearGradient(
-                colors: [Color(red: 0.14, green: 0.19, blue: 0.28), Color.swNavy],
-                startPoint: .top, endPoint: .bottom
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .confirmationDialog(
-            "Remove this shop?",
-            isPresented: $confirmRemoval,
-            titleVisibility: .visible
-        ) {
-            if let current = viewModel.connection {
-                Button("Remove \(current.displayName)", role: .destructive) {
-                    Task { await viewModel.removeShop(current) }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                    viewModel.isChannelPickerExpanded.toggle()
                 }
+            } label: {
+                HStack(spacing: 10) {
+                    Text(String((viewModel.connection?.displayName ?? "S").prefix(1)).uppercased())
+                        .font(IndustryFont.display(19))
+                        .foregroundStyle(Color.industryInverse)
+                        .frame(width: 34, height: 34)
+                        .background(Color.industryAccent)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(viewModel.selectedChannelName)
+                            .font(IndustryFont.display(17))
+                            .tracking(0.17)
+                            .foregroundStyle(Color.industryText)
+                            .lineLimit(1)
+                        HStack(spacing: 6) {
+                            PulsingDot()
+                            Text(statusLine)
+                                .industryKicker()
+                                .foregroundStyle(Color.industryFaint)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+                .contentShape(Rectangle())
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Its saved credentials will be deleted from this device. Other shops stay connected.")
+            .buttonStyle(.plain)
+
+            Spacer(minLength: 4)
+
+            Button {
+                let current = AppAppearance(rawValue: appearance) ?? .system
+                appearance = current == .dark ? AppAppearance.light.rawValue : AppAppearance.dark.rawValue
+            } label: {
+                Image(systemName: "sun.max")
+                    .font(.system(size: 17, weight: .light))
+            }
+            .buttonStyle(IconButtonStyle())
+            .accessibilityLabel("Toggle appearance")
+
+            if let client = viewModel.apiClient {
+                NavigationLink {
+                    ShopSettingsView(
+                        session: viewModel,
+                        settings: ShopSettingsViewModel(client: client)
+                    )
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 17, weight: .light))
+                        .frame(width: 44, height: 44)
+                        .foregroundStyle(Color.industryDim)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel("Shop settings")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 7)
+        .background(Color.industryBackground)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.industryHair).frame(height: 1)
         }
     }
 
-    // MARK: - Switcher menu content
-
-    @ViewBuilder
-    private var shopSwitcherMenu: some View {
-        ForEach(viewModel.savedConnections) { shop in
-            Button {
-                Task { await viewModel.switchTo(shop) }
-            } label: {
-                if shop.id == viewModel.connection?.id {
-                    Label(shop.displayName, systemImage: "checkmark")
-                } else {
-                    Text(shop.displayName)
-                }
-            }
-        }
-
-        Divider()
-
-        Button {
-            viewModel.beginAddingShop()
-        } label: {
-            Label("Add another shop…", systemImage: "plus")
-        }
-
-        if viewModel.connection != nil {
-            Button(role: .destructive) {
-                confirmRemoval = true
-            } label: {
-                Label("Remove this shop…", systemImage: "trash")
-            }
-        }
-    }
-
-    // MARK: - Label
-
-    private var switcherLabel: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(accent.opacity(0.18))
-                Text(String((viewModel.connection?.displayName ?? "S").prefix(1)).uppercased())
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(accent)
-            }
-            .frame(width: 44, height: 44)
-
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(viewModel.connection?.displayName ?? "Shopware")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(subtitleColor)
-                }
-                HStack(spacing: 6) {
-                    PulsingDot()
-                    Text(viewModel.versionString.isEmpty
-                         ? "Administration"
-                         : "Administration \(viewModel.versionString)")
-                        .font(.caption)
-                        .foregroundStyle(subtitleColor)
-                        .lineLimit(1)
-                }
-            }
-        }
-    }
-
-    private func headerIcon(_ systemName: String, size: CGFloat) -> some View {
-        Image(systemName: systemName)
-            .font(.system(size: size))
-            .foregroundStyle(.white.opacity(0.85))
-            .frame(width: 38, height: 38)
-            .background(Color.inverseText.opacity(0.08))
-            .clipShape(Circle())
+    private var statusLine: String {
+        let version = viewModel.versionString.isEmpty ? "ADMINISTRATION" : viewModel.versionString
+        return "\(viewModel.connection?.displayName.uppercased() ?? "SHOPWARE") · \(version)"
     }
 }

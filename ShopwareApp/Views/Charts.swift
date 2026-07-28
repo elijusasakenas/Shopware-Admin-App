@@ -1,249 +1,119 @@
-//
-//  Charts.swift
-//  ShopwareApp
-//
-//  Swift Charts views for the dashboard: the range-selectable card wrapper,
-//  the orders/turnover area charts, and the sales-by-language breakdown.
-//  DateRange lives in Models/DateRange.swift.
-//
-
 import Charts
 import SwiftUI
 
-// MARK: - Chart card wrapper
-
-struct ChartCard<ChartContent: View>: View {
-    let title: LocalizedStringKey
-    let ranges: [DateRange]
-    @Binding var selectedRange: DateRange
-    let isLoading: Bool
-    let onRangeChange: () -> Void
-    @ViewBuilder let chartContent: () -> ChartContent
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(title)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Color.primaryText)
-                    Text(selectedRange.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(Color.secondaryText)
-                }
-                Spacer()
-                if isLoading {
-                    ProgressView().scaleEffect(0.7)
-                }
-                Menu {
-                    ForEach(ranges, id: \.self) { range in
-                        Button {
-                            selectedRange = range
-                            onRangeChange()
-                        } label: {
-                            if selectedRange == range {
-                                Label(range.menuLabel, systemImage: "checkmark")
-                            } else {
-                                Text(range.menuLabel)
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 8) {
-                        Text(selectedRange.menuLabel)
-                            .font(.subheadline)
-                        Image(systemName: "chevron.down")
-                            .font(.caption2.weight(.semibold))
-                    }
-                    .foregroundStyle(Color.primaryText)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 36)
-                    .background(Color.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Color.border, lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-            }
-
-            chartContent()
-                .frame(height: 190)
-        }
-        .padding(20)
-        .background(Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border.opacity(0.7), lineWidth: 1))
-    }
-}
-
-// MARK: - Charts
-
-struct OrdersBarChart: View {
+struct HeroSparkline: View {
     let buckets: [DashboardBucket]
-    let range: DateRange
 
     var body: some View {
         if buckets.isEmpty {
-            ChartEmptyState(text: "No orders in this period")
+            Rectangle()
+                .fill(Color.industryHair)
+                .frame(height: 1)
         } else {
-            Chart(buckets) { bucket in
+            Chart(buckets.suffix(7)) { bucket in
                 AreaMark(
-                    x: .value("Date", bucket.date, unit: range.calendarComponent),
-                    y: .value("Orders", bucket.count)
+                    x: .value("Date", bucket.date),
+                    y: .value("Turnover", bucket.amount)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.shopwareBlue.opacity(0.16), Color.shopwareBlue.opacity(0.01)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Color.industryAccentTint)
                 .interpolationMethod(.monotone)
-
                 LineMark(
-                    x: .value("Date", bucket.date, unit: range.calendarComponent),
-                    y: .value("Orders", bucket.count)
+                    x: .value("Date", bucket.date),
+                    y: .value("Turnover", bucket.amount)
                 )
-                .foregroundStyle(Color.shopwareBlue)
-                .lineStyle(StrokeStyle(lineWidth: 2))
+                .foregroundStyle(Color.industryAccent)
+                .lineStyle(StrokeStyle(lineWidth: 1.4))
                 .interpolationMethod(.monotone)
             }
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 6)) { _ in
-                    AxisValueLabel(format: range.axisFormat)
-                        .foregroundStyle(Color.secondaryText)
-                }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisGridLine().foregroundStyle(Color.border.opacity(0.55))
-                    AxisValueLabel {
-                        if let v = value.as(Int.self) {
-                            Text("\(v)").foregroundStyle(Color.secondaryText)
-                        }
-                    }
-                }
-            }
-            .animation(.easeInOut(duration: 0.45), value: buckets.map(\.count))
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
         }
     }
 }
 
-struct RevenueBarChart: View {
+struct IndustryTrendChart: View {
     let buckets: [DashboardBucket]
+    let metric: TrendMetric
     let range: DateRange
     let currency: String
 
+    private var values: [Double] {
+        buckets.map { bucket in
+            switch metric {
+            case .orders: return Double(bucket.count)
+            case .turnover: return bucket.amount
+            case .basket: return bucket.count == 0 ? 0 : bucket.amount / Double(bucket.count)
+            }
+        }
+    }
+
     var body: some View {
         if buckets.isEmpty {
-            ChartEmptyState(text: "No turnover in this period")
+            Text("NO DATA IN THIS PERIOD")
+                .industryKicker()
+                .foregroundStyle(Color.industryFaint)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            Chart(buckets) { bucket in
+            Chart(Array(zip(buckets, values)), id: \.0.id) { bucket, value in
                 AreaMark(
                     x: .value("Date", bucket.date, unit: range.calendarComponent),
-                    y: .value("Turnover", bucket.amount)
+                    y: .value(metric.label, value)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.shopwareBlue.opacity(0.16), Color.shopwareBlue.opacity(0.01)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Color.industryAccentTint)
                 .interpolationMethod(.monotone)
-
                 LineMark(
                     x: .value("Date", bucket.date, unit: range.calendarComponent),
-                    y: .value("Turnover", bucket.amount)
+                    y: .value(metric.label, value)
                 )
-                .foregroundStyle(Color.shopwareBlue)
-                .lineStyle(StrokeStyle(lineWidth: 2))
+                .foregroundStyle(Color.industryAccent)
+                .lineStyle(StrokeStyle(lineWidth: 1.6))
                 .interpolationMethod(.monotone)
             }
             .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 6)) { _ in
+                AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                     AxisValueLabel(format: range.axisFormat)
-                        .foregroundStyle(Color.secondaryText)
+                        .font(IndustryFont.kicker(9))
+                        .foregroundStyle(Color.industryFaint)
+                    AxisTick().foregroundStyle(Color.clear)
                 }
             }
             .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisGridLine().foregroundStyle(Color.border.opacity(0.55))
+                AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
+                    AxisGridLine().foregroundStyle(Color.industryHair)
+                    AxisTick().foregroundStyle(Color.clear)
                     AxisValueLabel {
-                        if let v = value.as(Double.self) {
-                            Text(v.formatted(.currency(code: currency).precision(.fractionLength(2))))
-                                .font(.caption2)
-                                .foregroundStyle(Color.secondaryText)
+                        if let number = value.as(Double.self) {
+                            Text(axisLabel(number))
+                                .font(IndustryFont.display(11))
+                                .foregroundStyle(Color.industryFaint)
                         }
                     }
                 }
             }
-            .animation(.easeInOut(duration: 0.45), value: buckets.map(\.amount))
+            .animation(.easeInOut(duration: 0.35), value: values)
+        }
+    }
+
+    private func axisLabel(_ value: Double) -> String {
+        switch metric {
+        case .orders:
+            return Int(value).formatted()
+        case .turnover, .basket:
+            return value.formatted(.currency(code: currency).precision(.fractionLength(0)))
         }
     }
 }
 
-struct LanguageBreakdownCard: View {
-    let stats: [LanguageStat]
-    let currency: String
+struct TickBar: View {
+    let fraction: Double
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Sales by language")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color.primaryText)
-                Text("Last 30 days · where your customers buy")
-                    .font(.caption)
-                    .foregroundStyle(Color.secondaryText)
-            }
-
-            let maxCount = max(stats.map(\.count).max() ?? 1, 1)
-
-            ForEach(stats) { stat in
-                VStack(alignment: .leading, spacing: 7) {
-                    HStack(spacing: 10) {
-                        Text(stat.name)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Color.primaryText)
-                            .lineLimit(1)
-                        Spacer()
-                        Text(stat.count == 1 ? "1 order" : "\(stat.count) orders")
-                            .font(.caption)
-                            .foregroundStyle(Color.secondaryText)
-                        Text(stat.amount.formatted(.currency(code: currency).precision(.fractionLength(0))))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.primaryText)
-                    }
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(Color.border.opacity(0.4))
-                            Capsule()
-                                .fill(Color.shopwareBlue)
-                                .frame(width: max(geo.size.width * CGFloat(stat.count) / CGFloat(maxCount), 6))
-                        }
-                    }
-                    .frame(height: 6)
-                }
+        HStack(spacing: 2) {
+            ForEach(0..<20, id: \.self) { index in
+                Rectangle()
+                    .fill(Double(index) < fraction * 20 ? Color.industryAccent : Color.industryHair)
+                    .frame(height: 5)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background(Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border.opacity(0.7), lineWidth: 1))
-    }
-}
-
-struct ChartEmptyState: View {
-    let text: String
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "chart.xyaxis.line")
-                .font(.title2)
-                .foregroundStyle(Color.border)
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(Color.secondaryText)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

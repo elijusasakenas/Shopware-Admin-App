@@ -44,26 +44,30 @@ struct ProductEditView: View {
     private var currencyCode: String { viewModel.currencyCode }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if isLoading {
-                    ProgressView()
-                        .tint(.shopwareBlue)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    form
-                }
+        Group {
+            if isLoading {
+                Text("LOADING…")
+                    .industryKicker()
+                    .foregroundStyle(Color.industryFaint)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                form
             }
-            .background(Color.appBackground)
-            .navigationTitle("Edit product")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { Task { await save() } }
-                        .disabled(isSaving || isLoading)
-                }
+        }
+        .background(Color.industryBackground)
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("EDIT PRODUCT")
+                    .industryKicker(11)
+                    .foregroundStyle(Color.industryText)
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("SAVE") { Task { await save() } }
+                    .industryKicker()
+                    .foregroundStyle(Color.industryAccent)
+                    .disabled(isSaving || isLoading || !isDirty)
+                    .opacity(isDirty ? 1 : 0.45)
             }
         }
         .task { await load() }
@@ -73,81 +77,97 @@ struct ProductEditView: View {
     }
 
     private var form: some View {
-        Form {
-            if let errorMessage {
-                Section { ErrorBanner(message: errorMessage) }
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 26) {
+                if let errorMessage {
+                    ErrorBanner(message: errorMessage)
+                }
 
-            Section {
-                if images.isEmpty {
-                    Text("No images yet.")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondaryText)
-                } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(images) { image in
-                                galleryCell(image)
+                BlueprintFrame {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(detail?.productNumber ?? "—")
+                            .industryKicker()
+                            .foregroundStyle(Color.industryFaint)
+                        TextField("Product name", text: $name)
+                            .font(IndustryFont.display(26))
+                            .foregroundStyle(Color.industryText)
+                            .textFieldStyle(.plain)
+                        Rectangle().fill(Color.industryHair).frame(height: 1)
+                        HStack(spacing: 0) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Gross · \(currencyCode)").industryKicker().foregroundStyle(Color.industryFaint)
+                                TextField("0.00", text: $priceText)
+                                    .font(IndustryFont.display(22))
+                                    .textFieldStyle(.plain)
+                                    .decimalKeyboard()
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            Rectangle().fill(Color.industryHair).frame(width: 1, height: 44)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Net · Derived").industryKicker().foregroundStyle(Color.industryFaint)
+                                Text(netDisplay)
+                                    .font(IndustryFont.display(22))
+                                    .foregroundStyle(Color.industryDim)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, 12)
                         }
-                        .padding(.vertical, 4)
+                        Text("NET DERIVED FROM GROSS AT \(detail?.taxRate?.formatted() ?? "0")% TAX")
+                            .industryKicker(9)
+                            .foregroundStyle(Color.industryFaint)
                     }
                 }
-                PhotosPicker(selection: $pickedItem, matching: .images) {
-                    Label("Add image", systemImage: "plus")
-                        .font(.subheadline.weight(.semibold))
-                }
-                .disabled(imageBusy)
-            } header: {
-                HStack {
-                    Text("Images")
-                    if imageBusy {
-                        ProgressView().controlSize(.small)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    SectionHeader(title: "Inventory")
+                        .padding(.bottom, 10)
+                    Rectangle().fill(Color.industryLine).frame(height: 1)
+                    HStack {
+                        Text("Stock").font(IndustryFont.body(14.5)).foregroundStyle(Color.industryText)
+                        Spacer()
+                        StockStepper(stock: stock) { stock = $0 }
                     }
+                    .frame(minHeight: 54)
+                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    HStack {
+                        Text("Active in storefront").font(IndustryFont.body(14.5)).foregroundStyle(Color.industryText)
+                        Spacer()
+                        Text(active ? "ON" : "OFF").industryKicker().foregroundStyle(Color.industryFaint)
+                        SquareToggle(isOn: $active)
+                    }
+                    .frame(minHeight: 54)
                 }
-            } footer: {
-                Text("Tap an image to set it as the cover. Long-press for more.")
-            }
 
-            Section("Details") {
-                LabeledContent("Product number") {
-                    Text(detail?.productNumber ?? "—")
-                        .foregroundStyle(Color.secondaryText)
-                }
-                TextField("Name", text: $name)
-                Stepper("Stock: \(stock)", value: $stock, in: 0...1_000_000)
-                Toggle("Active", isOn: $active)
-                    .tint(.shopwareBlue)
-            }
-
-            Section {
-                HStack {
-                    Text("Price (gross)")
-                    Spacer()
-                    TextField("0.00", text: $priceText)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 130)
-                        .decimalKeyboard()
-                    Text(currencyCode)
-                        .foregroundStyle(Color.secondaryText)
-                }
-                HStack {
-                    Text("Price (net)")
-                    Spacer()
-                    Text(netDisplay)
-                        .foregroundStyle(Color.secondaryText)
-                    Text(currencyCode)
-                        .foregroundStyle(Color.secondaryText)
-                }
-            } header: {
-                Text("Price")
-            } footer: {
-                if let rate = detail?.taxRate {
-                    Text("Net is derived from gross at \(rate.formatted())% tax.")
+                VStack(alignment: .leading, spacing: 10) {
+                    SectionHeader(title: "Images", detail: "TAP TO SET COVER")
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            ForEach(images) { image in galleryCell(image) }
+                            PhotosPicker(selection: $pickedItem, matching: .images) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 18, weight: .light))
+                                    .foregroundStyle(Color.industryAccent)
+                                    .frame(width: 78, height: 78)
+                                    .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+                            }
+                            .disabled(imageBusy)
+                        }
+                    }
+                    .opacity(imageBusy ? 0.45 : 1)
                 }
             }
+            .padding(16)
+            .padding(.bottom, 28)
         }
-        .scrollContentBackground(.hidden)
+    }
+
+    private var isDirty: Bool {
+        guard let detail else { return false }
+        let typedGross = Decimal(string: priceText.replacingOccurrences(of: ",", with: "."))
+        return name != loadedName ||
+            stock != detail.stock ||
+            active != detail.active ||
+            typedGross != detail.grossPrice
     }
 
     /// Live net, computed from the gross the user is typing and the tax rate.
@@ -165,23 +185,19 @@ struct ProductEditView: View {
         Button {
             Task { await setCover(image) }
         } label: {
-            ProductThumbnail(url: image.url, size: 80)
+            ProductThumbnail(url: image.url, size: 78)
                 .overlay(alignment: .bottom) {
                     if isCover {
-                        Text("Cover")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(Color.inverseText)
+                        Text("COVER")
+                            .industryKicker(8.5)
+                            .foregroundStyle(Color.industryInverse)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.shopwareBlue)
-                            .clipShape(Capsule())
-                            .padding(.bottom, 5)
+                            .background(Color.industryAccent)
                     }
                 }
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(isCover ? Color.shopwareBlue : Color.clear, lineWidth: 2)
-                )
+                .background(isCover ? Color.industryAccentTint : Color.clear)
+                .overlay(Rectangle().stroke(isCover ? Color.industryAccent : Color.industryLine, lineWidth: 1))
         }
         .buttonStyle(.plain)
         .disabled(imageBusy)

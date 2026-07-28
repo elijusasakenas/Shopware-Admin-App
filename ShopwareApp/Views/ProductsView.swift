@@ -1,93 +1,179 @@
-//
-//  ProductsView.swift
-//  ShopwareApp
-//
-//  Searchable product list: queries /api/search/product by name or product
-//  number, scoped to the dashboard's selected sales channel.
-//
-
 import SwiftUI
 
 struct ProductsView: View {
-    @ObservedObject var viewModel: ProductsViewModel
+    enum StockFilter: String, CaseIterable, Identifiable {
+        case all = "ALL"
+        case low = "LOW STOCK"
+        case out = "OUT OF STOCK"
+        var id: String { rawValue }
+    }
 
+    @ObservedObject var viewModel: ProductsViewModel
     @State private var searchText = ""
     @State private var products: [ProductSummary] = []
+    @State private var filter: StockFilter = .all
     @State private var isLoading = false
+    @State private var busyProductIDs: Set<String> = []
     @State private var errorMessage: String?
-    /// Bumped on each keystroke so the debounce task can cancel a stale search.
     @State private var searchTask: Task<Void, Never>?
-    /// The product whose edit sheet is currently presented, if any.
-    @State private var editingProduct: ProductSummary?
 
-    private var currencyCode: String { viewModel.currencyCode }
+    private var filteredProducts: [ProductSummary] {
+        products.filter {
+            switch filter {
+            case .all: return true
+            case .low: return $0.stock <= 10
+            case .out: return $0.stock == 0
+            }
+        }
+    }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text("Products")
+                        .industryKicker(11)
+                        .foregroundStyle(Color.industryText)
+                    Spacer()
+                    Text("\(filteredProducts.count) items")
+                        .font(IndustryFont.display(15))
+                        .foregroundStyle(Color.industryFaint)
+                }
+
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 15, weight: .light))
+                        .foregroundStyle(Color.industryFaint)
+                    TextField("Name or product number", text: $searchText)
+                        .font(IndustryFont.body(15))
+                        .textFieldStyle(.plain)
+                }
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .background(Color.industrySurface)
+                .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+
+                filterControl
+
                 if let errorMessage {
                     ErrorBanner(message: errorMessage)
                 }
 
                 if isLoading && products.isEmpty {
-                    ProgressView()
-                        .tint(.shopwareBlue)
+                    Text("LOADING…")
+                        .industryKicker()
+                        .foregroundStyle(Color.industryFaint)
                         .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
-                } else if products.isEmpty {
-                    Group {
-                        if searchText.isEmpty {
-                            Text("No products found.")
-                        } else {
-                            Text("No products match “\(searchText)”.")
-                        }
-                    }
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondaryText)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 40)
+                        .padding(30)
+                } else if filteredProducts.isEmpty {
+                    Text("Nothing matches that search.")
+                        .font(IndustryFont.body(14))
+                        .foregroundStyle(Color.industryDim)
+                        .frame(maxWidth: .infinity)
+                        .padding(30)
                 } else {
-                    VStack(spacing: 0) {
-                        ForEach(products) { product in
-                            Button {
-                                editingProduct = product
-                            } label: {
-                                ProductRow(product: product, currencyCode: currencyCode)
-                            }
-                            .buttonStyle(.plain)
-                            if product.id != products.last?.id {
-                                Divider().padding(.leading, 14)
-                            }
-                        }
-                    }
-                    .background(Color.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border, lineWidth: 1))
+                    productList
                 }
             }
-            .padding(20)
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
             .padding(.bottom, 32)
         }
-        .background(Color.appBackground)
-        .navigationTitle("Products")
-        .searchable(text: $searchText, prompt: "Search by name or number")
-        .onChange(of: searchText) { newValue in
-            scheduleSearch(term: newValue)
-        }
+        .background(Color.industryBackground)
+        .navigationTitle("")
+        #if !os(macOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+        .onChange(of: searchText) { term in scheduleSearch(term: term) }
         .task {
-            // Initial population (most-recent products) before any typing.
             if products.isEmpty { await runSearch(term: "") }
-        }
-        .sheet(item: $editingProduct) { product in
-            ProductEditView(viewModel: viewModel, productID: product.id) {
-                // Re-run the current search so the list reflects the saved edits.
-                Task { await runSearch(term: searchText) }
-            }
-            .appAppearance()
         }
     }
 
-    /// Debounce keystrokes so we don't fire a request on every character.
+    private var filterControl: some View {
+        HStack(spacing: 6) {
+            ForEach(StockFilter.allCases) { candidate in
+                Button {
+                    filter = candidate
+                } label: {
+                    Text(candidate.rawValue)
+                        .industryKicker(9.5)
+                        .foregroundStyle(filter == candidate ? Color.industryInverse : Color.industryDim)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 34)
+                        .background(filter == candidate ? Color.industryAccent : Color.clear)
+                        .overlay(Rectangle().stroke(Color.industryHair, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
+        }
+    }
+
+    private var productList: some View {
+        VStack(spacing: 0) {
+            Rectangle().fill(Color.industryLine).frame(height: 1)
+            ForEach(filteredProducts) { product in
+                HStack(spacing: 12) {
+                    NavigationLink {
+                        ProductEditView(viewModel: viewModel, productID: product.id) {
+                            Task { await runSearch(term: searchText) }
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            ProductThumbnail(url: product.coverURL, size: 40)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(product.name)
+                                    .font(IndustryFont.body(14, medium: true))
+                                    .foregroundStyle(Color.industryText)
+                                    .lineLimit(1)
+                                Text(productMeta(product))
+                                    .industryKicker()
+                                    .foregroundStyle(Color.industryFaint)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    Spacer()
+                    StockStepper(
+                        stock: product.stock,
+                        isBusy: busyProductIDs.contains(product.id)
+                    ) { next in
+                        setStock(productID: product.id, to: next)
+                    }
+                }
+                .padding(.vertical, 10)
+                Rectangle().fill(Color.industryHair).frame(height: 1)
+            }
+        }
+    }
+
+    private func productMeta(_ product: ProductSummary) -> String {
+        let price = product.price?.formatted(
+            .currency(code: viewModel.currencyCode).precision(.fractionLength(2))
+        ) ?? "—"
+        return "\(product.productNumber) · \(price)"
+    }
+
+    private func setStock(productID: String, to stock: Int) {
+        guard let index = products.firstIndex(where: { $0.id == productID }) else { return }
+        let previous = products[index].stock
+        products[index].stock = stock
+        busyProductIDs.insert(productID)
+        Task {
+            do {
+                try await viewModel.setStock(productID: productID, to: stock)
+            } catch {
+                if let rollback = products.firstIndex(where: { $0.id == productID }) {
+                    products[rollback].stock = previous
+                }
+                errorMessage = error.shopwareDisplayMessage
+            }
+            busyProductIDs.remove(productID)
+        }
+    }
+
     private func scheduleSearch(term: String) {
         searchTask?.cancel()
         searchTask = Task {
@@ -113,63 +199,6 @@ struct ProductsView: View {
     }
 }
 
-private struct ProductRow: View {
-    let product: ProductSummary
-    let currencyCode: String
-
-    var body: some View {
-        HStack(spacing: 12) {
-            ProductThumbnail(url: product.coverURL, size: 44)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(product.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.primaryText)
-                    .lineLimit(1)
-                if !product.productNumber.isEmpty {
-                    Text(product.productNumber)
-                        .font(.caption)
-                        .foregroundStyle(Color.secondaryText)
-                        .lineLimit(1)
-                }
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 3) {
-                if let price = product.price {
-                    Text(price.formatted(.currency(code: currencyCode)))
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Color.primaryText)
-                }
-                stockBadge
-            }
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(Color.secondaryText)
-        }
-        .contentShape(Rectangle())
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-    }
-
-    @ViewBuilder
-    private var stockBadge: some View {
-        let isOut = product.stock == 0
-        Group {
-            if isOut {
-                Text("Out of stock")
-            } else {
-                Text("\(product.stock) in stock")
-            }
-        }
-            .font(.caption.weight(.bold))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(isOut ? Color.red.opacity(0.12) : Color.shopwareBlue.opacity(0.12))
-            .foregroundStyle(isOut ? Color.red : Color.shopwareBlue)
-            .clipShape(Capsule())
-    }
-}
-
-/// Square product cover thumbnail with a placeholder fallback.
 struct ProductThumbnail: View {
     let url: URL?
     var size: CGFloat = 44
@@ -180,15 +209,11 @@ struct ProductThumbnail: View {
             case .success(let image):
                 image.resizable().scaledToFill()
             default:
-                ZStack {
-                    Color.appBackground
-                    Image(systemName: "shippingbox")
-                        .foregroundStyle(Color.secondaryText)
-                }
+                Color.industrySunk
             }
         }
         .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Color.border, lineWidth: 1))
+        .clipped()
+        .overlay(Rectangle().stroke(Color.industryHair, lineWidth: 1))
     }
 }

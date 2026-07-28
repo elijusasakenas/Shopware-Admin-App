@@ -10,6 +10,7 @@ import Foundation
 struct LowStockProduct: Identifiable {
     var id: String
     var name: String
+    var productNumber: String
     var stock: Int
 }
 

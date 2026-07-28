@@ -1,11 +1,3 @@
-//
-//  OrderDetailView.swift
-//  ShopwareApp
-//
-//  Single order: header, customer, line items, and live state-machine
-//  transitions for order / payment / delivery status.
-//
-
 import SwiftUI
 
 struct OrderDetailView: View {
@@ -35,134 +27,210 @@ struct OrderDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Order header
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(order.orderNumber)
-                        .font(.system(size: 30, weight: .semibold))
-                        .foregroundStyle(Color.primaryText)
-                    Text(order.displayDate)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondaryText)
-                    HStack {
-                        Text(StateLocalization.stateName(orderState))
-                            .font(.caption.weight(.bold))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.shopwareBlue.opacity(0.12))
-                            .foregroundStyle(Color.shopwareBlue)
-                            .clipShape(Capsule())
-                        Spacer()
-                        Text(order.amountTotal.formatted(.currency(code: order.currencyCode)))
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Color.primaryText)
-                    }
-                }
-
-                if let errorMessage { ErrorBanner(message: errorMessage) }
-
-                // Customer
-                if !customerName.isEmpty || !customerEmail.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Customer")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Color.primaryText)
-                        if !customerName.isEmpty {
-                            Text(customerName)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Color.primaryText)
-                        }
-                        if !customerEmail.isEmpty {
-                            Text(customerEmail)
-                                .font(.subheadline)
-                                .foregroundStyle(Color.secondaryText)
-                                .textSelection(.enabled)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(16)
-                    .background(Color.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
-                }
-
-                // Line items
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Items")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color.primaryText)
-                    if isLoading {
-                        ProgressView().tint(.shopwareBlue).frame(maxWidth: .infinity).padding(12)
-                    } else if lineItems.isEmpty {
-                        Text("No items found.")
-                            .font(.subheadline)
-                            .foregroundStyle(Color.secondaryText)
-                    } else {
-                        ForEach(lineItems) { item in
-                            HStack(spacing: 12) {
-                                Text("\(item.quantity)×")
-                                    .font(.subheadline.weight(.bold))
-                                    .foregroundStyle(Color.shopwareBlue)
-                                Text(item.label)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(Color.primaryText)
-                                Spacer()
-                                Text(item.totalPrice.formatted(.currency(code: order.currencyCode)))
-                                    .font(.subheadline.weight(.bold))
-                                    .foregroundStyle(Color.primaryText)
+            VStack(alignment: .leading, spacing: 26) {
+                BlueprintFrame {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(order.displayDate)
+                            .industryKicker()
+                            .foregroundStyle(Color.industryFaint)
+                        HStack(alignment: .top) {
+                            Text(order.amountTotal.formatted(.currency(code: order.currencyCode)))
+                                .font(IndustryFont.display(44))
+                                .foregroundStyle(Color.industryText)
+                                .minimumScaleFactor(0.7)
+                                .lineLimit(1)
+                            Spacer()
+                            if !customerName.isEmpty || !customerEmail.isEmpty {
+                                VStack(alignment: .trailing, spacing: 3) {
+                                    Text("Customer").industryKicker().foregroundStyle(Color.industryFaint)
+                                    Text(customerName)
+                                        .font(IndustryFont.body(14.5, medium: true))
+                                        .foregroundStyle(Color.industryText)
+                                    Text(customerEmail)
+                                        .font(IndustryFont.body(12.5))
+                                        .foregroundStyle(Color.industryDim)
+                                        .textSelection(.enabled)
+                                }
                             }
-                            .padding(.vertical, 6)
-                            if item.id != lineItems.last?.id { Divider() }
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .background(Color.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
 
-                // Status management
-                StateTransitionCard(
-                    title: "Order status",
-                    currentState: orderState,
-                    transitions: orderTransitions,
-                    isBusy: isTransitioning
-                ) { transition in
-                    Task { await perform(entityName: "order", entityID: order.id, transition: transition) }
+                if let errorMessage {
+                    ErrorBanner(message: errorMessage)
                 }
 
-                if let transactionID, !paymentState.isEmpty {
-                    StateTransitionCard(
-                        title: "Payment status",
-                        currentState: paymentState,
-                        transitions: paymentTransitions,
-                        isBusy: isTransitioning
-                    ) { transition in
-                        Task { await perform(entityName: "order_transaction", entityID: transactionID, transition: transition) }
-                    }
-                }
-
-                if let deliveryID, !deliveryState.isEmpty {
-                    StateTransitionCard(
-                        title: "Delivery status",
-                        currentState: deliveryState,
-                        transitions: deliveryTransitions,
-                        isBusy: isTransitioning
-                    ) { transition in
-                        Task { await perform(entityName: "order_delivery", entityID: deliveryID, transition: transition) }
-                    }
-                }
+                progressSection
+                itemsSection
             }
-            .padding(20)
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
             .padding(.bottom, 32)
         }
-        .background(Color.appBackground)
-        .navigationTitle("Order")
+        .background(Color.industryBackground)
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("ORDER \(order.orderNumber)")
+                    .industryKicker(11)
+                    .foregroundStyle(Color.industryText)
+            }
+        }
         #if !os(macOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .task { await load() }
+    }
+
+    private var progressSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionHeader(title: "Progress")
+                .padding(.bottom, 10)
+            Rectangle().fill(Color.industryLine).frame(height: 1)
+            stageRow(
+                number: "01",
+                title: "Order status",
+                state: orderState,
+                transitions: orderTransitions
+            ) { transition in
+                Task { await perform(entityName: "order", entityID: order.id, transition: transition) }
+            }
+
+            if let transactionID, !paymentState.isEmpty {
+                stageRow(
+                    number: "02",
+                    title: "Payment status",
+                    state: paymentState,
+                    transitions: paymentTransitions
+                ) { transition in
+                    Task {
+                        await perform(
+                            entityName: "order_transaction",
+                            entityID: transactionID,
+                            transition: transition
+                        )
+                    }
+                }
+            }
+
+            if let deliveryID, !deliveryState.isEmpty {
+                stageRow(
+                    number: "03",
+                    title: "Delivery status",
+                    state: deliveryState,
+                    transitions: deliveryTransitions
+                ) { transition in
+                    Task {
+                        await perform(
+                            entityName: "order_delivery",
+                            entityID: deliveryID,
+                            transition: transition
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private func stageRow(
+        number: String,
+        title: String,
+        state: String,
+        transitions: [OrderTransition],
+        onSelect: @escaping (OrderTransition) -> Void
+    ) -> some View {
+        HStack(spacing: 12) {
+            Text(number)
+                .font(IndustryFont.display(16))
+                .foregroundStyle(Color.industryAccent)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).industryKicker().foregroundStyle(Color.industryFaint)
+                Text(StateLocalization.stateName(state))
+                    .font(IndustryFont.display(19))
+                    .foregroundStyle(Color.industryText)
+                    .contentTransition(.numericText())
+            }
+            Spacer()
+            if transitions.isEmpty {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 17, weight: .light))
+                    .foregroundStyle(Color.industryAccent)
+                    .frame(width: 44, height: 44)
+            } else if transitions.count == 1, let transition = transitions.first {
+                Button { onSelect(transition) } label: {
+                    Text("MARK \(StateLocalization.transitionName(transition.targetStateTechnicalName))")
+                        .industryKicker(9.5)
+                        .padding(.horizontal, 12)
+                        .lineLimit(1)
+                }
+                .buttonStyle(IndustryActionButtonStyle())
+                .disabled(isTransitioning)
+                .opacity(isTransitioning ? 0.45 : 1)
+            } else {
+                Menu {
+                    ForEach(transitions) { transition in
+                        Button(StateLocalization.transitionName(transition.targetStateTechnicalName)) {
+                            onSelect(transition)
+                        }
+                    }
+                } label: {
+                    Text("CHANGE")
+                        .industryKicker(9.5)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 44)
+                        .foregroundStyle(Color.industryInverse)
+                        .background(Color.industryAccent)
+                }
+                .disabled(isTransitioning)
+                .opacity(isTransitioning ? 0.45 : 1)
+            }
+        }
+        .padding(.vertical, 10)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.industryHair).frame(height: 1)
+        }
+    }
+
+    private var itemsSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionHeader(title: "Items")
+                .padding(.bottom, 10)
+            Rectangle().fill(Color.industryLine).frame(height: 1)
+            if isLoading {
+                Text("LOADING…")
+                    .industryKicker()
+                    .foregroundStyle(Color.industryFaint)
+                    .frame(maxWidth: .infinity)
+                    .padding(22)
+            } else {
+                ForEach(lineItems) { item in
+                    HStack(spacing: 12) {
+                        Text("\(item.quantity)×")
+                            .font(IndustryFont.display(16))
+                            .foregroundStyle(Color.industryAccent)
+                            .frame(width: 26, alignment: .leading)
+                        Text(item.label)
+                            .font(IndustryFont.body(14, medium: true))
+                            .foregroundStyle(Color.industryText)
+                        Spacer()
+                        Text(item.totalPrice.formatted(.currency(code: order.currencyCode)))
+                            .font(IndustryFont.display(16))
+                            .foregroundStyle(Color.industryText)
+                    }
+                    .padding(.vertical, 11)
+                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                }
+                HStack {
+                    Text("Total incl. VAT").industryKicker().foregroundStyle(Color.industryFaint)
+                    Spacer()
+                    Text(order.amountTotal.formatted(.currency(code: order.currencyCode)))
+                        .font(IndustryFont.display(22))
+                        .foregroundStyle(Color.industryText)
+                }
+                .padding(.top, 12)
+            }
+        }
     }
 
     private func load() async {
@@ -177,12 +245,18 @@ struct OrderDetailView: View {
             if let transaction = try await viewModel.orderTransaction(orderID: order.id) {
                 transactionID = transaction.id
                 paymentState = transaction.state
-                paymentTransitions = try await viewModel.stateTransitions(entityName: "order_transaction", entityID: transaction.id)
+                paymentTransitions = try await viewModel.stateTransitions(
+                    entityName: "order_transaction",
+                    entityID: transaction.id
+                )
             }
             if let delivery = try await viewModel.orderDelivery(orderID: order.id) {
                 deliveryID = delivery.id
                 deliveryState = delivery.state
-                deliveryTransitions = try await viewModel.stateTransitions(entityName: "order_delivery", entityID: delivery.id)
+                deliveryTransitions = try await viewModel.stateTransitions(
+                    entityName: "order_delivery",
+                    entityID: delivery.id
+                )
             }
         } catch {
             errorMessage = error.shopwareDisplayMessage
@@ -194,17 +268,30 @@ struct OrderDetailView: View {
         isTransitioning = true
         errorMessage = nil
         do {
-            try await viewModel.performTransition(entityName: entityName, entityID: entityID, action: transition.actionName)
+            try await viewModel.performTransition(
+                entityName: entityName,
+                entityID: entityID,
+                action: transition.actionName
+            )
             switch entityName {
             case "order":
                 orderState = transition.targetStateTechnicalName
-                orderTransitions = (try? await viewModel.stateTransitions(entityName: entityName, entityID: entityID)) ?? []
+                orderTransitions = (try? await viewModel.stateTransitions(
+                    entityName: entityName,
+                    entityID: entityID
+                )) ?? []
             case "order_transaction":
                 paymentState = transition.targetStateTechnicalName
-                paymentTransitions = (try? await viewModel.stateTransitions(entityName: entityName, entityID: entityID)) ?? []
+                paymentTransitions = (try? await viewModel.stateTransitions(
+                    entityName: entityName,
+                    entityID: entityID
+                )) ?? []
             case "order_delivery":
                 deliveryState = transition.targetStateTechnicalName
-                deliveryTransitions = (try? await viewModel.stateTransitions(entityName: entityName, entityID: entityID)) ?? []
+                deliveryTransitions = (try? await viewModel.stateTransitions(
+                    entityName: entityName,
+                    entityID: entityID
+                )) ?? []
             default:
                 break
             }
@@ -212,55 +299,5 @@ struct OrderDetailView: View {
             errorMessage = error.shopwareDisplayMessage
         }
         isTransitioning = false
-    }
-}
-
-struct StateTransitionCard: View {
-    let title: LocalizedStringKey
-    /// Language-neutral technicalName of the current state; localized here.
-    let currentState: String
-    let transitions: [OrderTransition]
-    let isBusy: Bool
-    let onSelect: (OrderTransition) -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Color.secondaryText)
-                    .textCase(.uppercase)
-                Text(StateLocalization.stateName(currentState))
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.primaryText)
-            }
-            Spacer()
-            if isBusy {
-                ProgressView().tint(.shopwareBlue)
-            } else if !transitions.isEmpty {
-                Menu {
-                    ForEach(transitions) { transition in
-                        Button(StateLocalization.transitionName(transition.targetStateTechnicalName)) { onSelect(transition) }
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("Change")
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption2.weight(.bold))
-                    }
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Color.inverseText)
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 40)
-                    .background(Color.shopwareBlue)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(16)
-        .background(Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
     }
 }

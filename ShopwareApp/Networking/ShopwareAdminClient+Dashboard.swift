@@ -101,7 +101,12 @@ extension ShopwareAdminClient {
             guard let id = row["id"] as? String else { return nil }
             let attrs = entityAttributes(of: row)
             let name = translatedName(from: attrs) ?? attrs["name"] as? String ?? String(localized: "Unnamed product")
-            return LowStockProduct(id: id, name: name, stock: attrs["stock"] as? Int ?? 0)
+            return LowStockProduct(
+                id: id,
+                name: name,
+                productNumber: attrs["productNumber"] as? String ?? "",
+                stock: attrs["stock"] as? Int ?? 0
+            )
         }
     }
 

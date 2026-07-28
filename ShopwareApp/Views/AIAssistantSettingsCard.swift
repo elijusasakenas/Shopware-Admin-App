@@ -70,8 +70,8 @@ struct AIAssistantSettingsCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.border, lineWidth: 1))
+        .clipShape(Rectangle())
+        .overlay(Rectangle().stroke(Color.border, lineWidth: 1))
         .onAppear {
             usage = AIUsage.snapshot()
             if let provider = aiKey.provider {
@@ -104,9 +104,9 @@ struct AIAssistantSettingsCard: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(Color.controlBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .clipShape(Rectangle())
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    Rectangle()
                         .stroke(Color.border, lineWidth: 1)
                 )
 
@@ -120,7 +120,7 @@ struct AIAssistantSettingsCard: View {
                     .frame(maxWidth: .infinity, minHeight: 42)
                     .foregroundStyle(Color.primaryText)
                     .background(Color.controlBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .clipShape(Rectangle())
             }
             .buttonStyle(PressableButtonStyle())
             .disabled(keyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

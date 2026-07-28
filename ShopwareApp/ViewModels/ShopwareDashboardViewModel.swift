@@ -26,16 +26,58 @@ final class ShopwareDashboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var ordersRange: DateRange = .days30
     @Published var revenueRange: DateRange = .days30
+    @Published var trendRange: DateRange = .days30
+    @Published var trendMetric: TrendMetric = .orders
+    @Published var isChannelPickerExpanded = false
     @Published var salesChannels: [SalesChannel] = []
     @Published var selectedChannelID: String?
     @Published var lowStockProducts: [LowStockProduct] = []
     @Published var topProducts: [TopProduct] = []
     @Published var languageStats: [LanguageStat] = []
     @Published var versionString = ""
+    @Published private(set) var dismissedAttentionIDs: Set<String> = []
 
     var selectedChannelName: String {
         guard let id = selectedChannelID else { return "All sales channels" }
         return salesChannels.first { $0.id == id }?.name ?? "Sales channel"
+    }
+
+    var attentionItems: [AttentionItem] {
+        var result: [AttentionItem] = []
+
+        if let order = metrics?.latestOrders.first(where: {
+            ["open", "in_progress"].contains($0.state)
+        }) {
+            result.append(
+                AttentionItem(
+                    id: "order-\(order.id)",
+                    severity: 3,
+                    title: "Order \(order.orderNumber) needs review",
+                    meta: "\(order.amountTotal.formatted(.currency(code: order.currencyCode))) · \(StateLocalization.stateName(order.state))",
+                    action: "REVIEW",
+                    destination: .order(order)
+                )
+            )
+        }
+
+        if let product = lowStockProducts.first {
+            result.append(
+                AttentionItem(
+                    id: "stock-\(product.id)",
+                    severity: product.stock == 0 ? 3 : 2,
+                    title: product.stock == 0
+                        ? "\(product.name) is out of stock"
+                        : "\(product.name) is running low",
+                    meta: "\(product.productNumber.isEmpty ? "PRODUCT" : product.productNumber) · \(product.stock) IN STOCK",
+                    action: "RESTOCK",
+                    destination: .products
+                )
+            )
+        }
+
+        return result
+            .filter { !dismissedAttentionIDs.contains($0.id) }
+            .sorted { $0.severity > $1.severity }
     }
 
     private let credentialStore = CredentialStore()
@@ -148,8 +190,8 @@ final class ShopwareDashboardViewModel: ObservableObject {
         }
         do {
             async let m = client.dashboardMetrics(salesChannelID: selectedChannelID)
-            async let ob = client.fetchHistory(paid: false, range: ordersRange, salesChannelID: selectedChannelID)
-            async let rb = client.fetchHistory(paid: true, range: revenueRange, salesChannelID: selectedChannelID)
+            async let ob = client.fetchHistory(paid: false, range: trendRange, salesChannelID: selectedChannelID)
+            async let rb = client.fetchHistory(paid: true, range: trendRange, salesChannelID: selectedChannelID)
             async let ls = client.fetchLowStockProducts(salesChannelID: selectedChannelID)
             async let tp = client.fetchTopProducts(since: DateRange.days30.sinceDate, salesChannelID: selectedChannelID)
             async let lang = client.fetchLanguageBreakdown(since: DateRange.days30.sinceDate, salesChannelID: selectedChannelID)
@@ -191,6 +233,57 @@ final class ShopwareDashboardViewModel: ObservableObject {
             }
         }
         isLoading = false
+    }
+
+    func fetchTrendHistory() async {
+        ordersRange = trendRange
+        revenueRange = trendRange
+        guard let client else { return }
+        isLoading = true
+        errorMessage = nil
+        do {
+            async let orders = client.fetchHistory(
+                paid: false,
+                range: trendRange,
+                salesChannelID: selectedChannelID
+            )
+            async let revenue = client.fetchHistory(
+                paid: true,
+                range: trendRange,
+                salesChannelID: selectedChannelID
+            )
+            orderBuckets = try await orders
+            revenueBuckets = try await revenue
+        } catch {
+            if !error.isCancellation {
+                errorMessage = error.shopwareDisplayMessage
+            }
+        }
+        isLoading = false
+    }
+
+    func dismissAttentionItem(_ id: String) {
+        dismissedAttentionIDs.insert(id)
+    }
+
+    func setStock(productID: String, to nextStock: Int) async {
+        guard let client,
+              let index = lowStockProducts.firstIndex(where: { $0.id == productID })
+        else { return }
+        let previous = lowStockProducts[index].stock
+        lowStockProducts[index].stock = max(0, nextStock)
+        errorMessage = nil
+        do {
+            try await client.updateProduct(id: productID, stock: max(0, nextStock))
+            if nextStock > 10 {
+                lowStockProducts.removeAll { $0.id == productID }
+            }
+        } catch {
+            if let rollback = lowStockProducts.firstIndex(where: { $0.id == productID }) {
+                lowStockProducts[rollback].stock = previous
+            }
+            errorMessage = error.shopwareDisplayMessage
+        }
     }
 
     /// Toggle maintenance for a sales channel and update the live channel list.
@@ -237,6 +330,7 @@ final class ShopwareDashboardViewModel: ObservableObject {
         lowStockProducts = []
         topProducts = []
         languageStats = []
+        dismissedAttentionIDs = []
         versionString = ""
         errorMessage = nil
     }

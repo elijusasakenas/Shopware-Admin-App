@@ -77,34 +77,32 @@ struct AIChatScreen: View {
     }
 
     private var loadingView: some View {
-        ProgressView()
-            .tint(.shopwareBlue)
+        Text("LOADING…")
+            .industryKicker()
+            .foregroundStyle(Color.industryFaint)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func requirementView(icon: String, title: LocalizedStringKey, message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 40))
-                .foregroundStyle(Color.shopwareBlue)
+        VStack(alignment: .leading, spacing: 14) {
             Text(title)
-                .font(.headline)
-                .foregroundStyle(Color.primaryText)
+                .font(IndustryFont.display(28))
+                .foregroundStyle(Color.industryText)
             Text(message)
-                .font(.subheadline)
-                .foregroundStyle(Color.secondaryText)
-                .multilineTextAlignment(.center)
+                .font(IndustryFont.body(14))
+                .foregroundStyle(Color.industryDim)
+                .lineSpacing(5)
             Button {
                 mcpAvailability = nil
                 serviceAvailability = nil
             } label: {
-                Text("Try again")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Color.shopwareBlue)
+                Text("TRY AGAIN")
+                    .industryKicker(10)
+                    .padding(.horizontal, 16)
             }
-            .padding(.top, 4)
+            .buttonStyle(IndustryActionButtonStyle(outlined: true))
         }
-        .padding(32)
+        .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -130,16 +128,7 @@ struct AIChatView: View {
             transcript
             inputBar
         }
-        .background(Color.appBackground)
-        .sheet(isPresented: approvalPresented) {
-            if let approval = chat.pendingApproval {
-                AIApprovalReviewSheet(
-                    approval: approval,
-                    approve: chat.approvePendingChange,
-                    decline: chat.declinePendingChange
-                )
-            }
-        }
+        .background(Color.industryBackground)
         .alert("Could not remove API key", isPresented: Binding(
             get: { keyError != nil },
             set: { if !$0 { keyError = nil } }
@@ -198,13 +187,18 @@ struct AIChatView: View {
                         entryView(entry)
                             .id(entry.id)
                     }
+                    if let approval = chat.pendingApproval {
+                        InlineApprovalCard(
+                            approval: approval,
+                            approve: chat.approvePendingChange,
+                            decline: chat.declinePendingChange
+                        )
+                        .id("approval")
+                    }
                     if chat.isThinking {
-                        HStack(spacing: 8) {
-                            ProgressView().tint(.shopwareBlue)
-                            Text("Thinking...")
-                                .font(.footnote)
-                                .foregroundStyle(Color.secondaryText)
-                        }
+                        Text("WORKING · READING SHOP DATA")
+                            .industryKicker()
+                            .foregroundStyle(Color.industryFaint)
                         .padding(.horizontal, 4)
                         .id("thinking")
                     }
@@ -222,16 +216,15 @@ struct AIChatView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.largeTitle)
-                .foregroundStyle(Color.shopwareBlue)
-            Text("Ask me anything about your shop.")
-                .font(.headline)
-                .foregroundStyle(Color.primaryText)
-            Text("I work through your shop's own MCP server: products, orders, promotions, settings and more. Every write needs a separate native approval before it can reach your shop.")
-                .font(.subheadline)
-                .foregroundStyle(Color.secondaryText)
-            VStack(alignment: .leading, spacing: 6) {
+            Text("Ask, and it works the shop for you.")
+                .font(IndustryFont.display(26))
+                .foregroundStyle(Color.industryText)
+            Text("Runs through your shop's own MCP server — products, orders, promotions, settings. Reads are immediate. Every write stops at an approval gate with the exact arguments shown.")
+                .font(IndustryFont.body(14))
+                .foregroundStyle(Color.industryDim)
+                .lineSpacing(5)
+            VStack(alignment: .leading, spacing: 0) {
+                Rectangle().fill(Color.industryLine).frame(height: 1)
                 suggestion(String(localized: "How did the shop do today?"))
                 suggestion(String(localized: "Which products are low on stock?"))
                 suggestion(String(localized: "Activate the summer promotion"))
@@ -243,58 +236,56 @@ struct AIChatView: View {
 
     private func suggestion(_ text: String) -> some View {
         Button {
-            draft = text
+            chat.send(text)
         } label: {
-            Text(text)
-                .font(.footnote)
-                .foregroundStyle(Color.shopwareBlue)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.controlBackground)
-                .clipShape(Capsule())
+            HStack {
+                Text(text)
+                    .font(IndustryFont.body(14))
+                    .foregroundStyle(Color.industryText)
+                Spacer()
+                Text("ASK")
+                    .industryKicker()
+                    .foregroundStyle(Color.industryAccent)
+            }
+            .frame(minHeight: 46)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(Color.industryHair).frame(height: 1)
+            }
         }
-        .buttonStyle(PressableButtonStyle())
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
     private func entryView(_ entry: ChatEntry) -> some View {
         switch entry.kind {
         case .user(let text):
-            HStack {
-                Spacer(minLength: 48)
+            VStack(alignment: .leading, spacing: 5) {
+                Text("YOU").industryKicker().foregroundStyle(Color.industryFaint)
                 Text(text)
-                    .foregroundStyle(Color.inverseText)
-                    .padding(.horizontal, 14)
+                    .font(IndustryFont.body(14.5))
+                    .foregroundStyle(Color.industryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(Color.shopwareBlue)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(Color.industryAccentTint)
+                    .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
             }
         case .assistant(let text):
-            HStack {
+            VStack(alignment: .leading, spacing: 5) {
+                Text("ASSISTANT").industryKicker().foregroundStyle(Color.industryFaint)
                 Text(.init(text)) // render the model's markdown
-                    .foregroundStyle(Color.primaryText)
-                    .padding(.horizontal, 14)
+                    .font(IndustryFont.body(14.5))
+                    .foregroundStyle(Color.industryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(Color.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.border, lineWidth: 1)
-                    )
-                Spacer(minLength: 48)
+                    .background(Color.industrySurface)
+                    .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
             }
         case .toolActivity(let label, let failed):
-            HStack(spacing: 6) {
-                Image(systemName: failed ? "exclamationmark.triangle" : "wrench.and.screwdriver")
-                    .font(.caption2)
-                Text(label)
-                    .font(.caption)
-            }
-            .foregroundStyle(failed ? Color.errorText : Color.secondaryText)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Color.controlBackground)
-            .clipShape(Capsule())
+            Text((failed ? "FAILED · " : "WORKING · ") + label.uppercased())
+                .industryKicker()
+                .foregroundStyle(failed ? Color.industryText : Color.industryFaint)
         case .error(let message):
             ErrorBanner(message: message)
         }
@@ -303,30 +294,8 @@ struct AIChatView: View {
     // MARK: - Input
 
     private var inputBar: some View {
-        HStack(spacing: 10) {
-            TextField("Message your shop assistant", text: $draft, axis: .vertical)
-                .lineLimit(1...4)
-                .focused($inputFocused)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Color.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.border, lineWidth: 1)
-                )
-                .onSubmit(sendDraft)
-            Button(action: sendDraft) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(canSend ? Color.shopwareBlue : Color.secondaryText.opacity(0.4))
-            }
-            .buttonStyle(PressableButtonStyle())
-            .disabled(!canSend)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color.appBackground)
+        AskBar(draft: $draft, onSubmit: sendDraft)
+            .opacity(chat.canSend ? 1 : 0.45)
     }
 
     private var canSend: Bool {
@@ -348,6 +317,47 @@ struct AIChatView: View {
         guard canSend else { return }
         chat.send(draft)
         draft = ""
+    }
+}
+
+private struct InlineApprovalCard: View {
+    let approval: AIApprovalChallenge
+    let approve: () -> Void
+    let decline: () -> Void
+
+    var body: some View {
+        BlueprintFrame {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Approval required · Write")
+                    .industryKicker()
+                    .foregroundStyle(Color.industryAccent)
+                Text(approval.actions.count == 1 ? approval.actions[0].localizedTitle : "\(approval.actions.count) shop changes")
+                    .font(IndustryFont.display(22))
+                    .foregroundStyle(Color.industryText)
+                Rectangle().fill(Color.industryHair).frame(height: 1)
+                ForEach(approval.actions) { action in
+                    Text(action.formattedDetails)
+                        .font(IndustryFont.display(13))
+                        .foregroundStyle(Color.industryDim)
+                        .textSelection(.enabled)
+                }
+                HStack(spacing: 8) {
+                    Button(action: approve) {
+                        Text("APPROVE ONCE")
+                            .industryKicker(10)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(IndustryActionButtonStyle())
+                    Button(action: decline) {
+                        Text("DECLINE")
+                            .industryKicker(10)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(IndustryActionButtonStyle(outlined: true))
+                }
+            }
+        }
+        .overlay(Rectangle().stroke(Color.industryAccent, lineWidth: 1))
     }
 }
 
@@ -415,7 +425,7 @@ private struct AIApprovalReviewSheet: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background((approval.isExpired(at: context.date) ? Color.red : Color.amber).opacity(0.1))
-                    .clipShape(Capsule())
+                    .clipShape(Rectangle())
             }
         }
         .frame(maxWidth: .infinity)
@@ -441,7 +451,7 @@ private struct AIApprovalReviewSheet: View {
         return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    Rectangle()
                         .fill(accent.opacity(0.12))
                         .frame(width: 42, height: 42)
                     Image(systemName: action.isDestructive ? "trash.fill" : "wand.and.stars")
@@ -486,9 +496,9 @@ private struct AIApprovalReviewSheet: View {
         }
         .padding(16)
         .background(Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(Rectangle())
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            Rectangle()
                 .stroke(accent.opacity(0.35), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
@@ -512,7 +522,7 @@ private struct AIApprovalReviewSheet: View {
         }
         .padding(14)
         .background(Color.shopwareBlue.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .clipShape(Rectangle())
     }
 
     private var actionBar: some View {
@@ -530,7 +540,7 @@ private struct AIApprovalReviewSheet: View {
                     .frame(maxWidth: .infinity, minHeight: 50)
                     .foregroundStyle(Color.inverseText)
                     .background(Color.shopwareBlue.opacity(approval.isExpired(at: context.date) ? 0.4 : 1))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .clipShape(Rectangle())
                 }
                 .buttonStyle(PressableButtonStyle())
                 .disabled(approval.isExpired(at: context.date))
@@ -541,7 +551,7 @@ private struct AIApprovalReviewSheet: View {
                         .foregroundStyle(Color.primaryText)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background(Color.controlBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .clipShape(Rectangle())
                 }
                 .buttonStyle(PressableButtonStyle())
             }

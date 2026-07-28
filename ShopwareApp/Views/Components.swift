@@ -1,11 +1,3 @@
-//
-//  Components.swift
-//  ShopwareApp
-//
-//  Small reusable views shared across screens: form fields, KPI cards,
-//  the orders list, and the error banner.
-//
-
 import SwiftUI
 
 struct FormField: View {
@@ -15,54 +7,196 @@ struct FormField: View {
     var isSecure = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 7) {
             Text(title)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(Color.secondaryText)
+                .industryKicker()
+                .foregroundStyle(Color.industryFaint)
             Group {
                 if isSecure { SecureField(placeholder, text: $text) }
                 else { TextField(placeholder, text: $text) }
             }
             .autocorrectionDisabled()
-            .font(.body)
-            .foregroundStyle(Color.primaryText)
-            .tint(Color.shopwareBlue)
-            .padding(.horizontal, 14)
-            .frame(minHeight: 52)
-            .background(Color.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border, lineWidth: 1))
+            .font(IndustryFont.body(15))
+            .foregroundStyle(Color.industryText)
+            .tint(Color.industryAccent)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 48)
+            .background(Color.industrySurface)
+            .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
         }
     }
 }
 
-struct MetricCard: View {
+struct SectionHeader: View {
     let title: LocalizedStringKey
-    let value: String
-    let accent: Color
+    var detail: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 7) {
-                Circle().fill(accent).frame(width: 8, height: 8)
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(Color.secondaryText)
-                    .lineLimit(1)
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(IndustryFont.display(20))
+                .foregroundStyle(Color.industryText)
+            Spacer()
+            if let detail {
+                Text(detail)
+                    .industryKicker()
+                    .foregroundStyle(Color.industryFaint)
             }
-            Text(value)
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(Color.primaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.65)
-                .contentTransition(.numericText())
-                .animation(.spring(response: 0.45, dampingFraction: 0.85), value: value)
         }
-        .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
-        .padding(16)
-        .background(Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border.opacity(0.7), lineWidth: 1))
+    }
+}
+
+struct BlueprintFrame<Content: View>: View {
+    var padding: CGFloat = 16
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        content()
+            .padding(padding)
+            .background(Color.industrySurface)
+            .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+            .overlay(RegistrationMarks().allowsHitTesting(false))
+    }
+}
+
+private struct RegistrationMarks: View {
+    var body: some View {
+        GeometryReader { geometry in
+            let points = [
+                CGPoint(x: 0, y: 0),
+                CGPoint(x: geometry.size.width, y: 0),
+                CGPoint(x: 0, y: geometry.size.height),
+                CGPoint(x: geometry.size.width, y: geometry.size.height)
+            ]
+            ForEach(Array(points.enumerated()), id: \.offset) { _, point in
+                Path { path in
+                    path.move(to: CGPoint(x: point.x - 5, y: point.y))
+                    path.addLine(to: CGPoint(x: point.x + 5, y: point.y))
+                    path.move(to: CGPoint(x: point.x, y: point.y - 5))
+                    path.addLine(to: CGPoint(x: point.x, y: point.y + 5))
+                }
+                .stroke(Color.industryMark, lineWidth: 1)
+            }
+        }
+        .padding(-6)
+    }
+}
+
+struct SeverityLadder: View {
+    let level: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(0..<3, id: \.self) { index in
+                Rectangle()
+                    .fill(index < level ? Color.industryAccent : Color.clear)
+                    .frame(width: 16, height: 3)
+            }
+        }
+        .frame(width: 16)
+        .accessibilityLabel(level == 3 ? "Urgent" : level == 2 ? "Warning" : "Information")
+    }
+}
+
+struct SquareToggle: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Button {
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.82)) {
+                isOn.toggle()
+            }
+        } label: {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                Rectangle()
+                    .fill(isOn ? Color.industryAccentTint : Color.clear)
+                    .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+                Rectangle()
+                    .fill(Color.industryAccent)
+                    .frame(width: 18, height: 18)
+                    .padding(2)
+            }
+            .frame(width: 44, height: 24)
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(isOn ? "On" : "Off")
+    }
+}
+
+struct StockStepper: View {
+    let stock: Int
+    var isBusy = false
+    let onChange: (Int) -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Button { onChange(max(0, stock - 1)) } label: {
+                Image(systemName: "minus")
+                    .font(.system(size: 11, weight: .light))
+                    .frame(width: 38, height: 38)
+            }
+            .disabled(stock == 0 || isBusy)
+            Text(stock.formatted())
+                .font(IndustryFont.display(17))
+                .monospacedDigit()
+                .foregroundStyle(Color.industryText)
+                .frame(minWidth: 34)
+            Button { onChange(stock + 1) } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .light))
+                    .frame(width: 38, height: 38)
+                    .background(Color.industryAccentTint)
+            }
+            .disabled(isBusy)
+        }
+        .foregroundStyle(Color.industryAccent)
+        .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+        .opacity(isBusy ? 0.45 : 1)
+        .buttonStyle(.plain)
+    }
+}
+
+struct AskBar: View {
+    var draft: Binding<String>?
+    var onSubmit: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 15, weight: .light))
+                    .foregroundStyle(Color.industryAccent)
+                if let draft {
+                    TextField("Ask your shop assistant", text: draft)
+                        .font(IndustryFont.body(15))
+                        .onSubmit(onSubmit)
+                } else {
+                    Text("Ask your shop assistant")
+                        .font(IndustryFont.body(15))
+                        .foregroundStyle(Color.industryDim)
+                    Spacer()
+                }
+            }
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(Color.industrySurface)
+            .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+            Button(action: onSubmit) {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 15, weight: .light))
+                    .foregroundStyle(Color.industryInverse)
+                    .frame(width: 44, height: 44)
+                    .background(Color.industryAccent)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+        .background(Color.industryBackground)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Color.industryLine).frame(height: 1)
+        }
     }
 }
 
@@ -72,69 +206,64 @@ struct OrderList: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            Rectangle().fill(Color.industryLine).frame(height: 1)
             if orders.isEmpty {
-                Group {
-                    if isLoading {
-                        Text("Loading...")
-                    } else {
-                        Text("No orders today.")
-                    }
-                }
-                .font(.subheadline)
-                .foregroundStyle(Color.secondaryText)
-                .frame(maxWidth: .infinity)
-                .padding(18)
+                Text(isLoading ? "LOADING…" : "NO ORDERS TODAY")
+                    .industryKicker()
+                    .foregroundStyle(Color.industryFaint)
+                    .frame(maxWidth: .infinity)
+                    .padding(22)
             } else {
                 ForEach(orders) { order in
                     NavigationLink(value: order) {
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(order.orderNumber)
-                                    .font(.subheadline.weight(.bold))
-                                    .foregroundStyle(Color.primaryText)
+                        HStack(spacing: 10) {
+                            Text(order.orderNumber)
+                                .font(IndustryFont.display(16))
+                                .foregroundStyle(Color.industryText)
+                                .frame(width: 58, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(StateLocalization.stateName(order.state))
+                                    .font(IndustryFont.body(14, medium: true))
+                                    .foregroundStyle(Color.industryText)
                                     .lineLimit(1)
-                                Text("\(order.displayDate) · \(StateLocalization.stateName(order.state))")
-                                    .font(.caption)
-                                    .foregroundStyle(Color.secondaryText)
+                                Text(order.displayDate)
+                                    .industryKicker(9)
+                                    .foregroundStyle(Color.industryFaint)
                                     .lineLimit(1)
                             }
                             Spacer()
                             Text(order.amountTotal.formatted(.currency(code: order.currencyCode)))
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(Color.primaryText)
+                                .font(IndustryFont.display(17))
+                                .foregroundStyle(Color.industryText)
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.7)
                             Image(systemName: "chevron.right")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(Color.secondaryText)
+                                .font(.system(size: 11, weight: .light))
+                                .foregroundStyle(Color.industryFaint)
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 11)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    if order.id != orders.last?.id {
-                        Divider().padding(.leading, 14)
-                    }
+                    Rectangle().fill(Color.industryHair).frame(height: 1)
                 }
             }
         }
-        .background(Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.border, lineWidth: 1))
     }
 }
 
 struct ErrorBanner: View {
     let message: String
+
     var body: some View {
-        Text(message)
-            .font(.subheadline)
-            .foregroundStyle(Color.errorText)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(Color.errorBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.errorBorder, lineWidth: 1))
+        HStack(spacing: 12) {
+            SeverityLadder(level: 3)
+            Text(message)
+                .font(IndustryFont.body(14))
+                .foregroundStyle(Color.industryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(12)
+        .background(Color.industrySurface)
+        .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
     }
 }

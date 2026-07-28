@@ -23,3 +23,27 @@ struct DashboardBucket: Identifiable {
     var count: Int
     var amount: Double
 }
+
+enum TrendMetric: String, CaseIterable, Identifiable {
+    case orders
+    case turnover
+    case basket
+
+    var id: String { rawValue }
+    var label: String { rawValue.uppercased() }
+}
+
+struct AttentionItem: Identifiable {
+    enum Destination {
+        case order(LatestOrder)
+        case products
+        case resolve
+    }
+
+    var id: String
+    var severity: Int
+    var title: String
+    var meta: String
+    var action: String
+    var destination: Destination
+}

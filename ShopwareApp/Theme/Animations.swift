@@ -11,22 +11,21 @@ import SwiftUI
 // Soft radar pulse for the live connection indicator
 struct PulsingDot: View {
     @State private var pulse = false
-    private let green = Color(red: 0.22, green: 0.82, blue: 0.42)
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(green)
-                .frame(width: 14, height: 14)
-                .scaleEffect(pulse ? 1.8 : 0.6)
+            Rectangle()
+                .fill(Color.industryAccent)
+                .frame(width: 6, height: 6)
+                .scaleEffect(pulse ? 2 : 1)
                 .opacity(pulse ? 0 : 0.5)
-            Circle()
-                .fill(green)
-                .frame(width: 7, height: 7)
+            Rectangle()
+                .fill(Color.industryAccent)
+                .frame(width: 6, height: 6)
         }
-        .frame(width: 14, height: 14)
+        .frame(width: 12, height: 12)
         .onAppear {
-            withAnimation(.easeOut(duration: 1.8).repeatForever(autoreverses: false)) {
+            withAnimation(.easeOut(duration: 2).repeatForever(autoreverses: false)) {
                 pulse = true
             }
         }

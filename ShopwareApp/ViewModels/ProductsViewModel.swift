@@ -26,6 +26,10 @@ final class ProductsViewModel: ObservableObject {
         try await client.searchProducts(term: term, salesChannelID: salesChannelID)
     }
 
+    func setStock(productID: String, to stock: Int) async throws {
+        try await client.updateProduct(id: productID, stock: max(0, stock))
+    }
+
     func productDetail(id: String, languageID: String? = nil) async throws -> ProductDetail {
         try await client.fetchProductDetail(id: id, languageID: languageID)
     }

@@ -2,7 +2,7 @@
 //  Color+Shopware.swift
 //  ShopwareApp
 //
-//  Palette matching the Shopware 6 administration (Meteor design system).
+//  Semantic palette for the Industry dashboard design.
 //
 
 import SwiftUI
@@ -13,36 +13,77 @@ import AppKit
 #endif
 
 extension Color {
-    static let appBackground = dynamic(light: Color(red: 0.94, green: 0.95, blue: 0.96),
-                                       dark: Color(red: 0.06, green: 0.08, blue: 0.11))
-    static let surface       = dynamic(light: Color.white,
-                                       dark: Color(red: 0.11, green: 0.14, blue: 0.18))
-    static let controlBackground = dynamic(light: Color(red: 0.91, green: 0.94, blue: 0.96),
-                                           dark: Color(red: 0.16, green: 0.20, blue: 0.26))
-    static let border        = dynamic(light: Color(red: 0.82, green: 0.85, blue: 0.88),
-                                       dark: Color(red: 0.24, green: 0.29, blue: 0.36))
-    static let primaryText   = dynamic(light: Color(red: 0.08, green: 0.13, blue: 0.18),
-                                       dark: Color(red: 0.93, green: 0.96, blue: 0.98))
-    static let secondaryText = dynamic(light: Color(red: 0.32, green: 0.40, blue: 0.48),
-                                       dark: Color(red: 0.62, green: 0.70, blue: 0.78))
-    static let inverseText   = Color.white
-    static let shopwareBlue  = dynamic(light: Color(red: 0.03, green: 0.44, blue: 1.0),
-                                       dark: Color(red: 0.27, green: 0.58, blue: 1.0))
-    static let swNavy        = Color(red: 0.10, green: 0.14, blue: 0.20)
-    static let amber         = dynamic(light: Color(red: 0.72, green: 0.45, blue: 0.05),
-                                       dark: Color(red: 0.95, green: 0.67, blue: 0.24))
-    static let blue          = dynamic(light: Color(red: 0.42, green: 0.27, blue: 0.76),
-                                       dark: Color(red: 0.59, green: 0.48, blue: 0.96))
-    static let red           = dynamic(light: Color(red: 0.87, green: 0.16, blue: 0.30),
-                                       dark: Color(red: 1.0, green: 0.38, blue: 0.48))
-    static let errorText     = dynamic(light: Color(red: 0.56, green: 0.11, blue: 0.09),
-                                       dark: Color(red: 1.0, green: 0.62, blue: 0.58))
-    static let errorBackground = dynamic(light: Color(red: 1.0, green: 0.94, blue: 0.93),
-                                         dark: Color(red: 0.22, green: 0.08, blue: 0.08))
-    static let errorBorder   = dynamic(light: Color(red: 0.95, green: 0.71, blue: 0.68),
-                                       dark: Color(red: 0.58, green: 0.20, blue: 0.20))
+    static let industryBackground = dynamic(
+        light: Color(red: 0.949, green: 0.949, blue: 0.953),
+        dark: Color(red: 0.082, green: 0.106, blue: 0.129)
+    )
+    static let industrySurface = dynamic(
+        light: .white,
+        dark: Color(red: 0.110, green: 0.141, blue: 0.173)
+    )
+    static let industrySunk = dynamic(
+        light: Color(red: 0.914, green: 0.914, blue: 0.918),
+        dark: Color(red: 0.129, green: 0.169, blue: 0.204)
+    )
+    static let industryText = dynamic(
+        light: Color(red: 0.114, green: 0.122, blue: 0.125),
+        dark: Color(red: 0.933, green: 0.945, blue: 0.957)
+    )
+    static let industryDim = dynamic(
+        light: Color(red: 0.365, green: 0.365, blue: 0.376),
+        dark: Color(red: 0.655, green: 0.702, blue: 0.741)
+    )
+    static let industryFaint = dynamic(
+        light: Color(red: 0.596, green: 0.596, blue: 0.608),
+        dark: Color(red: 0.463, green: 0.510, blue: 0.549)
+    )
+    static let industryAccent = dynamic(
+        light: Color(red: 0.349, green: 0.502, blue: 0.651),
+        dark: Color(red: 0.580, green: 0.737, blue: 0.890)
+    )
+    static let industryAccentDeep = dynamic(
+        light: Color(red: 0.173, green: 0.271, blue: 0.365),
+        dark: Color(red: 0.710, green: 0.851, blue: 0.992)
+    )
+    static let industryAccentTint = dynamic(
+        light: Color(red: 0.349, green: 0.502, blue: 0.651).opacity(0.10),
+        dark: Color(red: 0.580, green: 0.737, blue: 0.890).opacity(0.12)
+    )
+    static let industryInverse = dynamic(
+        light: Color(red: 0.961, green: 0.961, blue: 0.973),
+        dark: Color(red: 0.082, green: 0.106, blue: 0.129)
+    )
+    static let industryLine = dynamic(
+        light: Color(red: 0.114, green: 0.122, blue: 0.125).opacity(0.18),
+        dark: Color(red: 0.949, green: 0.949, blue: 0.953).opacity(0.20)
+    )
+    static let industryHair = dynamic(
+        light: Color(red: 0.114, green: 0.122, blue: 0.125).opacity(0.10),
+        dark: Color(red: 0.949, green: 0.949, blue: 0.953).opacity(0.11)
+    )
+    static let industryMark = dynamic(
+        light: Color(red: 0.114, green: 0.122, blue: 0.125).opacity(0.50),
+        dark: Color(red: 0.949, green: 0.949, blue: 0.953).opacity(0.45)
+    )
 
-    private static func dynamic(light: Color, dark: Color) -> Color {
+    // Existing call sites keep these semantic aliases while screens migrate.
+    static let appBackground = industryBackground
+    static let surface = industrySurface
+    static let controlBackground = industrySunk
+    static let border = industryLine
+    static let primaryText = industryText
+    static let secondaryText = industryDim
+    static let inverseText = industryInverse
+    static let shopwareBlue = industryAccent
+    static let swNavy = industryText
+    static let amber = industryAccent
+    static let blue = industryAccent
+    static let red = industryAccent
+    static let errorText = industryText
+    static let errorBackground = industrySurface
+    static let errorBorder = industryLine
+
+    static func dynamic(light: Color, dark: Color) -> Color {
         #if canImport(UIKit)
         return Color(UIColor { traits in
             traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)

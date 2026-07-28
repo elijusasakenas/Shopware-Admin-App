@@ -12,20 +12,36 @@ struct PrimaryButtonStyle: ButtonStyle {
         configuration.label
             .frame(maxWidth: .infinity, minHeight: 50)
             .foregroundStyle(Color.inverseText)
-            .background(Color.shopwareBlue.opacity(configuration.isPressed ? 0.82 : 1))
-            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .background(configuration.isPressed ? Color.industryAccentDeep : Color.industryAccent)
+            .contentShape(Rectangle())
     }
 }
 
 struct IconButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .frame(width: 48, height: 44)
-            .foregroundStyle(Color.primaryText)
-            .background(Color.controlBackground.opacity(configuration.isPressed ? 0.7 : 1))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .frame(width: 44, height: 44)
+            .foregroundStyle(Color.industryDim)
+            .background(configuration.isPressed ? Color.industryAccentTint : Color.clear)
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+struct IndustryActionButtonStyle: ButtonStyle {
+    var outlined = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(minHeight: 44)
+            .foregroundStyle(outlined ? Color.industryDim : Color.industryInverse)
+            .background(
+                configuration.isPressed
+                    ? Color.industryAccentTint
+                    : (outlined ? Color.clear : Color.industryAccent)
+            )
+            .overlay(Rectangle().stroke(outlined ? Color.industryLine : Color.clear, lineWidth: 1))
+            .contentShape(Rectangle())
     }
 }
 
