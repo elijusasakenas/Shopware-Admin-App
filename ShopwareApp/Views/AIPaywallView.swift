@@ -51,7 +51,7 @@ struct AIPaywallView: View {
                         Task { await subscriptions.purchase() }
                     } label: {
                         if subscriptions.isPurchasing {
-                            Text("WORKING…").industryKicker()
+                            Text("Working…").font(.headline)
                         } else {
                             Text("Subscribe for \(priceText)")
                                 .font(.headline)
@@ -136,9 +136,9 @@ struct AIPaywallView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(Color.surface)
-                .clipShape(Rectangle())
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .overlay(
-                    Rectangle()
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .stroke(Color.border, lineWidth: 1)
                 )
 
@@ -158,7 +158,7 @@ struct AIPaywallView: View {
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .foregroundStyle(Color.primaryText)
                     .background(Color.controlBackground)
-                    .clipShape(Rectangle())
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
             .buttonStyle(PressableButtonStyle())
             .disabled(keyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

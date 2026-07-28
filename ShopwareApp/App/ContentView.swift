@@ -15,9 +15,8 @@ struct ContentView: View {
     var body: some View {
         Group {
             if viewModel.isBooting {
-                Text("LOADING…")
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                ProgressView()
+                    .tint(.shopwareBlue)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.appBackground)
             } else if viewModel.connection == nil {

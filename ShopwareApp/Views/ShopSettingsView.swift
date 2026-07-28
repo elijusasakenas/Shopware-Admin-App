@@ -33,13 +33,13 @@ struct ShopSettingsView: View {
             .padding(.top, 14)
             .padding(.bottom, 34)
         }
-        .background(Color.industryBackground)
+        .background(Color.appBackground)
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("SHOP & APP")
-                    .industryKicker(11)
-                    .foregroundStyle(Color.industryText)
+                    .font(.headline)
+                    .foregroundStyle(Color.primaryText)
             }
         }
         #if !os(macOS)
@@ -87,15 +87,16 @@ struct ShopSettingsView: View {
             SectionHeader(title: "Appearance")
             HStack(spacing: 0) {
                 appearanceButton(.light)
-                Rectangle().fill(Color.industryHair).frame(width: 1, height: 44)
+                Divider().frame(height: 44)
                 appearanceButton(.dark)
             }
-            .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+            .background(Color.controlBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
             HStack {
                 Text("App language")
-                    .font(IndustryFont.body(14.5))
-                    .foregroundStyle(Color.industryText)
+                    .font(.body)
+                    .foregroundStyle(Color.primaryText)
                 Spacer()
                 Picker("App language", selection: $appLanguageCode) {
                     ForEach(AppLanguage.allCases) { language in
@@ -103,13 +104,14 @@ struct ShopSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .tint(Color.industryAccent)
+                .tint(Color.shopwareBlue)
             }
             .frame(minHeight: 48)
             .overlay(alignment: .bottom) {
-                Rectangle().fill(Color.industryHair).frame(height: 1)
+                Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
             }
         }
+        .shopwareCard()
     }
 
     private func appearanceButton(_ option: AppAppearance) -> some View {
@@ -117,10 +119,10 @@ struct ShopSettingsView: View {
             appearance = option.rawValue
         } label: {
             Text(option.title)
-                .industryKicker(10)
-                .foregroundStyle(appearance == option.rawValue ? Color.industryInverse : Color.industryDim)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(appearance == option.rawValue ? Color.inverseText : Color.secondaryText)
                 .frame(maxWidth: .infinity, minHeight: 44)
-                .background(appearance == option.rawValue ? Color.industryAccent : Color.clear)
+                .background(appearance == option.rawValue ? Color.shopwareBlue : Color.clear)
         }
         .buttonStyle(.plain)
     }
@@ -129,7 +131,7 @@ struct ShopSettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Manage")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             NavigationLink {
                 NewCustomersView(settings: settings)
             } label: {
@@ -164,6 +166,7 @@ struct ShopSettingsView: View {
             }
             .buttonStyle(.plain)
         }
+        .shopwareCard()
     }
 
     private func manageRow(
@@ -173,8 +176,8 @@ struct ShopSettingsView: View {
     ) -> some View {
         HStack {
             Text(title)
-                .font(IndustryFont.body(14.5))
-                .foregroundStyle(Color.industryText)
+                .font(.body)
+                .foregroundStyle(Color.primaryText)
             Spacer()
             Group {
                 if localizeValue {
@@ -183,16 +186,16 @@ struct ShopSettingsView: View {
                     Text(value)
                 }
             }
-                .industryKicker()
-                .foregroundStyle(Color.industryFaint)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color.secondaryText)
             Image(systemName: "chevron.right")
                 .font(.system(size: 10, weight: .light))
-                .foregroundStyle(Color.industryFaint)
+                .foregroundStyle(Color.secondaryText)
         }
         .frame(minHeight: 50)
         .contentShape(Rectangle())
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.industryHair).frame(height: 1)
+            Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
         }
     }
 
@@ -200,31 +203,32 @@ struct ShopSettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Maintenance mode")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             ForEach(session.salesChannels) { channel in
                 HStack {
                     Text(channel.name)
-                        .font(IndustryFont.body(14.5))
-                        .foregroundStyle(Color.industryText)
+                        .font(.body)
+                        .foregroundStyle(Color.primaryText)
                     Spacer()
                     Text(channel.maintenance ? "ON" : "OFF")
-                        .industryKicker()
-                        .foregroundStyle(Color.industryFaint)
+                        .font(.caption)
+                        .foregroundStyle(Color.secondaryText)
                     SquareToggle(isOn: maintenanceBinding(for: channel))
                 }
                 .frame(minHeight: 52)
                 .overlay(alignment: .bottom) {
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
                 }
             }
         }
+        .shopwareCard()
     }
 
     private var promotionsSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Promotions")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             if isLoading {
                 loadingRow
             } else if promotions.isEmpty {
@@ -234,67 +238,69 @@ struct ShopSettingsView: View {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(promotion.name)
-                                .font(IndustryFont.body(14.5, medium: true))
-                                .foregroundStyle(Color.industryText)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.primaryText)
                             if let code = promotion.code, !code.isEmpty {
                                 Text("CODE \(code)")
-                                    .industryKicker()
-                                    .foregroundStyle(Color.industryFaint)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.secondaryText)
                             }
                         }
                         Spacer()
                         Text(promotion.active ? "ACTIVE" : "PAUSED")
-                            .industryKicker()
-                            .foregroundStyle(promotion.active ? Color.industryAccent : Color.industryFaint)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(promotion.active ? Color.shopwareBlue : Color.secondaryText)
                         SquareToggle(isOn: promotionBinding(for: promotion))
                     }
                     .frame(minHeight: 56)
                     .overlay(alignment: .bottom) {
-                        Rectangle().fill(Color.industryHair).frame(height: 1)
+                        Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
                     }
                 }
             }
         }
+        .shopwareCard()
     }
 
     private var languageSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Sales by language · 30d")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             let maximum = max(session.languageStats.map(\.count).max() ?? 1, 1)
             ForEach(session.languageStats) { stat in
                 VStack(alignment: .leading, spacing: 7) {
                     HStack {
                         Text(stat.name)
-                            .font(IndustryFont.body(14))
-                            .foregroundStyle(Color.industryText)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.primaryText)
                         Spacer()
                         Text("\(stat.count) ORDERS")
-                            .industryKicker()
-                            .foregroundStyle(Color.industryFaint)
+                            .font(.caption)
+                            .foregroundStyle(Color.secondaryText)
                         Text(stat.amount.formatted(
                             .currency(code: session.metrics?.currencyCode ?? "EUR")
                                 .precision(.fractionLength(0))
                         ))
-                        .font(IndustryFont.display(16))
-                        .foregroundStyle(Color.industryText)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.primaryText)
                     }
                     TickBar(fraction: Double(stat.count) / Double(maximum))
                 }
                 .padding(.vertical, 10)
                 .overlay(alignment: .bottom) {
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
                 }
             }
         }
+        .shopwareCard()
     }
 
     private var newsletterSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Newsletter signups")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             if isLoading {
                 loadingRow
             } else if recipients.isEmpty {
@@ -304,8 +310,8 @@ struct ShopSettingsView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(recipient.email)
-                                .font(IndustryFont.body(14))
-                                .foregroundStyle(Color.industryText)
+                                .font(.subheadline)
+                                .foregroundStyle(Color.primaryText)
                                 .lineLimit(1)
                             if let createdAt = recipient.createdAt {
                                 Text(
@@ -314,22 +320,23 @@ struct ShopSettingsView: View {
                                             .locale(AppLocalization.locale)
                                     )
                                 )
-                                    .industryKicker()
-                                    .foregroundStyle(Color.industryFaint)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.secondaryText)
                             }
                         }
                         Spacer()
                         Text(recipient.statusLabel)
-                            .industryKicker()
-                            .foregroundStyle(Color.industryAccent)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.shopwareBlue)
                     }
                     .padding(.vertical, 10)
                     .overlay(alignment: .bottom) {
-                        Rectangle().fill(Color.industryHair).frame(height: 1)
+                        Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
                     }
                 }
             }
         }
+        .shopwareCard()
     }
 
     private var signOutButton: some View {
@@ -337,26 +344,31 @@ struct ShopSettingsView: View {
             confirmSignOut = true
         } label: {
             Text("SIGN OUT OF ALL SHOPS")
-                .industryKicker(10)
-                .foregroundStyle(Color.industryDim)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.red)
                 .frame(maxWidth: .infinity, minHeight: 46)
-                .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+                .background(Color.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color.border, lineWidth: 1)
+                )
         }
         .buttonStyle(.plain)
     }
 
     private var loadingRow: some View {
         Text("LOADING…")
-            .industryKicker()
-            .foregroundStyle(Color.industryFaint)
+            .font(.subheadline)
+            .foregroundStyle(Color.secondaryText)
             .frame(maxWidth: .infinity)
             .padding(20)
     }
 
     private func emptyRow(_ text: LocalizedStringKey) -> some View {
         Text(text)
-            .industryKicker()
-            .foregroundStyle(Color.industryFaint)
+            .font(.subheadline)
+            .foregroundStyle(Color.secondaryText)
             .frame(maxWidth: .infinity)
             .padding(20)
     }

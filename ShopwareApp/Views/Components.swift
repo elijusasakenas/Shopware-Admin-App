@@ -7,22 +7,26 @@ struct FormField: View {
     var isSecure = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .industryKicker()
-                .foregroundStyle(Color.industryFaint)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(Color.secondaryText)
             Group {
                 if isSecure { SecureField(placeholder, text: $text) }
                 else { TextField(placeholder, text: $text) }
             }
             .autocorrectionDisabled()
-            .font(IndustryFont.body(15))
-            .foregroundStyle(Color.industryText)
-            .tint(Color.industryAccent)
-            .padding(.horizontal, 12)
-            .frame(minHeight: 48)
-            .background(Color.industrySurface)
-            .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+            .font(.body)
+            .foregroundStyle(Color.primaryText)
+            .tint(Color.shopwareBlue)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 52)
+            .background(Color.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.border, lineWidth: 1)
+            )
         }
     }
 }
@@ -34,51 +38,31 @@ struct SectionHeader: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
-                .font(IndustryFont.display(20))
-                .foregroundStyle(Color.industryText)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.primaryText)
             Spacer()
             if let detail {
                 Text(AppLocalization.string(String.LocalizationValue(detail)))
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.shopwareBlue)
             }
         }
     }
 }
 
 struct BlueprintFrame<Content: View>: View {
-    var padding: CGFloat = 16
+    var padding: CGFloat = 18
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         content()
-            .padding(padding)
-            .background(Color.industrySurface)
-            .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
-            .overlay(RegistrationMarks().allowsHitTesting(false))
-    }
-}
-
-private struct RegistrationMarks: View {
-    var body: some View {
-        GeometryReader { geometry in
-            let points = [
-                CGPoint(x: 0, y: 0),
-                CGPoint(x: geometry.size.width, y: 0),
-                CGPoint(x: 0, y: geometry.size.height),
-                CGPoint(x: geometry.size.width, y: geometry.size.height)
-            ]
-            ForEach(Array(points.enumerated()), id: \.offset) { _, point in
-                Path { path in
-                    path.move(to: CGPoint(x: point.x - 5, y: point.y))
-                    path.addLine(to: CGPoint(x: point.x + 5, y: point.y))
-                    path.move(to: CGPoint(x: point.x, y: point.y - 5))
-                    path.addLine(to: CGPoint(x: point.x, y: point.y + 5))
-                }
-                .stroke(Color.industryMark, lineWidth: 1)
-            }
-        }
-        .padding(-6)
+            .padding(max(padding, 16))
+            .background(Color.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.border.opacity(0.7), lineWidth: 1)
+            )
     }
 }
 
@@ -88,9 +72,9 @@ struct SeverityLadder: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             ForEach(0..<3, id: \.self) { index in
-                Rectangle()
-                    .fill(index < level ? Color.industryAccent : Color.clear)
-                    .frame(width: 16, height: 3)
+                Capsule()
+                    .fill(index < level ? Color.shopwareBlue : Color.border)
+                    .frame(width: 16, height: 4)
             }
         }
         .frame(width: 16)
@@ -108,13 +92,13 @@ struct SquareToggle: View {
             }
         } label: {
             ZStack(alignment: isOn ? .trailing : .leading) {
-                Rectangle()
-                    .fill(isOn ? Color.industryAccentTint : Color.clear)
-                    .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
-                Rectangle()
-                    .fill(Color.industryAccent)
+                Capsule()
+                    .fill(isOn ? Color.shopwareBlue : Color.controlBackground)
+                Circle()
+                    .fill(Color.white)
                     .frame(width: 18, height: 18)
-                    .padding(2)
+                    .padding(3)
+                    .shadow(color: .black.opacity(0.16), radius: 1, y: 1)
             }
             .frame(width: 44, height: 24)
         }
@@ -129,28 +113,43 @@ struct StockStepper: View {
     let onChange: (Int) -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 6) {
             Button { onChange(max(0, stock - 1)) } label: {
                 Image(systemName: "minus")
-                    .font(.system(size: 11, weight: .light))
-                    .frame(width: 38, height: 38)
+                    .font(.system(size: 12, weight: .semibold))
+                    .frame(width: 32, height: 32)
+                    .background(Color.controlBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
             }
-            .disabled(stock == 0 || isBusy)
+            .disabled(stock <= 0 || isBusy)
+            .opacity(stock <= 0 ? 0.4 : 1)
+
             Text(stock.formatted())
-                .font(IndustryFont.display(17))
+                .font(.body.monospacedDigit().weight(.semibold))
                 .monospacedDigit()
-                .foregroundStyle(Color.industryText)
-                .frame(minWidth: 34)
+                .foregroundStyle(stock < 0 ? Color.red : Color.primaryText)
+                .frame(minWidth: 36, minHeight: 32)
+                .background(stock < 0 ? Color.red.opacity(0.08) : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+
             Button { onChange(stock + 1) } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .light))
-                    .frame(width: 38, height: 38)
-                    .background(Color.industryAccentTint)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.inverseText)
+                    .frame(width: 32, height: 32)
+                    .background(Color.shopwareBlue)
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
             }
             .disabled(isBusy)
         }
-        .foregroundStyle(Color.industryAccent)
-        .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+        .foregroundStyle(Color.shopwareBlue)
+        .padding(4)
+        .background(Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.border, lineWidth: 1)
+        )
         .opacity(isBusy ? 0.45 : 1)
         .buttonStyle(.plain)
     }
@@ -166,45 +165,67 @@ struct AskBar: View {
         HStack(spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 15, weight: .light))
-                    .foregroundStyle(Color.industryAccent)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.shopwareBlue)
                 if let draft {
                     TextField("Ask your shop assistant", text: draft)
-                        .font(IndustryFont.body(15))
+                        .font(.body)
                         .focused($fieldFocused)
-                        .onSubmit(onSubmit)
+                        .submitLabel(.send)
+                        .onSubmit(submit)
+                    if fieldFocused {
+                        Button {
+                            fieldFocused = false
+                        } label: {
+                            Image(systemName: "keyboard.chevron.compact.down")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(Color.secondaryText)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Done")
+                    }
                 } else {
                     Text("Ask your shop assistant")
-                        .font(IndustryFont.body(15))
-                        .foregroundStyle(Color.industryDim)
+                        .font(.body)
+                        .foregroundStyle(Color.secondaryText)
                     Spacer()
                 }
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 14)
             .frame(maxWidth: .infinity, minHeight: 44)
-            .background(Color.industrySurface)
-            .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
-            Button(action: onSubmit) {
+            .background(Color.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+            Button(action: submit) {
                 Image(systemName: "arrow.up")
-                    .font(.system(size: 15, weight: .light))
-                    .foregroundStyle(Color.industryInverse)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.inverseText)
                     .frame(width: 44, height: 44)
-                    .background(Color.industryAccent)
+                    .background(Color.shopwareBlue)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
         .padding(.bottom, 8)
-        .background(Color.industryBackground)
+        .background(Color.appBackground)
         .overlay(alignment: .top) {
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Rectangle().fill(Color.border.opacity(0.7)).frame(height: 1)
         }
         .task {
             guard autoFocus, draft != nil else { return }
             await Task.yield()
             fieldFocused = true
         }
+    }
+
+    private func submit() {
+        fieldFocused = false
+        onSubmit()
     }
 }
 
@@ -214,11 +235,10 @@ struct OrderList: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Rectangle().fill(Color.industryLine).frame(height: 1)
             if orders.isEmpty {
-                Text(isLoading ? "LOADING…" : "NO ORDERS TODAY")
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                Text(isLoading ? "Loading…" : "No orders today.")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(22)
             } else {
@@ -226,36 +246,45 @@ struct OrderList: View {
                     NavigationLink(value: order) {
                         HStack(spacing: 10) {
                             Text(order.orderNumber)
-                                .font(IndustryFont.display(16))
-                                .foregroundStyle(Color.industryText)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(Color.primaryText)
                                 .frame(width: 58, alignment: .leading)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(StateLocalization.stateName(order.state))
-                                    .font(IndustryFont.body(14, medium: true))
-                                    .foregroundStyle(Color.industryText)
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(Color.primaryText)
                                     .lineLimit(1)
                                 Text(order.displayDate)
-                                    .industryKicker(9)
-                                    .foregroundStyle(Color.industryFaint)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.secondaryText)
                                     .lineLimit(1)
                             }
                             Spacer()
                             Text(order.amountTotal.formatted(.currency(code: order.currencyCode)))
-                                .font(IndustryFont.display(17))
-                                .foregroundStyle(Color.industryText)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(Color.primaryText)
                                 .lineLimit(1)
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 11, weight: .light))
-                                .foregroundStyle(Color.industryFaint)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Color.secondaryText)
                         }
+                        .padding(.horizontal, 14)
                         .padding(.vertical, 11)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    if order.id != orders.last?.id {
+                        Divider().padding(.leading, 14)
+                    }
                 }
             }
         }
+        .background(Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 }
 
@@ -263,15 +292,37 @@ struct ErrorBanner: View {
     let message: String
 
     var body: some View {
-        HStack(spacing: 12) {
-            SeverityLadder(level: 3)
-            Text(message)
-                .font(IndustryFont.body(14))
-                .foregroundStyle(Color.industryText)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(12)
-        .background(Color.industrySurface)
-        .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+        Text(message)
+            .font(.subheadline)
+            .foregroundStyle(Color.errorText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(Color.errorBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.errorBorder, lineWidth: 1)
+            )
+    }
+}
+
+private struct ShopwareCardModifier: ViewModifier {
+    let padding: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .padding(padding)
+            .background(Color.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.border.opacity(0.7), lineWidth: 1)
+            )
+    }
+}
+
+extension View {
+    func shopwareCard(padding: CGFloat = 18) -> some View {
+        modifier(ShopwareCardModifier(padding: padding))
     }
 }

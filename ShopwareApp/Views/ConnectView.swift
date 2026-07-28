@@ -15,14 +15,14 @@ struct ConnectView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     VStack(alignment: .leading, spacing: 9) {
                         Text("Shopware Admin API")
-                            .industryKicker()
-                            .foregroundStyle(Color.industryAccent)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.shopwareBlue)
                         Text("Connect your shop")
-                            .font(IndustryFont.display(34))
-                            .foregroundStyle(Color.industryText)
+                            .font(.largeTitle.weight(.bold))
+                            .foregroundStyle(Color.primaryText)
                         Text("Create an integration in Shopware Administration and enter its access keys here. Credentials remain in the device keychain.")
-                            .font(IndustryFont.body(13.5))
-                            .foregroundStyle(Color.industryDim)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.secondaryText)
                             .lineSpacing(5)
                         Link(
                             destination: URL(
@@ -31,11 +31,11 @@ struct ConnectView: View {
                         ) {
                             HStack(spacing: 6) {
                                 Text("HOW TO GET YOUR ACCESS KEYS")
-                                    .industryKicker()
+                                    .font(.caption.weight(.semibold))
                                 Image(systemName: "arrow.up.right")
                                     .font(.system(size: 9, weight: .light))
                             }
-                            .foregroundStyle(Color.industryAccent)
+                            .foregroundStyle(Color.shopwareBlue)
                         }
                         .padding(.top, 3)
                     }
@@ -56,23 +56,20 @@ struct ConnectView: View {
                         connect()
                     } label: {
                         Text(viewModel.isLoading ? "CONNECTING…" : "CONNECT")
-                            .industryKicker(10.5)
-                            .foregroundStyle(canConnect ? Color.industryAccent : Color.industryDim)
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                            .background(canConnect ? Color.industryAccentTint : Color.clear)
-                            .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+                            .font(.headline)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PrimaryButtonStyle())
                     .disabled(!canConnect || viewModel.isLoading)
+                    .opacity(canConnect ? 1 : 0.45)
 
                     BlueprintFrame(padding: 14) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Before you ship this publicly")
-                                .industryKicker()
-                                .foregroundStyle(Color.industryAccent)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.shopwareBlue)
                             Text("Route AI requests through the included proxy, keep service secrets out of the app bundle, and use the narrowest Shopware integration permissions your workflow needs.")
-                                .font(IndustryFont.body(12.5))
-                                .foregroundStyle(Color.industryDim)
+                                .font(.caption)
+                                .foregroundStyle(Color.secondaryText)
                                 .lineSpacing(4)
                         }
                     }
@@ -80,19 +77,19 @@ struct ConnectView: View {
                 .padding(.horizontal, 18)
                 .padding(.bottom, 34)
             }
-            .background(Color.industryBackground)
+            .background(Color.appBackground)
             .navigationTitle("")
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("ADD A SHOP")
-                        .industryKicker(11)
-                        .foregroundStyle(Color.industryText)
+                        .font(.headline)
+                        .foregroundStyle(Color.primaryText)
                 }
                 if isAddingAdditionalShop {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("CANCEL") { viewModel.cancelAddingShop() }
-                            .industryKicker()
-                            .foregroundStyle(Color.industryAccent)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.shopwareBlue)
                     }
                 }
             }

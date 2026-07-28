@@ -36,13 +36,13 @@ struct NewCustomersView: View {
             .padding(.top, 14)
             .padding(.bottom, 32)
         }
-        .background(Color.industryBackground)
+        .background(Color.appBackground)
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("NEW CUSTOMERS")
-                    .industryKicker(11)
-                    .foregroundStyle(Color.industryText)
+                    .font(.headline)
+                    .foregroundStyle(Color.primaryText)
             }
         }
         #if !os(macOS)
@@ -59,13 +59,13 @@ struct NewCustomersView: View {
         BlueprintFrame(padding: 14) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Registrations · Last 7 days")
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.secondaryText)
                 HStack(spacing: 0) {
                     summaryCell(customers.count, label: "TOTAL")
-                    Rectangle().fill(Color.industryHair).frame(width: 1, height: 42)
+                    Divider().frame(height: 42)
                     summaryCell(customers.filter { !$0.guest }.count, label: "ACCOUNTS")
-                    Rectangle().fill(Color.industryHair).frame(width: 1, height: 42)
+                    Divider().frame(height: 42)
                     summaryCell(customers.filter(\.guest).count, label: "GUESTS")
                 }
             }
@@ -75,9 +75,9 @@ struct NewCustomersView: View {
     private func summaryCell(_ value: Int, label: LocalizedStringKey) -> some View {
         VStack(spacing: 3) {
             Text(value.formatted())
-                .font(IndustryFont.display(30))
-                .foregroundStyle(Color.industryText)
-            Text(label).industryKicker(9).foregroundStyle(Color.industryFaint)
+                .font(.title.weight(.semibold))
+                .foregroundStyle(Color.primaryText)
+            Text(label).font(.caption).foregroundStyle(Color.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -88,13 +88,17 @@ struct NewCustomersView: View {
                 Button {
                     filter = candidate
                 } label: {
-                    Text(AppLocalization.string(String.LocalizationValue(candidate.rawValue)))
-                        .industryKicker()
-                        .foregroundStyle(filter == candidate ? Color.industryInverse : Color.industryDim)
+                        Text(AppLocalization.string(String.LocalizationValue(candidate.rawValue)))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(filter == candidate ? Color.inverseText : Color.secondaryText)
                         .padding(.horizontal, 12)
                         .frame(minHeight: 34)
-                        .background(filter == candidate ? Color.industryAccent : Color.clear)
-                        .overlay(Rectangle().stroke(Color.industryHair, lineWidth: 1))
+                        .background(filter == candidate ? Color.shopwareBlue : Color.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(Color.border, lineWidth: 1)
+                        )
                 }
                 .buttonStyle(.plain)
             }
@@ -103,7 +107,6 @@ struct NewCustomersView: View {
 
     private var customerRows: some View {
         VStack(spacing: 0) {
-            Rectangle().fill(Color.industryLine).frame(height: 1)
             if isLoading {
                 emptyRow("LOADING…")
             } else if visibleCustomers.isEmpty {
@@ -113,26 +116,36 @@ struct NewCustomersView: View {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(customer.name.isEmpty ? customer.email : customer.name)
-                                .font(IndustryFont.body(14.5, medium: true))
-                                .foregroundStyle(Color.industryText)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.primaryText)
                                 .lineLimit(1)
                             Text(customerMeta(customer))
-                                .industryKicker()
-                                .foregroundStyle(Color.industryFaint)
+                                .font(.caption)
+                                .foregroundStyle(Color.secondaryText)
                                 .lineLimit(1)
                         }
                         Spacer()
                         SeverityLadder(level: customer.guest ? 1 : 2)
                         Text(customer.guest ? "GUEST" : "ACCOUNT")
-                            .industryKicker()
-                            .foregroundStyle(Color.industryDim)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.secondaryText)
                             .frame(width: 58, alignment: .trailing)
                     }
                     .padding(.vertical, 11)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    if customer.id != visibleCustomers.last?.id {
+                        Divider()
+                    }
                 }
             }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 2)
+        .background(Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 
     private func customerMeta(_ customer: CustomerRegistration) -> String {
@@ -144,8 +157,8 @@ struct NewCustomersView: View {
 
     private func emptyRow(_ label: LocalizedStringKey) -> some View {
         Text(label)
-            .industryKicker()
-            .foregroundStyle(Color.industryFaint)
+            .font(.subheadline)
+            .foregroundStyle(Color.secondaryText)
             .frame(maxWidth: .infinity)
             .padding(24)
     }

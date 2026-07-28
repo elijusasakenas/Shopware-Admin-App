@@ -31,24 +31,24 @@ struct OrderDetailView: View {
                 BlueprintFrame {
                     VStack(alignment: .leading, spacing: 12) {
                         Text(order.displayDate)
-                            .industryKicker()
-                            .foregroundStyle(Color.industryFaint)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.secondaryText)
                         HStack(alignment: .top) {
                             Text(order.amountTotal.formatted(.currency(code: order.currencyCode)))
-                                .font(IndustryFont.display(44))
-                                .foregroundStyle(Color.industryText)
+                                .font(.system(size: 40, weight: .semibold, design: .rounded))
+                                .foregroundStyle(Color.primaryText)
                                 .minimumScaleFactor(0.7)
                                 .lineLimit(1)
                             Spacer()
                             if !customerName.isEmpty || !customerEmail.isEmpty {
                                 VStack(alignment: .trailing, spacing: 3) {
-                                    Text("Customer").industryKicker().foregroundStyle(Color.industryFaint)
+                                    Text("Customer").font(.caption).foregroundStyle(Color.secondaryText)
                                     Text(customerName)
-                                        .font(IndustryFont.body(14.5, medium: true))
-                                        .foregroundStyle(Color.industryText)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(Color.primaryText)
                                     Text(customerEmail)
-                                        .font(IndustryFont.body(12.5))
-                                        .foregroundStyle(Color.industryDim)
+                                        .font(.caption)
+                                        .foregroundStyle(Color.secondaryText)
                                         .textSelection(.enabled)
                                 }
                             }
@@ -67,13 +67,13 @@ struct OrderDetailView: View {
             .padding(.top, 14)
             .padding(.bottom, 32)
         }
-        .background(Color.industryBackground)
+        .background(Color.appBackground)
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("ORDER \(order.orderNumber)")
-                    .industryKicker(11)
-                    .foregroundStyle(Color.industryText)
+                    .font(.headline)
+                    .foregroundStyle(Color.primaryText)
             }
         }
         #if !os(macOS)
@@ -86,7 +86,7 @@ struct OrderDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Progress")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             stageRow(
                 number: "01",
                 title: "Order status",
@@ -130,6 +130,7 @@ struct OrderDetailView: View {
                 }
             }
         }
+        .shopwareCard()
     }
 
     private func stageRow(
@@ -141,26 +142,26 @@ struct OrderDetailView: View {
     ) -> some View {
         HStack(spacing: 12) {
             Text(number)
-                .font(IndustryFont.display(16))
-                .foregroundStyle(Color.industryAccent)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(Color.shopwareBlue)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).industryKicker().foregroundStyle(Color.industryFaint)
+                Text(title).font(.caption).foregroundStyle(Color.secondaryText)
                 Text(StateLocalization.stateName(state))
-                    .font(IndustryFont.display(19))
-                    .foregroundStyle(Color.industryText)
+                    .font(.headline)
+                    .foregroundStyle(Color.primaryText)
                     .contentTransition(.numericText())
             }
             Spacer()
             if transitions.isEmpty {
                 Image(systemName: "checkmark")
                     .font(.system(size: 17, weight: .light))
-                    .foregroundStyle(Color.industryAccent)
+                    .foregroundStyle(Color.shopwareBlue)
                     .frame(width: 44, height: 44)
             } else if transitions.count == 1, let transition = transitions.first {
                 Button { onSelect(transition) } label: {
                     Text("MARK \(StateLocalization.transitionName(transition.targetStateTechnicalName))")
-                        .industryKicker(9.5)
+                        .font(.caption.weight(.semibold))
                         .padding(.horizontal, 12)
                         .lineLimit(1)
                 }
@@ -176,11 +177,12 @@ struct OrderDetailView: View {
                     }
                 } label: {
                     Text("CHANGE")
-                        .industryKicker(9.5)
+                        .font(.caption.weight(.semibold))
                         .padding(.horizontal, 14)
                         .frame(minHeight: 44)
-                        .foregroundStyle(Color.industryInverse)
-                        .background(Color.industryAccent)
+                        .foregroundStyle(Color.inverseText)
+                        .background(Color.shopwareBlue)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
                 .disabled(isTransitioning)
                 .opacity(isTransitioning ? 0.45 : 1)
@@ -188,7 +190,7 @@ struct OrderDetailView: View {
         }
         .padding(.vertical, 10)
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.industryHair).frame(height: 1)
+            Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
         }
     }
 
@@ -196,41 +198,42 @@ struct OrderDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Items")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             if isLoading {
                 Text("LOADING…")
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(22)
             } else {
                 ForEach(lineItems) { item in
                     HStack(spacing: 12) {
                         Text("\(item.quantity)×")
-                            .font(IndustryFont.display(16))
-                            .foregroundStyle(Color.industryAccent)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Color.shopwareBlue)
                             .frame(width: 26, alignment: .leading)
                         Text(item.label)
-                            .font(IndustryFont.body(14, medium: true))
-                            .foregroundStyle(Color.industryText)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.primaryText)
                         Spacer()
                         Text(item.totalPrice.formatted(.currency(code: order.currencyCode)))
-                            .font(IndustryFont.display(16))
-                            .foregroundStyle(Color.industryText)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.primaryText)
                     }
                     .padding(.vertical, 11)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    Divider()
                 }
                 HStack {
-                    Text("Total incl. VAT").industryKicker().foregroundStyle(Color.industryFaint)
+                    Text("Total incl. VAT").font(.caption).foregroundStyle(Color.secondaryText)
                     Spacer()
                     Text(order.amountTotal.formatted(.currency(code: order.currencyCode)))
-                        .font(IndustryFont.display(22))
-                        .foregroundStyle(Color.industryText)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Color.primaryText)
                 }
                 .padding(.top, 12)
             }
         }
+        .shopwareCard()
     }
 
     private func load() async {

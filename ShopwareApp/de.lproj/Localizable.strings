@@ -23,6 +23,7 @@
 "New customer registrations" = "Neue Kundenregistrierungen";
 "New customers" = "Neue Kunden";
 "Newsletter signups" = "Newsletter-Anmeldungen";
+"Promotions" = "Aktionen";
 "No customer registrations yet." = "Noch keine Kundenregistrierungen.";
 "No items found." = "Keine Positionen gefunden.";
 "No newsletter registrations yet." = "Noch keine Newsletter-Anmeldungen.";
@@ -388,3 +389,5 @@
 "GUESTS" = "GÄSTE";
 "NO DATE" = "KEIN DATUM";
 "Choose a saved shop" = "Gespeicherten Shop auswählen";
+"Available" = "Verfügbar";
+"Unavailable" = "Nicht verfügbar";

@@ -32,26 +32,30 @@ struct ProductsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Text("Products")
-                        .industryKicker(11)
-                        .foregroundStyle(Color.industryText)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Color.primaryText)
                     Spacer()
                     Text("\(filteredProducts.count) items")
-                        .font(IndustryFont.display(15))
-                        .foregroundStyle(Color.industryFaint)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondaryText)
                 }
 
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 15, weight: .light))
-                        .foregroundStyle(Color.industryFaint)
+                        .foregroundStyle(Color.secondaryText)
                     TextField("Name or product number", text: $searchText)
-                        .font(IndustryFont.body(15))
+                        .font(.body)
                         .textFieldStyle(.plain)
                 }
                 .padding(.horizontal, 12)
                 .frame(minHeight: 44)
-                .background(Color.industrySurface)
-                .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+                .background(Color.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color.border, lineWidth: 1)
+                )
 
                 filterControl
 
@@ -60,15 +64,14 @@ struct ProductsView: View {
                 }
 
                 if isLoading && products.isEmpty {
-                    Text("LOADING…")
-                        .industryKicker()
-                        .foregroundStyle(Color.industryFaint)
+                    ProgressView()
+                        .tint(.shopwareBlue)
                         .frame(maxWidth: .infinity)
                         .padding(30)
                 } else if filteredProducts.isEmpty {
                     Text("Nothing matches that search.")
-                        .font(IndustryFont.body(14))
-                        .foregroundStyle(Color.industryDim)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondaryText)
                         .frame(maxWidth: .infinity)
                         .padding(30)
                 } else {
@@ -79,7 +82,7 @@ struct ProductsView: View {
             .padding(.top, 12)
             .padding(.bottom, 32)
         }
-        .background(Color.industryBackground)
+        .background(Color.appBackground)
         .navigationTitle("")
         #if !os(macOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -97,12 +100,16 @@ struct ProductsView: View {
                     filter = candidate
                 } label: {
                     Text(candidate.rawValue)
-                        .industryKicker(9.5)
-                        .foregroundStyle(filter == candidate ? Color.industryInverse : Color.industryDim)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(filter == candidate ? Color.inverseText : Color.secondaryText)
                         .padding(.horizontal, 12)
                         .frame(minHeight: 34)
-                        .background(filter == candidate ? Color.industryAccent : Color.clear)
-                        .overlay(Rectangle().stroke(Color.industryHair, lineWidth: 1))
+                        .background(filter == candidate ? Color.shopwareBlue : Color.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(Color.border, lineWidth: 1)
+                        )
                 }
                 .buttonStyle(.plain)
             }
@@ -112,7 +119,6 @@ struct ProductsView: View {
 
     private var productList: some View {
         VStack(spacing: 0) {
-            Rectangle().fill(Color.industryLine).frame(height: 1)
             ForEach(filteredProducts) { product in
                 HStack(spacing: 12) {
                     NavigationLink {
@@ -124,12 +130,12 @@ struct ProductsView: View {
                             ProductThumbnail(url: product.coverURL, size: 40)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(product.name)
-                                    .font(IndustryFont.body(14, medium: true))
-                                    .foregroundStyle(Color.industryText)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Color.primaryText)
                                     .lineLimit(1)
                                 Text(productMeta(product))
-                                    .industryKicker()
-                                    .foregroundStyle(Color.industryFaint)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.secondaryText)
                                     .lineLimit(1)
                             }
                         }
@@ -144,9 +150,19 @@ struct ProductsView: View {
                     }
                 }
                 .padding(.vertical, 10)
-                Rectangle().fill(Color.industryHair).frame(height: 1)
+                if product.id != filteredProducts.last?.id {
+                    Divider().padding(.leading, 52)
+                }
             }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 2)
+        .background(Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 
     private func productMeta(_ product: ProductSummary) -> String {
@@ -209,11 +225,14 @@ struct ProductThumbnail: View {
             case .success(let image):
                 image.resizable().scaledToFill()
             default:
-                Color.industrySunk
+                Color.controlBackground
             }
         }
         .frame(width: size, height: size)
-        .clipped()
-        .overlay(Rectangle().stroke(Color.industryHair, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.border.opacity(0.7), lineWidth: 1)
+        )
     }
 }

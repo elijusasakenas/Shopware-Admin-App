@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C0DE00000000000000000002 /* AppLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000001 /* AppLocalizationTests.swift */; };
 		0E5C48E0BAE57E768E9C0A06 /* JSONParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */; };
 		164778662EBB0A11E394ACA8 /* DateRangeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */; };
 		17C945967E748D94790BBB02 /* StateLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2B7A34E27E5F22B07E71E0 /* StateLocalizationTests.swift */; };
 		5A9E2D8C1F734B6A90C2E411 /* AIChatModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9E2D8C1F734B6A90C2E412 /* AIChatModelsTests.swift */; };
 		86F698E5A025F513633D1C68 /* ShopwareConnectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */; };
+		C0DE00000000000000000002 /* AppLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000001 /* AppLocalizationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,12 +26,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		C0DE00000000000000000001 /* AppLocalizationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLocalizationTests.swift; sourceTree = "<group>"; };
 		5A9E2D8C1F734B6A90C2E412 /* AIChatModelsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIChatModelsTests.swift; sourceTree = "<group>"; };
 		90058C3D868BD0CBE5024A45 /* ShopwareAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShopwareAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShopwareConnectionTests.swift; sourceTree = "<group>"; };
 		AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JSONParsingTests.swift; sourceTree = "<group>"; };
 		AF2B7A34E27E5F22B07E71E0 /* StateLocalizationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StateLocalizationTests.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000001 /* AppLocalizationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLocalizationTests.swift; sourceTree = "<group>"; };
 		C729498F2FDB6B6A002A697B /* ShopwareApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShopwareApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DateRangeTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */

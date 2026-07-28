@@ -40,7 +40,7 @@ struct DashboardView: View {
                     showAssistant = true
                 }
             }
-            .background(Color.industryBackground)
+            .background(Color.appBackground)
             .task { await viewModel.refresh() }
             .navigationDestination(for: LatestOrder.self) { order in
                 if let client = viewModel.apiClient {
@@ -72,8 +72,8 @@ struct DashboardView: View {
     private var channelPicker: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Sales channel")
-                .industryKicker()
-                .foregroundStyle(Color.industryFaint)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color.secondaryText)
                 .padding(.bottom, 10)
             channelRow(id: nil, name: "All sales channels", share: "100%")
             ForEach(Array(viewModel.salesChannels.enumerated()), id: \.element.id) { index, channel in
@@ -87,9 +87,9 @@ struct DashboardView: View {
         .padding(.horizontal, 16)
         .padding(.top, 10)
         .padding(.bottom, 14)
-        .background(Color.industrySunk)
+        .background(Color.surface)
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.industryHair).frame(height: 1)
+            Rectangle().fill(Color.border.opacity(0.7)).frame(height: 1)
         }
     }
 
@@ -104,23 +104,23 @@ struct DashboardView: View {
         } label: {
             HStack(spacing: 12) {
                 ZStack {
-                    Rectangle().stroke(Color.industryAccent, lineWidth: 1).frame(width: 9, height: 9)
+                    Circle().stroke(Color.shopwareBlue, lineWidth: 1.5).frame(width: 12, height: 12)
                     if viewModel.selectedChannelID == id {
-                        Rectangle().fill(Color.industryAccent).frame(width: 5, height: 5)
+                        Circle().fill(Color.shopwareBlue).frame(width: 6, height: 6)
                     }
                 }
                 Text(name)
-                    .font(IndustryFont.body(15))
-                    .foregroundStyle(Color.industryText)
+                    .font(.body)
+                    .foregroundStyle(Color.primaryText)
                     .lineLimit(1)
                 Spacer()
                 Text(share)
-                    .font(IndustryFont.display(15))
-                    .foregroundStyle(Color.industryDim)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.secondaryText)
             }
             .frame(minHeight: 44)
             .overlay(alignment: .top) {
-                Rectangle().fill(Color.industryHair).frame(height: 1)
+                Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
             }
         }
         .buttonStyle(.plain)
@@ -131,27 +131,27 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Text("Turnover · Today")
-                        .industryKicker()
-                        .foregroundStyle(Color.industryFaint)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.secondaryText)
                     Spacer()
                     Text(comparisonText)
-                        .industryKicker()
-                        .foregroundStyle(Color.industryAccent)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.shopwareBlue)
                 }
                 HStack(alignment: .bottom, spacing: 12) {
                     Text(viewModel.metrics?.todayRevenue.formatted(
                         .currency(code: currency).precision(.fractionLength(2))
                     ) ?? "—")
-                        .font(IndustryFont.display(50))
+                        .font(.system(size: 44, weight: .semibold, design: .rounded))
                         .minimumScaleFactor(0.7)
                         .lineLimit(1)
-                        .foregroundStyle(Color.industryText)
+                        .foregroundStyle(Color.primaryText)
                         .contentTransition(.numericText())
                     HeroSparkline(buckets: viewModel.revenueBuckets)
                         .frame(maxWidth: .infinity)
                         .frame(height: 36)
                 }
-                Rectangle().fill(Color.industryHair).frame(height: 1)
+                Divider()
                 HStack(spacing: 0) {
                     satellite("Orders", value: viewModel.metrics?.orderCountToday.formatted() ?? "—")
                     divider
@@ -180,10 +180,10 @@ struct DashboardView: View {
 
     private func satellite(_ title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).industryKicker(9).foregroundStyle(Color.industryFaint)
+            Text(title).font(.caption).foregroundStyle(Color.secondaryText)
             Text(value)
-                .font(IndustryFont.display(22))
-                .foregroundStyle(Color.industryText)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
         }
@@ -192,41 +192,44 @@ struct DashboardView: View {
     }
 
     private var divider: some View {
-        Rectangle().fill(Color.industryHair).frame(width: 1, height: 42)
+        Divider().frame(height: 42)
     }
 
     private var attentionSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Needs you")
-                    .font(IndustryFont.display(20))
-                    .foregroundStyle(Color.industryText)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Color.primaryText)
                 Text(viewModel.attentionItems.count.formatted())
-                    .font(IndustryFont.display(20))
-                    .foregroundStyle(Color.industryAccent)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Color.shopwareBlue)
                 Spacer()
                 Text("Ranked by cost of waiting")
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                    .font(.caption)
+                    .foregroundStyle(Color.secondaryText)
             }
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             if viewModel.attentionItems.isEmpty {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 18, weight: .light))
-                        .foregroundStyle(Color.industryAccent)
+                        .foregroundStyle(Color.shopwareBlue)
                     Text("Nothing waiting on you. Queue is clear.")
-                        .font(IndustryFont.body(14.5))
-                        .foregroundStyle(Color.industryDim)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondaryText)
                 }
                 .padding(.vertical, 22)
             } else {
                 ForEach(viewModel.attentionItems) { item in
                     attentionRow(item)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    if item.id != viewModel.attentionItems.last?.id {
+                        Divider()
+                    }
                 }
             }
         }
+        .shopwareCard()
     }
 
     private func attentionRow(_ item: AttentionItem) -> some View {
@@ -234,12 +237,12 @@ struct DashboardView: View {
             SeverityLadder(level: item.severity)
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.title)
-                    .font(IndustryFont.body(14.5, medium: true))
-                    .foregroundStyle(Color.industryText)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.primaryText)
                     .lineLimit(2)
                 Text(item.meta)
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                    .font(.caption)
+                    .foregroundStyle(Color.secondaryText)
                     .lineLimit(1)
             }
             Spacer(minLength: 4)
@@ -275,7 +278,7 @@ struct DashboardView: View {
 
     private func attentionActionLabel(_ label: String) -> some View {
         Text(AppLocalization.string(String.LocalizationValue(label)))
-            .industryKicker(10.5)
+            .font(.caption.weight(.semibold))
             .padding(.horizontal, 14)
     }
 
@@ -293,7 +296,7 @@ struct DashboardView: View {
                         currency: currency
                     )
                     .frame(height: 170)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    Divider()
                     trendStats
                 }
                 .opacity(viewModel.isLoading ? 0.45 : 1)
@@ -308,35 +311,57 @@ struct DashboardView: View {
                     viewModel.trendMetric = metric
                 } label: {
                     Text(metric.label)
-                        .industryKicker(10)
-                        .foregroundStyle(viewModel.trendMetric == metric ? Color.industryInverse : Color.industryDim)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(viewModel.trendMetric == metric ? Color.inverseText : Color.secondaryText)
                         .frame(maxWidth: .infinity, minHeight: 40)
-                        .background(viewModel.trendMetric == metric ? Color.industryAccent : Color.clear)
+                        .background(viewModel.trendMetric == metric ? Color.shopwareBlue : Color.clear)
                 }
                 .buttonStyle(.plain)
                 if metric != TrendMetric.allCases.last {
-                    Rectangle().fill(Color.industryHair).frame(width: 1, height: 40)
+                    Divider().frame(height: 40)
                 }
             }
         }
-        .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+        .background(Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 
     private var rangeControl: some View {
-        HStack(spacing: 6) {
-            ForEach(DateRange.allCases, id: \.self) { range in
-                Button {
-                    viewModel.trendRange = range
-                    Task { await viewModel.fetchTrendHistory() }
-                } label: {
-                    Text(range.menuLabel)
-                        .font(IndustryFont.display(13))
-                        .foregroundStyle(viewModel.trendRange == range ? Color.industryAccent : Color.industryDim)
-                        .frame(maxWidth: .infinity, minHeight: 32)
-                        .background(viewModel.trendRange == range ? Color.industryAccentTint : Color.clear)
-                        .overlay(Rectangle().stroke(Color.industryHair, lineWidth: 1))
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(DateRange.allCases, id: \.self) { range in
+                    Button {
+                        viewModel.trendRange = range
+                        Task { await viewModel.fetchTrendHistory() }
+                    } label: {
+                        Text(range.menuLabel)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .foregroundStyle(
+                                viewModel.trendRange == range
+                                    ? Color.shopwareBlue
+                                    : Color.secondaryText
+                            )
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 32)
+                            .background(
+                                viewModel.trendRange == range
+                                    ? Color.shopwareBlue.opacity(0.10)
+                                    : Color.surface
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -362,13 +387,13 @@ struct DashboardView: View {
         return VStack(spacing: 0) {
             HStack(spacing: 0) {
                 statCell("Total", value: formatTrend(total))
-                Rectangle().fill(Color.industryHair).frame(width: 1, height: 43)
+                Divider().frame(height: 43)
                 statCell("Per day", value: formatTrend(perDay))
             }
-            Rectangle().fill(Color.industryHair).frame(height: 1)
+            Divider()
             HStack(spacing: 0) {
                 statCell("Best day", value: formatTrend(best))
-                Rectangle().fill(Color.industryHair).frame(width: 1, height: 43)
+                Divider().frame(height: 43)
                 statCell("Vs. prev.", value: comparisonText, accent: true)
             }
         }
@@ -376,10 +401,10 @@ struct DashboardView: View {
 
     private func statCell(_ title: LocalizedStringKey, value: String, accent: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(title).industryKicker(9).foregroundStyle(Color.industryFaint)
+            Text(title).font(.caption).foregroundStyle(Color.secondaryText)
             Text(value)
-                .font(IndustryFont.display(19))
-                .foregroundStyle(accent ? Color.industryAccent : Color.industryText)
+                .font(.headline)
+                .foregroundStyle(accent ? Color.shopwareBlue : Color.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
         }
@@ -409,11 +434,11 @@ struct DashboardView: View {
                 SectionHeader(title: "Stock", detail: "ALL PRODUCTS →")
             }
             .buttonStyle(.plain)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             if viewModel.lowStockProducts.isEmpty {
-                Text("NO LOW-STOCK PRODUCTS")
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                Text("No low-stock products")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(22)
             } else {
@@ -421,12 +446,12 @@ struct DashboardView: View {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(product.name)
-                                .font(IndustryFont.body(14, medium: true))
-                                .foregroundStyle(Color.industryText)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.primaryText)
                                 .lineLimit(1)
                             Text(product.productNumber.isEmpty ? "PRODUCT" : product.productNumber)
-                                .industryKicker()
-                                .foregroundStyle(Color.industryFaint)
+                                .font(.caption)
+                                .foregroundStyle(Color.secondaryText)
                         }
                         Spacer()
                         StockStepper(stock: product.stock) { stock in
@@ -434,34 +459,45 @@ struct DashboardView: View {
                         }
                     }
                     .padding(.vertical, 10)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    if product.id != viewModel.lowStockProducts.last?.id {
+                        Divider()
+                    }
                 }
             }
         }
+        .shopwareCard()
     }
 
     private var alsoSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Also in this shop")
-                .industryKicker()
-                .foregroundStyle(Color.industryFaint)
+                .font(.headline)
+                .foregroundStyle(Color.primaryText)
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             alsoRow("Sales by language", value: "\(viewModel.languageStats.count) MARKETS")
-            alsoRow("Promotions", value: "MANAGE")
-            alsoRow("Newsletter signups", value: "VIEW")
-            alsoRow("Shop status & log", value: "ALL GREEN", accent: true)
+            alsoRow("Promotions", value: "MANAGE", destination: .promotions)
+            alsoRow("Newsletter signups", value: "VIEW", destination: .newsletter)
+            alsoRow(
+                "Shop status & log",
+                value: "ALL GREEN",
+                accent: true,
+                destination: .shopStatus
+            )
         }
+        .shopwareCard()
     }
 
     @ViewBuilder
-    private func alsoRow(_ label: LocalizedStringKey, value: String, accent: Bool = false) -> some View {
+    private func alsoRow(
+        _ label: LocalizedStringKey,
+        value: String,
+        accent: Bool = false,
+        destination: ShopShortcutDestination = .settings
+    ) -> some View {
         if let client = viewModel.apiClient {
             NavigationLink {
-                ShopSettingsView(
-                    session: viewModel,
-                    settings: ShopSettingsViewModel(client: client)
-                )
+                shortcutDestination(destination, client: client)
             } label: {
                 alsoRowLabel(label, value: value, accent: accent)
             }
@@ -471,22 +507,40 @@ struct DashboardView: View {
         }
     }
 
+    @ViewBuilder
+    private func shortcutDestination(
+        _ destination: ShopShortcutDestination,
+        client: ShopwareAdminClient
+    ) -> some View {
+        let settings = ShopSettingsViewModel(client: client)
+        switch destination {
+        case .settings:
+            ShopSettingsView(session: viewModel, settings: settings)
+        case .promotions:
+            PromotionsView(settings: settings)
+        case .newsletter:
+            NewsletterSignupsView(settings: settings)
+        case .shopStatus:
+            ShopStatusView(settings: settings)
+        }
+    }
+
     private func alsoRowLabel(_ label: LocalizedStringKey, value: String, accent: Bool) -> some View {
         HStack {
             Text(label)
-                .font(IndustryFont.body(14))
-                .foregroundStyle(Color.industryText)
+                .font(.subheadline)
+                .foregroundStyle(Color.primaryText)
             Spacer()
             Text(value)
-                .industryKicker()
-                .foregroundStyle(accent ? Color.industryAccent : Color.industryDim)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(accent ? Color.shopwareBlue : Color.secondaryText)
             Image(systemName: "chevron.right")
                 .font(.system(size: 10, weight: .light))
-                .foregroundStyle(Color.industryFaint)
+                .foregroundStyle(Color.secondaryText)
         }
         .frame(minHeight: 46)
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.industryHair).frame(height: 1)
+            Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
         }
     }
 
@@ -506,4 +560,11 @@ struct DashboardView: View {
     private var currency: String {
         viewModel.metrics?.currencyCode ?? "EUR"
     }
+}
+
+private enum ShopShortcutDestination {
+    case settings
+    case promotions
+    case newsletter
+    case shopStatus
 }

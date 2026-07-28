@@ -20,13 +20,13 @@ struct ShopStatusView: View {
             .padding(.top, 14)
             .padding(.bottom, 32)
         }
-        .background(Color.industryBackground)
+        .background(Color.appBackground)
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("SHOP STATUS & LOG")
-                    .industryKicker(11)
-                    .foregroundStyle(Color.industryText)
+                    .font(.headline)
+                    .foregroundStyle(Color.primaryText)
             }
         }
         #if !os(macOS)
@@ -39,19 +39,19 @@ struct ShopStatusView: View {
         BlueprintFrame {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Shopware version").industryKicker().foregroundStyle(Color.industryFaint)
+                    Text("Shopware version").font(.subheadline).foregroundStyle(Color.secondaryText)
                     Spacer()
-                    Text("Up to date").industryKicker().foregroundStyle(Color.industryAccent)
+                    Text("Up to date").font(.caption.weight(.semibold)).foregroundStyle(Color.shopwareBlue)
                 }
                 Text(version.isEmpty ? "—" : version)
-                    .font(IndustryFont.display(34))
-                    .foregroundStyle(Color.industryText)
-                Rectangle().fill(Color.industryHair).frame(height: 1)
+                    .font(.largeTitle.weight(.semibold))
+                    .foregroundStyle(Color.primaryText)
+                Divider()
                 HStack(spacing: 0) {
                     statusCell("Storefront", value: averageResponse)
-                    Rectangle().fill(Color.industryHair).frame(width: 1, height: 40)
+                    Divider().frame(height: 40)
                     statusCell("Admin API", value: "LIVE")
-                    Rectangle().fill(Color.industryHair).frame(width: 1, height: 40)
+                    Divider().frame(height: 40)
                     statusCell("Errors · 24h", value: errorCount.formatted())
                 }
             }
@@ -61,8 +61,8 @@ struct ShopStatusView: View {
 
     private func statusCell(_ label: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(label).industryKicker(8.5).foregroundStyle(Color.industryFaint)
-            Text(value).font(IndustryFont.display(20)).foregroundStyle(Color.industryText)
+            Text(label).font(.caption).foregroundStyle(Color.secondaryText)
+            Text(value).font(.headline).foregroundStyle(Color.primaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 8)
@@ -82,38 +82,47 @@ struct ShopStatusView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Storefront availability")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             if domains.isEmpty {
                 emptyRow("NO STOREFRONT DOMAINS")
             } else {
                 ForEach(domains) { domain in
                     HStack(spacing: 10) {
-                        SeverityLadder(level: domainSeverity(domain))
+                        Image(systemName: domain.isHealthy ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(domain.isHealthy ? Color.green : Color.red)
+                            .frame(width: 22)
+                            .accessibilityLabel(
+                                domain.isHealthy ? Text("Available") : Text("Unavailable")
+                            )
                         Text(domain.url)
-                            .font(IndustryFont.body(13.5))
-                            .foregroundStyle(Color.industryText)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.primaryText)
                             .lineLimit(1)
                         Spacer()
                         Text(domain.responseMs.map { "\($0) ms" } ?? "—")
-                            .font(IndustryFont.display(15))
-                            .foregroundStyle(Color.industryDim)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.secondaryText)
                         Text(domain.statusCode.map(String.init) ?? "—")
-                            .industryKicker()
-                            .foregroundStyle(Color.industryFaint)
+                            .font(.caption)
+                            .foregroundStyle(Color.secondaryText)
                             .frame(width: 34, alignment: .trailing)
                     }
                     .padding(.vertical, 11)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    if domain.id != domains.last?.id {
+                        Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
+                    }
                 }
             }
         }
+        .shopwareCard()
     }
 
     private var logSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Shop log", detail: "NEWEST FIRST")
                 .padding(.bottom, 10)
-            Rectangle().fill(Color.industryLine).frame(height: 1)
+            Divider()
             if logEntries.isEmpty {
                 emptyRow("THE LOG IS EMPTY")
             } else {
@@ -121,7 +130,7 @@ struct ShopStatusView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 8) {
                             SeverityLadder(level: logSeverity(entry))
-                            Text(entry.levelLabel).industryKicker().foregroundStyle(Color.industryDim)
+                            Text(entry.levelLabel).font(.caption.weight(.semibold)).foregroundStyle(Color.secondaryText)
                             Spacer()
                             if let createdAt = entry.createdAt {
                                 Text(
@@ -130,26 +139,22 @@ struct ShopStatusView: View {
                                             .locale(AppLocalization.locale)
                                     )
                                 )
-                                    .industryKicker(9)
-                                    .foregroundStyle(Color.industryFaint)
+                                    .font(.caption2)
+                                    .foregroundStyle(Color.secondaryText)
                             }
                         }
                         Text(entry.message)
-                            .font(IndustryFont.body(13))
-                            .foregroundStyle(Color.industryDim)
+                            .font(.caption)
+                            .foregroundStyle(Color.secondaryText)
                             .lineSpacing(3)
                             .lineLimit(3)
                     }
                     .padding(.vertical, 10)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
                 }
             }
         }
-    }
-
-    private func domainSeverity(_ domain: DomainStatus) -> Int {
-        guard domain.isHealthy else { return 1 }
-        return (domain.responseMs ?? 0) > 400 ? 2 : 3
+        .shopwareCard()
     }
 
     private func logSeverity(_ entry: LogEntry) -> Int {
@@ -158,8 +163,8 @@ struct ShopStatusView: View {
 
     private func emptyRow(_ label: LocalizedStringKey) -> some View {
         Text(label)
-            .industryKicker()
-            .foregroundStyle(Color.industryFaint)
+            .font(.subheadline)
+            .foregroundStyle(Color.secondaryText)
             .frame(maxWidth: .infinity)
             .padding(22)
     }

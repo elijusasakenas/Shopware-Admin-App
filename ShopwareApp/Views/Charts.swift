@@ -7,7 +7,7 @@ struct HeroSparkline: View {
     var body: some View {
         if buckets.isEmpty {
             Rectangle()
-                .fill(Color.industryHair)
+                .fill(Color.border)
                 .frame(height: 1)
         } else {
             Chart(buckets.suffix(7)) { bucket in
@@ -15,14 +15,14 @@ struct HeroSparkline: View {
                     x: .value("Date", bucket.date),
                     y: .value("Turnover", bucket.amount)
                 )
-                .foregroundStyle(Color.industryAccentTint)
+                .foregroundStyle(Color.shopwareBlue.opacity(0.10))
                 .interpolationMethod(.monotone)
                 LineMark(
                     x: .value("Date", bucket.date),
                     y: .value("Turnover", bucket.amount)
                 )
-                .foregroundStyle(Color.industryAccent)
-                .lineStyle(StrokeStyle(lineWidth: 1.4))
+                .foregroundStyle(Color.shopwareBlue)
+                .lineStyle(StrokeStyle(lineWidth: 2))
                 .interpolationMethod(.monotone)
             }
             .chartXAxis(.hidden)
@@ -49,9 +49,9 @@ struct IndustryTrendChart: View {
 
     var body: some View {
         if buckets.isEmpty {
-            Text("NO DATA IN THIS PERIOD")
-                .industryKicker()
-                .foregroundStyle(Color.industryFaint)
+            Text("No data in this period")
+                .font(.subheadline)
+                .foregroundStyle(Color.secondaryText)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             Chart(Array(zip(buckets, values)), id: \.0.id) { bucket, value in
@@ -59,33 +59,33 @@ struct IndustryTrendChart: View {
                     x: .value("Date", bucket.date, unit: range.calendarComponent),
                     y: .value(metric.label, value)
                 )
-                .foregroundStyle(Color.industryAccentTint)
+                .foregroundStyle(Color.shopwareBlue.opacity(0.10))
                 .interpolationMethod(.monotone)
                 LineMark(
                     x: .value("Date", bucket.date, unit: range.calendarComponent),
                     y: .value(metric.label, value)
                 )
-                .foregroundStyle(Color.industryAccent)
-                .lineStyle(StrokeStyle(lineWidth: 1.6))
+                .foregroundStyle(Color.shopwareBlue)
+                .lineStyle(StrokeStyle(lineWidth: 2))
                 .interpolationMethod(.monotone)
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                     AxisValueLabel(format: range.axisFormat)
-                        .font(IndustryFont.kicker(9))
-                        .foregroundStyle(Color.industryFaint)
+                        .font(.caption2)
+                        .foregroundStyle(Color.secondaryText)
                     AxisTick().foregroundStyle(Color.clear)
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
-                    AxisGridLine().foregroundStyle(Color.industryHair)
+                    AxisGridLine().foregroundStyle(Color.border.opacity(0.6))
                     AxisTick().foregroundStyle(Color.clear)
                     AxisValueLabel {
                         if let number = value.as(Double.self) {
                             Text(axisLabel(number))
-                                .font(IndustryFont.display(11))
-                                .foregroundStyle(Color.industryFaint)
+                                .font(.caption2)
+                                .foregroundStyle(Color.secondaryText)
                         }
                     }
                 }
@@ -110,8 +110,8 @@ struct TickBar: View {
     var body: some View {
         HStack(spacing: 2) {
             ForEach(0..<20, id: \.self) { index in
-                Rectangle()
-                    .fill(Double(index) < fraction * 20 ? Color.industryAccent : Color.industryHair)
+                Capsule()
+                    .fill(Double(index) < fraction * 20 ? Color.shopwareBlue : Color.border.opacity(0.7))
                     .frame(height: 5)
             }
         }

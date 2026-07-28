@@ -13,22 +13,22 @@ struct ShopHeaderView: View {
             } label: {
                 HStack(spacing: 10) {
                     Text(String((viewModel.connection?.displayName ?? "S").prefix(1)).uppercased())
-                        .font(IndustryFont.display(19))
-                        .foregroundStyle(Color.industryInverse)
+                        .font(.headline)
+                        .foregroundStyle(Color.inverseText)
                         .frame(width: 34, height: 34)
-                        .background(Color.industryAccent)
+                        .background(Color.shopwareBlue)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(viewModel.selectedChannelName)
-                            .font(IndustryFont.display(17))
-                            .tracking(0.17)
-                            .foregroundStyle(Color.industryText)
+                            .font(.headline)
+                            .foregroundStyle(Color.primaryText)
                             .lineLimit(1)
                         HStack(spacing: 6) {
                             PulsingDot()
                             Text(statusLine)
-                                .industryKicker()
-                                .foregroundStyle(Color.industryFaint)
+                                .font(.caption)
+                                .foregroundStyle(Color.secondaryText)
                                 .lineLimit(1)
                         }
                     }
@@ -44,7 +44,7 @@ struct ShopHeaderView: View {
                 appearance = current == .dark ? AppAppearance.light.rawValue : AppAppearance.dark.rawValue
             } label: {
                 Image(systemName: "sun.max")
-                    .font(.system(size: 17, weight: .light))
+                    .font(.system(size: 17, weight: .medium))
             }
             .buttonStyle(IconButtonStyle())
             .accessibilityLabel("Toggle appearance")
@@ -57,24 +57,22 @@ struct ShopHeaderView: View {
                     )
                 } label: {
                     Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 17, weight: .light))
-                        .frame(width: 44, height: 44)
-                        .foregroundStyle(Color.industryDim)
+                        .font(.system(size: 17, weight: .medium))
                 }
-                .buttonStyle(PressableButtonStyle())
+                .buttonStyle(IconButtonStyle())
                 .accessibilityLabel("Shop settings")
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 7)
-        .background(Color.industryBackground)
+        .padding(.vertical, 8)
+        .background(Color.surface)
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.industryHair).frame(height: 1)
+            Rectangle().fill(Color.border.opacity(0.7)).frame(height: 1)
         }
     }
 
     private var statusLine: String {
-        let version = viewModel.versionString.isEmpty ? "ADMINISTRATION" : viewModel.versionString
-        return "\(viewModel.connection?.displayName.uppercased() ?? "SHOPWARE") · \(version)"
+        let version = viewModel.versionString.isEmpty ? "Administration" : viewModel.versionString
+        return "\(viewModel.connection?.displayName ?? "Shopware") · \(version)"
     }
 }

@@ -46,26 +46,25 @@ struct ProductEditView: View {
     var body: some View {
         Group {
             if isLoading {
-                Text("LOADING…")
-                    .industryKicker()
-                    .foregroundStyle(Color.industryFaint)
+                ProgressView()
+                    .tint(.shopwareBlue)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 form
             }
         }
-        .background(Color.industryBackground)
+        .background(Color.appBackground)
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("EDIT PRODUCT")
-                    .industryKicker(11)
-                    .foregroundStyle(Color.industryText)
+                    .font(.headline)
+                    .foregroundStyle(Color.primaryText)
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("SAVE") { Task { await save() } }
-                    .industryKicker()
-                    .foregroundStyle(Color.industryAccent)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.shopwareBlue)
                     .disabled(isSaving || isLoading || !isDirty)
                     .opacity(isDirty ? 1 : 0.45)
             }
@@ -86,57 +85,58 @@ struct ProductEditView: View {
                 BlueprintFrame {
                     VStack(alignment: .leading, spacing: 12) {
                         Text(detail?.productNumber ?? "—")
-                            .industryKicker()
-                            .foregroundStyle(Color.industryFaint)
+                            .font(.caption)
+                            .foregroundStyle(Color.secondaryText)
                         TextField("Product name", text: $name)
-                            .font(IndustryFont.display(26))
-                            .foregroundStyle(Color.industryText)
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(Color.primaryText)
                             .textFieldStyle(.plain)
-                        Rectangle().fill(Color.industryHair).frame(height: 1)
+                        Divider()
                         HStack(spacing: 0) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Gross · \(currencyCode)").industryKicker().foregroundStyle(Color.industryFaint)
+                                Text("Gross · \(currencyCode)").font(.caption).foregroundStyle(Color.secondaryText)
                                 TextField("0.00", text: $priceText)
-                                    .font(IndustryFont.display(22))
+                                    .font(.title3.weight(.semibold))
                                     .textFieldStyle(.plain)
                                     .decimalKeyboard()
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            Rectangle().fill(Color.industryHair).frame(width: 1, height: 44)
+                            Divider().frame(height: 44)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Net · Derived").industryKicker().foregroundStyle(Color.industryFaint)
+                                Text("Net · Derived").font(.caption).foregroundStyle(Color.secondaryText)
                                 Text(netDisplay)
-                                    .font(IndustryFont.display(22))
-                                    .foregroundStyle(Color.industryDim)
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundStyle(Color.secondaryText)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.leading, 12)
                         }
                         Text("NET DERIVED FROM GROSS AT \(detail?.taxRate?.formatted() ?? "0")% TAX")
-                            .industryKicker(9)
-                            .foregroundStyle(Color.industryFaint)
+                            .font(.caption2)
+                            .foregroundStyle(Color.secondaryText)
                     }
                 }
 
                 VStack(alignment: .leading, spacing: 0) {
                     SectionHeader(title: "Inventory")
                         .padding(.bottom, 10)
-                    Rectangle().fill(Color.industryLine).frame(height: 1)
+                    Divider()
                     HStack {
-                        Text("Stock").font(IndustryFont.body(14.5)).foregroundStyle(Color.industryText)
+                        Text("Stock").font(.body).foregroundStyle(Color.primaryText)
                         Spacer()
                         StockStepper(stock: stock) { stock = $0 }
                     }
                     .frame(minHeight: 54)
-                    Rectangle().fill(Color.industryHair).frame(height: 1)
+                    Divider()
                     HStack {
-                        Text("Active in storefront").font(IndustryFont.body(14.5)).foregroundStyle(Color.industryText)
+                        Text("Active in storefront").font(.body).foregroundStyle(Color.primaryText)
                         Spacer()
-                        Text(active ? "ON" : "OFF").industryKicker().foregroundStyle(Color.industryFaint)
+                        Text(active ? "On" : "Off").font(.caption).foregroundStyle(Color.secondaryText)
                         SquareToggle(isOn: $active)
                     }
                     .frame(minHeight: 54)
                 }
+                .shopwareCard()
 
                 VStack(alignment: .leading, spacing: 10) {
                     SectionHeader(title: "Images", detail: "TAP TO SET COVER")
@@ -145,10 +145,15 @@ struct ProductEditView: View {
                             ForEach(images) { image in galleryCell(image) }
                             PhotosPicker(selection: $pickedItem, matching: .images) {
                                 Image(systemName: "plus")
-                                    .font(.system(size: 18, weight: .light))
-                                    .foregroundStyle(Color.industryAccent)
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundStyle(Color.shopwareBlue)
                                     .frame(width: 78, height: 78)
-                                    .overlay(Rectangle().stroke(Color.industryLine, lineWidth: 1))
+                                    .background(Color.surface)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .stroke(Color.border, lineWidth: 1)
+                                    )
                             }
                             .disabled(imageBusy)
                         }
@@ -189,15 +194,19 @@ struct ProductEditView: View {
                 .overlay(alignment: .bottom) {
                     if isCover {
                         Text("COVER")
-                            .industryKicker(8.5)
-                            .foregroundStyle(Color.industryInverse)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Color.inverseText)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.industryAccent)
+                            .background(Color.shopwareBlue)
                     }
                 }
-                .background(isCover ? Color.industryAccentTint : Color.clear)
-                .overlay(Rectangle().stroke(isCover ? Color.industryAccent : Color.industryLine, lineWidth: 1))
+                .background(isCover ? Color.shopwareBlue.opacity(0.10) : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(isCover ? Color.shopwareBlue : Color.border, lineWidth: 1)
+                )
         }
         .buttonStyle(.plain)
         .disabled(imageBusy)

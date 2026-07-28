@@ -9,10 +9,6 @@ import SwiftUI
 
 @main
 struct ShopwareAppApp: App {
-    init() {
-        AppFontRegistration.registerBundledFonts()
-    }
-
     var body: some Scene {
         WindowGroup {
             ContentView()

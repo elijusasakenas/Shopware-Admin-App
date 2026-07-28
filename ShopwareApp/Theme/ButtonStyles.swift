@@ -12,17 +12,18 @@ struct PrimaryButtonStyle: ButtonStyle {
         configuration.label
             .frame(maxWidth: .infinity, minHeight: 50)
             .foregroundStyle(Color.inverseText)
-            .background(configuration.isPressed ? Color.industryAccentDeep : Color.industryAccent)
-            .contentShape(Rectangle())
+            .background(Color.shopwareBlue.opacity(configuration.isPressed ? 0.82 : 1))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
 struct IconButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .frame(width: 44, height: 44)
-            .foregroundStyle(Color.industryDim)
-            .background(configuration.isPressed ? Color.industryAccentTint : Color.clear)
+            .frame(width: 48, height: 44)
+            .foregroundStyle(Color.primaryText)
+            .background(Color.controlBackground.opacity(configuration.isPressed ? 0.7 : 1))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
@@ -34,14 +35,17 @@ struct IndustryActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(minHeight: 44)
-            .foregroundStyle(outlined ? Color.industryDim : Color.industryInverse)
+            .foregroundStyle(outlined ? Color.shopwareBlue : Color.inverseText)
             .background(
                 configuration.isPressed
-                    ? Color.industryAccentTint
-                    : (outlined ? Color.clear : Color.industryAccent)
+                    ? Color.shopwareBlue.opacity(0.12)
+                    : (outlined ? Color.clear : Color.shopwareBlue)
             )
-            .overlay(Rectangle().stroke(outlined ? Color.industryLine : Color.clear, lineWidth: 1))
-            .contentShape(Rectangle())
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(outlined ? Color.shopwareBlue : Color.clear, lineWidth: 1)
+            )
     }
 }
 

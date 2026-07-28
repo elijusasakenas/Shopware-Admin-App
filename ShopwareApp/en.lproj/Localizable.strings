@@ -23,6 +23,7 @@
 "New customer registrations" = "New customer registrations";
 "New customers" = "New customers";
 "Newsletter signups" = "Newsletter signups";
+"Promotions" = "Promotions";
 "No customer registrations yet." = "No customer registrations yet.";
 "No items found." = "No items found.";
 "No newsletter registrations yet." = "No newsletter registrations yet.";
@@ -388,3 +389,5 @@
 "GUESTS" = "GUESTS";
 "NO DATE" = "NO DATE";
 "Choose a saved shop" = "Choose a saved shop";
+"Available" = "Available";
+"Unavailable" = "Unavailable";
