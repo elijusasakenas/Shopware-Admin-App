@@ -69,18 +69,18 @@ final class AIChatViewModel: ObservableObject {
         activeTask = nil
         conversationID = UUID()
         isThinking = false
-        entries.append(ChatEntry(kind: .error(String(localized: "Request cancelled."))))
+        entries.append(ChatEntry(kind: .error(AppLocalization.string("Request cancelled."))))
     }
 
     func approvePendingChange() {
         guard let approval = pendingApproval else { return }
         guard approval.expiresAt > Int64(Date().timeIntervalSince1970 * 1_000) else {
             pendingApproval = nil
-            entries.append(ChatEntry(kind: .error(String(localized: "The approval expired. Ask the assistant to prepare the change again."))))
+            entries.append(ChatEntry(kind: .error(AppLocalization.string("The approval expired. Ask the assistant to prepare the change again."))))
             return
         }
         pendingApproval = nil
-        let message = String(localized: "Approved the proposed change.")
+        let message = AppLocalization.string("Approved the proposed change.")
         entries.append(ChatEntry(kind: .user(message)))
         apiMessages.append(.user("The user approved the exact proposed action in the native confirmation. Retry it once with identical arguments."))
         startRun(approvalToken: approval.token)
@@ -89,7 +89,7 @@ final class AIChatViewModel: ObservableObject {
     func declinePendingChange() {
         guard pendingApproval != nil else { return }
         pendingApproval = nil
-        let message = String(localized: "Declined the proposed change.")
+        let message = AppLocalization.string("Declined the proposed change.")
         entries.append(ChatEntry(kind: .user(message)))
         apiMessages.append(.user("The user declined the proposed write. Do not perform or retry it."))
     }
@@ -162,20 +162,20 @@ final class AIChatViewModel: ObservableObject {
             case "pause_turn":
                 continue
             case "max_tokens":
-                entries.append(ChatEntry(kind: .error(String(localized: "The response reached its length limit. Ask the assistant to continue more briefly."))))
+                entries.append(ChatEntry(kind: .error(AppLocalization.string("The response reached its length limit. Ask the assistant to continue more briefly."))))
                 return
             case "refusal":
-                entries.append(ChatEntry(kind: .error(String(localized: "The assistant could not complete that request."))))
+                entries.append(ChatEntry(kind: .error(AppLocalization.string("The assistant could not complete that request."))))
                 return
             case "end_turn", "stop_sequence", .none:
                 return
             default:
-                entries.append(ChatEntry(kind: .error(String(localized: "The assistant stopped unexpectedly. Please try again."))))
+                entries.append(ChatEntry(kind: .error(AppLocalization.string("The assistant stopped unexpectedly. Please try again."))))
                 return
             }
         }
 
-        entries.append(ChatEntry(kind: .error(String(localized: "The assistant stopped after too many steps. Please refine your request."))))
+        entries.append(ChatEntry(kind: .error(AppLocalization.string("The assistant stopped after too many steps. Please refine your request."))))
     }
 
     /// Renders text blocks as bubbles and MCP tool calls as activity chips.

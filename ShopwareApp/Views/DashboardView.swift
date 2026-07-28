@@ -4,6 +4,7 @@ struct DashboardView: View {
     @ObservedObject var viewModel: ShopwareDashboardViewModel
     @State private var showAssistant = false
     @State private var showProducts = false
+    @State private var assistantDraft = ""
 
     var body: some View {
         NavigationStack {
@@ -35,7 +36,7 @@ struct DashboardView: View {
                 }
                 .refreshable { await viewModel.refresh() }
 
-                AskBar {
+                AskBar(draft: $assistantDraft) {
                     showAssistant = true
                 }
             }
@@ -52,7 +53,12 @@ struct DashboardView: View {
                 }
             }
             .navigationDestination(isPresented: $showAssistant) {
-                AIChatScreen(viewModel: viewModel)
+                AIChatScreen(viewModel: viewModel, initialDraft: assistantDraft)
+            }
+            .onChange(of: showAssistant) { isShowing in
+                if !isShowing {
+                    assistantDraft = ""
+                }
             }
             .navigationDestination(isPresented: $showProducts) {
                 productsDestination
@@ -172,7 +178,7 @@ struct DashboardView: View {
         return average.formatted(.currency(code: currency).precision(.fractionLength(2)))
     }
 
-    private func satellite(_ title: String, value: String) -> some View {
+    private func satellite(_ title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).industryKicker(9).foregroundStyle(Color.industryFaint)
             Text(value)
@@ -268,7 +274,7 @@ struct DashboardView: View {
     }
 
     private func attentionActionLabel(_ label: String) -> some View {
-        Text(label)
+        Text(AppLocalization.string(String.LocalizationValue(label)))
             .industryKicker(10.5)
             .padding(.horizontal, 14)
     }
@@ -368,7 +374,7 @@ struct DashboardView: View {
         }
     }
 
-    private func statCell(_ title: String, value: String, accent: Bool = false) -> some View {
+    private func statCell(_ title: LocalizedStringKey, value: String, accent: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title).industryKicker(9).foregroundStyle(Color.industryFaint)
             Text(value)
@@ -449,7 +455,7 @@ struct DashboardView: View {
     }
 
     @ViewBuilder
-    private func alsoRow(_ label: String, value: String, accent: Bool = false) -> some View {
+    private func alsoRow(_ label: LocalizedStringKey, value: String, accent: Bool = false) -> some View {
         if let client = viewModel.apiClient {
             NavigationLink {
                 ShopSettingsView(
@@ -465,7 +471,7 @@ struct DashboardView: View {
         }
     }
 
-    private func alsoRowLabel(_ label: String, value: String, accent: Bool) -> some View {
+    private func alsoRowLabel(_ label: LocalizedStringKey, value: String, accent: Bool) -> some View {
         HStack {
             Text(label)
                 .font(IndustryFont.body(14))

@@ -134,7 +134,7 @@ struct OrderDetailView: View {
 
     private func stageRow(
         number: String,
-        title: String,
+        title: LocalizedStringKey,
         state: String,
         transitions: [OrderTransition],
         onSelect: @escaping (OrderTransition) -> Void

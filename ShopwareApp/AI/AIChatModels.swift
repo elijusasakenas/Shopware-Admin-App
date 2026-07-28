@@ -228,16 +228,16 @@ struct AIApprovalChallenge: Decodable, Equatable {
                 .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
                 .map(String.init))
 
-            if words.contains("product") { return String(localized: "Product change") }
-            if words.contains("order") { return String(localized: "Order change") }
-            if words.contains("promotion") { return String(localized: "Promotion change") }
-            if words.contains("customer") { return String(localized: "Customer change") }
-            if words.contains("media") || words.contains("image") { return String(localized: "Media change") }
+            if words.contains("product") { return AppLocalization.string("Product change") }
+            if words.contains("order") { return AppLocalization.string("Order change") }
+            if words.contains("promotion") { return AppLocalization.string("Promotion change") }
+            if words.contains("customer") { return AppLocalization.string("Customer change") }
+            if words.contains("media") || words.contains("image") { return AppLocalization.string("Media change") }
             if words.contains("setting") || words.contains("settings") || words.contains("configure") {
-                return String(localized: "Settings change")
+                return AppLocalization.string("Settings change")
             }
-            if words.contains("maintenance") { return String(localized: "Maintenance-mode change") }
-            return String(localized: "Shop data change")
+            if words.contains("maintenance") { return AppLocalization.string("Maintenance-mode change") }
+            return AppLocalization.string("Shop data change")
         }
 
         var formattedDetails: String {

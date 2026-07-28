@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ShopSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var session: ShopwareDashboardViewModel
     @ObservedObject var settings: ShopSettingsViewModel
     @AppStorage(AppLanguage.storageKey) private var appLanguageCode = AppLanguage.system.rawValue
@@ -11,6 +12,7 @@ struct ShopSettingsView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var confirmSignOut = false
+    @State private var showShopSwitcher = false
 
     var body: some View {
         ScrollView {
@@ -54,6 +56,30 @@ struct ShopSettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+        .confirmationDialog(
+            "Switch shop",
+            isPresented: $showShopSwitcher,
+            titleVisibility: .visible
+        ) {
+            ForEach(session.savedConnections) { shop in
+                Button {
+                    Task {
+                        await session.switchTo(shop)
+                        dismiss()
+                    }
+                } label: {
+                    if shop.id == session.connection?.id {
+                        Label(shop.displayName, systemImage: "checkmark")
+                    } else {
+                        Text(shop.displayName)
+                    }
+                }
+                .disabled(shop.id == session.connection?.id)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Choose a saved shop")
+        }
     }
 
     private var appearanceSection: some View {
@@ -90,7 +116,7 @@ struct ShopSettingsView: View {
         Button {
             appearance = option.rawValue
         } label: {
-            Text(option.rawValue.uppercased())
+            Text(option.title)
                 .industryKicker(10)
                 .foregroundStyle(appearance == option.rawValue ? Color.industryInverse : Color.industryDim)
                 .frame(maxWidth: .infinity, minHeight: 44)
@@ -117,21 +143,48 @@ struct ShopSettingsView: View {
             }
             .buttonStyle(.plain)
             Button {
+                showShopSwitcher = true
+            } label: {
+                manageRow(
+                    "Switch shop",
+                    value: session.connection?.displayName ?? "—",
+                    localizeValue: false
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(session.savedConnections.count < 2)
+            .opacity(session.savedConnections.count < 2 ? 0.45 : 1)
+            Button {
                 session.beginAddingShop()
             } label: {
-                manageRow("Add another shop", value: "\(session.savedConnections.count) CONNECTED")
+                manageRow(
+                    "Add another shop",
+                    value: AppLocalization.string("\(session.savedConnections.count) CONNECTED")
+                )
             }
             .buttonStyle(.plain)
         }
     }
 
-    private func manageRow(_ title: String, value: String) -> some View {
+    private func manageRow(
+        _ title: LocalizedStringKey,
+        value: String,
+        localizeValue: Bool = true
+    ) -> some View {
         HStack {
             Text(title)
                 .font(IndustryFont.body(14.5))
                 .foregroundStyle(Color.industryText)
             Spacer()
-            Text(value).industryKicker().foregroundStyle(Color.industryFaint)
+            Group {
+                if localizeValue {
+                    Text(AppLocalization.string(String.LocalizationValue(value)))
+                } else {
+                    Text(value)
+                }
+            }
+                .industryKicker()
+                .foregroundStyle(Color.industryFaint)
             Image(systemName: "chevron.right")
                 .font(.system(size: 10, weight: .light))
                 .foregroundStyle(Color.industryFaint)
@@ -255,7 +308,12 @@ struct ShopSettingsView: View {
                                 .foregroundStyle(Color.industryText)
                                 .lineLimit(1)
                             if let createdAt = recipient.createdAt {
-                                Text(createdAt.formatted(date: .abbreviated, time: .shortened))
+                                Text(
+                                    createdAt.formatted(
+                                        Date.FormatStyle(date: .abbreviated, time: .shortened)
+                                            .locale(AppLocalization.locale)
+                                    )
+                                )
                                     .industryKicker()
                                     .foregroundStyle(Color.industryFaint)
                             }
@@ -295,7 +353,7 @@ struct ShopSettingsView: View {
             .padding(20)
     }
 
-    private func emptyRow(_ text: String) -> some View {
+    private func emptyRow(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .industryKicker()
             .foregroundStyle(Color.industryFaint)

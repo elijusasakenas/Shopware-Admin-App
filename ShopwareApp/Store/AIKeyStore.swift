@@ -45,7 +45,7 @@ enum AIProviderSelection: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .automatic: String(localized: "Automatic")
+        case .automatic: AppLocalization.string("Automatic")
         case .anthropic: "Anthropic"
         case .openAI: "OpenAI"
         case .gemini: "Gemini"

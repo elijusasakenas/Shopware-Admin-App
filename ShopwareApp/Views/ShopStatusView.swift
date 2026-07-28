@@ -59,7 +59,7 @@ struct ShopStatusView: View {
         .opacity(isLoading ? 0.45 : 1)
     }
 
-    private func statusCell(_ label: String, value: String) -> some View {
+    private func statusCell(_ label: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label).industryKicker(8.5).foregroundStyle(Color.industryFaint)
             Text(value).font(IndustryFont.display(20)).foregroundStyle(Color.industryText)
@@ -124,7 +124,12 @@ struct ShopStatusView: View {
                             Text(entry.levelLabel).industryKicker().foregroundStyle(Color.industryDim)
                             Spacer()
                             if let createdAt = entry.createdAt {
-                                Text(createdAt.formatted(date: .abbreviated, time: .shortened))
+                                Text(
+                                    createdAt.formatted(
+                                        Date.FormatStyle(date: .abbreviated, time: .shortened)
+                                            .locale(AppLocalization.locale)
+                                    )
+                                )
                                     .industryKicker(9)
                                     .foregroundStyle(Color.industryFaint)
                             }
@@ -151,7 +156,7 @@ struct ShopStatusView: View {
         entry.level >= 400 ? 3 : entry.level >= 300 ? 2 : 1
     }
 
-    private func emptyRow(_ label: String) -> some View {
+    private func emptyRow(_ label: LocalizedStringKey) -> some View {
         Text(label)
             .industryKicker()
             .foregroundStyle(Color.industryFaint)

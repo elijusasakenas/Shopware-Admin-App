@@ -10,9 +10,8 @@
 //  states track the app language we carry the language-neutral `technicalName`
 //  through the networking layer and localize it here.
 //
-//  Runtime strings are resolved with `String(localized:)` so they go through
-//  the `.strings` tables — `LocalizedStringKey` only auto-localizes literals,
-//  not interpolated runtime values. Unknown/custom states fall back to a
+//  Runtime strings are resolved with `AppLocalization` so they use the
+//  language selected inside the app. Unknown/custom states fall back to a
 //  humanized form of the key (e.g. "paid_partially" -> "Paid partially").
 //
 
@@ -40,9 +39,9 @@ enum StateLocalization {
         guard !trimmed.isEmpty else { return humanized("Unknown") }
 
         let lookupKey = "\(prefix).\(trimmed)"
-        let resolved = String(localized: String.LocalizationValue(lookupKey), table: nil)
+        let resolved = AppLocalization.string(String.LocalizationValue(lookupKey), table: nil)
 
-        // String(localized:) returns the key itself when there's no match.
+        // The localization API returns the key itself when there's no match.
         return resolved == lookupKey ? humanized(trimmed) : resolved
     }
 

@@ -14,10 +14,16 @@ import SwiftUI
 /// a subscription and takes priority when both are available.
 struct AIChatScreen: View {
     @ObservedObject var viewModel: ShopwareDashboardViewModel
+    let initialDraft: String
     @StateObject private var subscriptions = AISubscriptionManager()
     @StateObject private var aiKey = AIKeyStore()
     @State private var mcpAvailability: ShopwareAdminClient.MCPAvailability?
     @State private var serviceAvailability: AIChatService.Availability?
+
+    init(viewModel: ShopwareDashboardViewModel, initialDraft: String = "") {
+        self.viewModel = viewModel
+        self.initialDraft = initialDraft
+    }
 
     var body: some View {
         Group {
@@ -31,7 +37,7 @@ struct AIChatScreen: View {
                 requirementView(
                     icon: "pause.circle",
                     title: "AI assistant unavailable",
-                    message: String(localized: "The AI assistant is temporarily disabled. Please try again later.")
+                    message: AppLocalization.string("The AI assistant is temporarily disabled. Please try again later.")
                 )
             } else if case .failed(let message) = serviceAvailability {
                 requirementView(icon: "wifi.exclamationmark", title: "Couldn't reach the AI service", message: message)
@@ -40,18 +46,23 @@ struct AIChatScreen: View {
                 case .none:
                     loadingView.task { mcpAvailability = await client.mcpAvailability() }
                 case .available:
-                    AIChatView(client: client, subscriptions: subscriptions, aiKey: aiKey)
+                    AIChatView(
+                        client: client,
+                        subscriptions: subscriptions,
+                        aiKey: aiKey,
+                        initialDraft: initialDraft
+                    )
                 case .unsupportedVersion(let current, let required):
                     requirementView(
                         icon: "arrow.up.circle",
                         title: "Shopware update required",
-                        message: String(localized: "The AI assistant needs Shopware \(required) or newer. Your shop runs \(current).")
+                        message: AppLocalization.string("The AI assistant needs Shopware \(required) or newer. Your shop runs \(current).")
                     )
                 case .disabled:
                     requirementView(
                         icon: "wrench.adjustable",
                         title: "MCP server is disabled",
-                        message: String(localized: "Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again.")
+                        message: AppLocalization.string("Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again.")
                     )
                 case .failed(let message):
                     requirementView(icon: "wifi.exclamationmark", title: "Couldn't check your shop", message: message)
@@ -112,10 +123,15 @@ struct AIChatView: View {
     @ObservedObject private var aiKey: AIKeyStore
     @State private var draft = ""
     @State private var keyError: String?
-    @FocusState private var inputFocused: Bool
 
-    init(client: ShopwareAdminClient, subscriptions: AISubscriptionManager, aiKey: AIKeyStore) {
+    init(
+        client: ShopwareAdminClient,
+        subscriptions: AISubscriptionManager,
+        aiKey: AIKeyStore,
+        initialDraft: String = ""
+    ) {
         self.aiKey = aiKey
+        _draft = State(initialValue: initialDraft)
         _chat = StateObject(wrappedValue: AIChatViewModel(
             client: client,
             entitlementProvider: { await subscriptions.entitlementJWS() },
@@ -225,9 +241,9 @@ struct AIChatView: View {
                 .lineSpacing(5)
             VStack(alignment: .leading, spacing: 0) {
                 Rectangle().fill(Color.industryLine).frame(height: 1)
-                suggestion(String(localized: "How did the shop do today?"))
-                suggestion(String(localized: "Which products are low on stock?"))
-                suggestion(String(localized: "Activate the summer promotion"))
+                suggestion(AppLocalization.string("How did the shop do today?"))
+                suggestion(AppLocalization.string("Which products are low on stock?"))
+                suggestion(AppLocalization.string("Activate the summer promotion"))
             }
             .padding(.top, 4)
         }
@@ -294,7 +310,7 @@ struct AIChatView: View {
     // MARK: - Input
 
     private var inputBar: some View {
-        AskBar(draft: $draft, onSubmit: sendDraft)
+        AskBar(draft: $draft, autoFocus: true, onSubmit: sendDraft)
             .opacity(chat.canSend ? 1 : 0.45)
     }
 
@@ -434,8 +450,8 @@ private struct AIApprovalReviewSheet: View {
     private var actionList: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(approval.actions.count == 1
-                 ? String(localized: "PROPOSED CHANGE")
-                 : String(localized: "PROPOSED CHANGES"))
+                 ? AppLocalization.string("PROPOSED CHANGE")
+                 : AppLocalization.string("PROPOSED CHANGES"))
                 .font(.caption.weight(.bold))
                 .tracking(0.8)
                 .foregroundStyle(Color.secondaryText)
@@ -465,8 +481,8 @@ private struct AIApprovalReviewSheet: View {
                         .font(.headline)
                         .foregroundStyle(Color.primaryText)
                     Text(action.isDestructive
-                         ? String(localized: "Destructive action")
-                         : String(localized: "Shop data change"))
+                         ? AppLocalization.string("Destructive action")
+                         : AppLocalization.string("Shop data change"))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(accent)
                 }
@@ -478,7 +494,7 @@ private struct AIApprovalReviewSheet: View {
 
             Divider()
 
-            Text(String(localized: "Technical action: \(action.tool)"))
+            Text(AppLocalization.string("Technical action: \(action.tool)"))
                 .font(.caption2.monospaced())
                 .foregroundStyle(Color.secondaryText)
                 .textSelection(.enabled)
@@ -532,8 +548,8 @@ private struct AIApprovalReviewSheet: View {
                 Button(action: approve) {
                     Label(
                         approval.actions.count == 1
-                            ? String(localized: "Approve and apply")
-                            : String(localized: "Approve \(approval.actions.count) changes"),
+                            ? AppLocalization.string("Approve and apply")
+                            : AppLocalization.string("Approve \(approval.actions.count) changes"),
                         systemImage: "checkmark.shield.fill"
                     )
                     .font(.headline)
@@ -563,11 +579,11 @@ private struct AIApprovalReviewSheet: View {
 
     private func expiryText(at date: Date) -> String {
         let seconds = max(0, Int(approval.expirationDate.timeIntervalSince(date)))
-        guard seconds > 0 else { return String(localized: "Approval expired") }
+        guard seconds > 0 else { return AppLocalization.string("Approval expired") }
         let minutes = seconds / 60
         let remainder = seconds % 60
         return minutes > 0
-            ? String(localized: "Expires in \(minutes)m \(remainder)s")
-            : String(localized: "Expires in \(remainder)s")
+            ? AppLocalization.string("Expires in \(minutes)m \(remainder)s")
+            : AppLocalization.string("Expires in \(remainder)s")
     }
 }

@@ -28,15 +28,15 @@ struct AIAssistantSettingsCard: View {
             statusRow(
                 title: "Subscription",
                 value: subscriptions.isSubscribed
-                    ? String(localized: "Active")
-                    : String(localized: "Not subscribed"),
+                    ? AppLocalization.string("Active")
+                    : AppLocalization.string("Not subscribed"),
                 active: subscriptions.isSubscribed
             )
             statusRow(
                 title: "Own API key",
                 value: aiKey.hasKey
-                    ? "\(aiKey.provider?.displayName ?? String(localized: "Saved")) · \(String(localized: "Saved in Keychain"))"
-                    : String(localized: "Not set"),
+                    ? "\(aiKey.provider?.displayName ?? AppLocalization.string("Saved")) · \(AppLocalization.string("Saved in Keychain"))"
+                    : AppLocalization.string("Not set"),
                 active: aiKey.hasKey
             )
 
@@ -45,9 +45,9 @@ struct AIAssistantSettingsCard: View {
             Text("Usage this month")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(Color.primaryText)
-            usageRow(label: String(localized: "Requests"), value: usage.requests)
-            usageRow(label: String(localized: "Input tokens"), value: usage.inputTokens)
-            usageRow(label: String(localized: "Output tokens"), value: usage.outputTokens)
+            usageRow(label: AppLocalization.string("Requests"), value: usage.requests)
+            usageRow(label: AppLocalization.string("Input tokens"), value: usage.inputTokens)
+            usageRow(label: AppLocalization.string("Output tokens"), value: usage.outputTokens)
             Text("Counted on this device; resets monthly. With your own API key, billing lives in your selected provider's console.")
                 .font(.caption)
                 .foregroundStyle(Color.secondaryText)
@@ -114,8 +114,8 @@ struct AIAssistantSettingsCard: View {
                 saveKey()
             } label: {
                 Text(aiKey.hasKey
-                     ? String(localized: "Replace API key")
-                     : String(localized: "Save API key"))
+                     ? AppLocalization.string("Replace API key")
+                     : AppLocalization.string("Save API key"))
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity, minHeight: 42)
                     .foregroundStyle(Color.primaryText)

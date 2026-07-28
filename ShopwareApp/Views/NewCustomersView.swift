@@ -72,7 +72,7 @@ struct NewCustomersView: View {
         }
     }
 
-    private func summaryCell(_ value: Int, label: String) -> some View {
+    private func summaryCell(_ value: Int, label: LocalizedStringKey) -> some View {
         VStack(spacing: 3) {
             Text(value.formatted())
                 .font(IndustryFont.display(30))
@@ -88,7 +88,7 @@ struct NewCustomersView: View {
                 Button {
                     filter = candidate
                 } label: {
-                    Text(candidate.rawValue)
+                    Text(AppLocalization.string(String.LocalizationValue(candidate.rawValue)))
                         .industryKicker()
                         .foregroundStyle(filter == candidate ? Color.industryInverse : Color.industryDim)
                         .padding(.horizontal, 12)
@@ -136,11 +136,13 @@ struct NewCustomersView: View {
     }
 
     private func customerMeta(_ customer: CustomerRegistration) -> String {
-        let date = customer.createdAt?.formatted(date: .abbreviated, time: .shortened) ?? "NO DATE"
+        let format = Date.FormatStyle(date: .abbreviated, time: .shortened)
+            .locale(AppLocalization.locale)
+        let date = customer.createdAt?.formatted(format) ?? AppLocalization.string("NO DATE")
         return "\(customer.email) · \(date)"
     }
 
-    private func emptyRow(_ label: String) -> some View {
+    private func emptyRow(_ label: LocalizedStringKey) -> some View {
         Text(label)
             .industryKicker()
             .foregroundStyle(Color.industryFaint)

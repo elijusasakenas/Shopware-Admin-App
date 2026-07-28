@@ -100,7 +100,7 @@ extension ShopwareAdminClient {
         return (response["data"] as? [[String: Any]] ?? []).compactMap { row in
             guard let id = row["id"] as? String else { return nil }
             let attrs = entityAttributes(of: row)
-            let name = translatedName(from: attrs) ?? attrs["name"] as? String ?? String(localized: "Unnamed product")
+            let name = translatedName(from: attrs) ?? attrs["name"] as? String ?? AppLocalization.string("Unnamed product")
             return LowStockProduct(
                 id: id,
                 name: name,

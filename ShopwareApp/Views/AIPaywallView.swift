@@ -43,7 +43,7 @@ struct AIPaywallView: View {
                     // No product means StoreKit has nothing to sell: in the
                     // simulator the scheme's StoreKit configuration is missing;
                     // in production the App Store Connect product is absent.
-                    ErrorBanner(message: String(localized: "The subscription is currently unavailable. Please try again later."))
+                    ErrorBanner(message: AppLocalization.string("The subscription is currently unavailable. Please try again later."))
                 }
 
                 VStack(spacing: 12) {
@@ -167,9 +167,9 @@ struct AIPaywallView: View {
 
     private var priceText: String {
         if let product = subscriptions.product {
-            return String(localized: "\(product.displayPrice) / month")
+            return AppLocalization.string("\(product.displayPrice) / month")
         }
-        return String(localized: "10 € / month")
+        return AppLocalization.string("10 € / month")
     }
 
     private var header: some View {

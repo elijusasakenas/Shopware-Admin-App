@@ -38,7 +38,7 @@ struct SectionHeader: View {
                 .foregroundStyle(Color.industryText)
             Spacer()
             if let detail {
-                Text(detail)
+                Text(AppLocalization.string(String.LocalizationValue(detail)))
                     .industryKicker()
                     .foregroundStyle(Color.industryFaint)
             }
@@ -158,7 +158,9 @@ struct StockStepper: View {
 
 struct AskBar: View {
     var draft: Binding<String>?
+    var autoFocus = false
     var onSubmit: () -> Void
+    @FocusState private var fieldFocused: Bool
 
     var body: some View {
         HStack(spacing: 8) {
@@ -169,6 +171,7 @@ struct AskBar: View {
                 if let draft {
                     TextField("Ask your shop assistant", text: draft)
                         .font(IndustryFont.body(15))
+                        .focused($fieldFocused)
                         .onSubmit(onSubmit)
                 } else {
                     Text("Ask your shop assistant")
@@ -196,6 +199,11 @@ struct AskBar: View {
         .background(Color.industryBackground)
         .overlay(alignment: .top) {
             Rectangle().fill(Color.industryLine).frame(height: 1)
+        }
+        .task {
+            guard autoFocus, draft != nil else { return }
+            await Task.yield()
+            fieldFocused = true
         }
     }
 }

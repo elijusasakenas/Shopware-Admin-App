@@ -494,7 +494,7 @@ struct AIChatService {
     }
 
     private func providerKeyError(_ provider: AIProvider) -> String {
-        "\(provider.displayName): \(String(localized: "The AI provider rejected the API key. Check the key and its billing access."))"
+        "\(provider.displayName): \(AppLocalization.string("The AI provider rejected the API key. Check the key and its billing access."))"
     }
 
     private func errorMessage(from data: Data, status: Int) -> String {
@@ -504,11 +504,11 @@ struct AIChatService {
         }
         if let body = try? JSONDecoder().decode(ErrorBody.self, from: data) { return body.error.message }
         switch status {
-        case 401: return String(localized: "The AI service rejected the subscription. Try restoring purchases.")
-        case 413: return String(localized: "This conversation is too large. Start a new chat.")
-        case 429: return String(localized: "Your AI usage limit was reached. Please try again later.")
-        case 503: return String(localized: "The AI assistant is temporarily unavailable.")
-        default: return String(localized: "The AI service returned an error (\(status)).")
+        case 401: return AppLocalization.string("The AI service rejected the subscription. Try restoring purchases.")
+        case 413: return AppLocalization.string("This conversation is too large. Start a new chat.")
+        case 429: return AppLocalization.string("Your AI usage limit was reached. Please try again later.")
+        case 503: return AppLocalization.string("The AI assistant is temporarily unavailable.")
+        default: return AppLocalization.string("The AI service returned an error (\(status)).")
         }
     }
 }

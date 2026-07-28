@@ -18,7 +18,10 @@ struct LatestOrder: Identifiable, Equatable, Hashable {
 
     var displayDate: String {
         guard let orderDateTime else { return "No date" }
-        return orderDateTime.formatted(date: .abbreviated, time: .shortened)
+        return orderDateTime.formatted(
+            Date.FormatStyle(date: .abbreviated, time: .shortened)
+                .locale(AppLocalization.locale)
+        )
     }
 }
 

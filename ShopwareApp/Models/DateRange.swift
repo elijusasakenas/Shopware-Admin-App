@@ -28,7 +28,10 @@ enum DateRange: String, CaseIterable {
 
     // "13 May - 12 Jun" under the card title, like the admin dashboard
     var subtitle: String {
-        let format = Date.FormatStyle().day().month(.abbreviated)
+        let format = Date.FormatStyle()
+            .locale(AppLocalization.locale)
+            .day()
+            .month(.abbreviated)
         if self == .yesterday {
             return sinceDate.formatted(format)
         }
@@ -68,8 +71,10 @@ enum DateRange: String, CaseIterable {
 
     var axisFormat: Date.FormatStyle {
         switch self {
-        case .hours24, .yesterday: return .dateTime.hour()
-        default:                   return .dateTime.month(.abbreviated).day()
+        case .hours24, .yesterday:
+            return .dateTime.locale(AppLocalization.locale).hour()
+        default:
+            return .dateTime.locale(AppLocalization.locale).month(.abbreviated).day()
         }
     }
 }

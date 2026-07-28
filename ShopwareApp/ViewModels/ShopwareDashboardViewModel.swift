@@ -38,8 +38,8 @@ final class ShopwareDashboardViewModel: ObservableObject {
     @Published private(set) var dismissedAttentionIDs: Set<String> = []
 
     var selectedChannelName: String {
-        guard let id = selectedChannelID else { return "All sales channels" }
-        return salesChannels.first { $0.id == id }?.name ?? "Sales channel"
+        guard let id = selectedChannelID else { return AppLocalization.string("All sales channels") }
+        return salesChannels.first { $0.id == id }?.name ?? AppLocalization.string("Sales channel")
     }
 
     var attentionItems: [AttentionItem] {
@@ -52,9 +52,9 @@ final class ShopwareDashboardViewModel: ObservableObject {
                 AttentionItem(
                     id: "order-\(order.id)",
                     severity: 3,
-                    title: "Order \(order.orderNumber) needs review",
+                    title: AppLocalization.string("Order \(order.orderNumber) needs review"),
                     meta: "\(order.amountTotal.formatted(.currency(code: order.currencyCode))) · \(StateLocalization.stateName(order.state))",
-                    action: "REVIEW",
+                    action: AppLocalization.string("REVIEW"),
                     destination: .order(order)
                 )
             )
@@ -66,10 +66,12 @@ final class ShopwareDashboardViewModel: ObservableObject {
                     id: "stock-\(product.id)",
                     severity: product.stock == 0 ? 3 : 2,
                     title: product.stock == 0
-                        ? "\(product.name) is out of stock"
-                        : "\(product.name) is running low",
-                    meta: "\(product.productNumber.isEmpty ? "PRODUCT" : product.productNumber) · \(product.stock) IN STOCK",
-                    action: "RESTOCK",
+                        ? AppLocalization.string("\(product.name) is out of stock")
+                        : AppLocalization.string("\(product.name) is running low"),
+                    meta: AppLocalization.string(
+                        "\(product.productNumber.isEmpty ? AppLocalization.string("PRODUCT") : product.productNumber) · \(product.stock) IN STOCK"
+                    ),
+                    action: AppLocalization.string("RESTOCK"),
                     destination: .products
                 )
             )
