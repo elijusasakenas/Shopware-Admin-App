@@ -54,7 +54,7 @@ final class ShopwareDashboardViewModel: ObservableObject {
                     severity: 3,
                     title: AppLocalization.string("Order \(order.orderNumber) needs review"),
                     meta: "\(order.amountTotal.formatted(.currency(code: order.currencyCode))) · \(StateLocalization.stateName(order.state))",
-                    action: AppLocalization.string("REVIEW"),
+                    action: AppLocalization.string("Review"),
                     destination: .order(order)
                 )
             )
@@ -64,14 +64,12 @@ final class ShopwareDashboardViewModel: ObservableObject {
             result.append(
                 AttentionItem(
                     id: "stock-\(product.id)",
-                    severity: product.stock == 0 ? 3 : 2,
-                    title: product.stock == 0
+                    severity: product.stock <= 0 ? 3 : 2,
+                    title: product.stock <= 0
                         ? AppLocalization.string("\(product.name) is out of stock")
                         : AppLocalization.string("\(product.name) is running low"),
-                    meta: AppLocalization.string(
-                        "\(product.productNumber.isEmpty ? AppLocalization.string("PRODUCT") : product.productNumber) · \(product.stock) IN STOCK"
-                    ),
-                    action: AppLocalization.string("RESTOCK"),
+                    meta: "\(product.productNumber.isEmpty ? AppLocalization.string("PRODUCT") : product.productNumber) · \(stockLabel(for: product.stock))",
+                    action: AppLocalization.string("Restock"),
                     destination: .products
                 )
             )
@@ -80,6 +78,12 @@ final class ShopwareDashboardViewModel: ObservableObject {
         return result
             .filter { !dismissedAttentionIDs.contains($0.id) }
             .sorted { $0.severity > $1.severity }
+    }
+
+    private func stockLabel(for stock: Int) -> String {
+        stock <= 0
+            ? AppLocalization.string("Out of stock")
+            : AppLocalization.string("\(stock) in stock")
     }
 
     private let credentialStore = CredentialStore()

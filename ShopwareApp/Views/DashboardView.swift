@@ -18,7 +18,7 @@ struct DashboardView: View {
                         .riseIn(0.06)
                 }
 
-                ScrollView {
+                ScrollView(.vertical) {
                     VStack(alignment: .leading, spacing: 26) {
                         if let message = viewModel.errorMessage {
                             ErrorBanner(message: message)
@@ -33,7 +33,10 @@ struct DashboardView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 18)
                     .padding(.bottom, 24)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .frame(maxWidth: .infinity)
+                .clipped()
                 .refreshable { await viewModel.refresh() }
 
                 AskBar(draft: $assistantDraft) {
@@ -196,19 +199,23 @@ struct DashboardView: View {
     }
 
     private var attentionSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Needs you")
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Things to review")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(Color.primaryText)
                 Text(viewModel.attentionItems.count.formatted())
-                    .font(.title3.weight(.semibold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(Color.shopwareBlue)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.shopwareBlue.opacity(0.10))
+                    .clipShape(Capsule())
                 Spacer()
-                Text("Ranked by cost of waiting")
-                    .font(.caption)
-                    .foregroundStyle(Color.secondaryText)
             }
+            Text("Take a look when you have a moment.")
+                .font(.subheadline)
+                .foregroundStyle(Color.secondaryText)
             Divider()
             if viewModel.attentionItems.isEmpty {
                 HStack(spacing: 12) {
@@ -233,22 +240,47 @@ struct DashboardView: View {
     }
 
     private func attentionRow(_ item: AttentionItem) -> some View {
-        HStack(spacing: 12) {
-            SeverityLadder(level: item.severity)
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .top, spacing: 12) {
+            attentionIcon(item)
+            VStack(alignment: .leading, spacing: 6) {
                 Text(item.title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.primaryText)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(item.meta)
                     .font(.caption)
                     .foregroundStyle(Color.secondaryText)
                     .lineLimit(1)
+                attentionAction(item)
+                    .padding(.top, 3)
             }
-            Spacer(minLength: 4)
-            attentionAction(item)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
+    }
+
+    private func attentionIcon(_ item: AttentionItem) -> some View {
+        let presentation = attentionIconPresentation(item)
+        return Image(systemName: presentation.symbol)
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(presentation.color)
+            .frame(width: 38, height: 38)
+            .background(presentation.color.opacity(0.11))
+            .clipShape(Circle())
+            .accessibilityHidden(true)
+    }
+
+    private func attentionIconPresentation(
+        _ item: AttentionItem
+    ) -> (symbol: String, color: Color) {
+        switch item.destination {
+        case .order:
+            return ("doc.text", .shopwareBlue)
+        case .products:
+            return ("shippingbox.fill", item.severity >= 3 ? .red : .amber)
+        case .resolve:
+            return ("checkmark", .green)
+        }
     }
 
     @ViewBuilder
@@ -258,12 +290,12 @@ struct DashboardView: View {
             NavigationLink(value: order) {
                 attentionActionLabel(item.action)
             }
-            .buttonStyle(IndustryActionButtonStyle())
+            .buttonStyle(.plain)
         case .products:
             Button { showProducts = true } label: {
                 attentionActionLabel(item.action)
             }
-            .buttonStyle(IndustryActionButtonStyle())
+            .buttonStyle(.plain)
         case .resolve:
             Button {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
@@ -272,14 +304,22 @@ struct DashboardView: View {
             } label: {
                 attentionActionLabel(item.action)
             }
-            .buttonStyle(IndustryActionButtonStyle())
+            .buttonStyle(.plain)
         }
     }
 
     private func attentionActionLabel(_ label: String) -> some View {
-        Text(AppLocalization.string(String.LocalizationValue(label)))
-            .font(.caption.weight(.semibold))
-            .padding(.horizontal, 14)
+        HStack(spacing: 6) {
+            Text(AppLocalization.string(String.LocalizationValue(label)))
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+        }
+        .font(.subheadline.weight(.semibold))
+        .foregroundStyle(Color.shopwareBlue)
+        .padding(.horizontal, 12)
+        .frame(minHeight: 36)
+        .background(Color.shopwareBlue.opacity(0.09))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private var trendSection: some View {

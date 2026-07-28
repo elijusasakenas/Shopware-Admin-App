@@ -354,6 +354,8 @@
 "NO PROMOTIONS" = "NO HAY PROMOCIONES";
 "NO STOREFRONT DOMAINS" = "NO HAY DOMINIOS DE TIENDA";
 "Needs you" = "Requiere tu atención";
+"Things to review" = "Para revisar";
+"Take a look when you have a moment." = "Échale un vistazo cuando tengas un momento.";
 "Net · Derived" = "Neto · Calculado";
 "Nothing matches that search." = "Nada coincide con esa búsqueda.";
 "Nothing waiting on you. Queue is clear." = "Nada requiere tu atención. La cola está vacía.";
@@ -362,6 +364,8 @@
 "PRODUCT" = "PRODUCTO";
 "RESTOCK" = "REPONER";
 "REVIEW" = "REVISAR";
+"Restock" = "Reponer";
+"Review" = "Revisar";
 "Ranked by cost of waiting" = "Ordenado por coste de espera";
 "Registrations · Last 7 days" = "Registros · Últimos 7 días";
 "Route AI requests through the included proxy, keep service secrets out of the app bundle, and use the narrowest Shopware integration permissions your workflow needs." = "Canaliza las solicitudes de IA mediante el proxy incluido, mantén los secretos del servicio fuera del paquete de la app y concede a la integración de Shopware solo los permisos imprescindibles.";
@@ -384,6 +388,7 @@
 "%@ is out of stock" = "%@ está agotado";
 "%@ is running low" = "%@ tiene poco stock";
 "%@ · %lld IN STOCK" = "%@ · %lld EN STOCK";
+"%lld in stock" = "%lld en stock";
 "%lld CONNECTED" = "%lld CONECTADAS";
 "ACCOUNTS" = "CUENTAS";
 "GUESTS" = "INVITADOS";

@@ -13,6 +13,9 @@
 		5A9E2D8C1F734B6A90C2E411 /* AIChatModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9E2D8C1F734B6A90C2E412 /* AIChatModelsTests.swift */; };
 		86F698E5A025F513633D1C68 /* ShopwareConnectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */; };
 		C0DE00000000000000000002 /* AppLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000001 /* AppLocalizationTests.swift */; };
+		D0C0A0010000000000000001 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C0A0010000000000000011 /* MockURLProtocol.swift */; };
+		D0C0A0010000000000000002 /* ShopwareAdminClientIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C0A0010000000000000012 /* ShopwareAdminClientIntegrationTests.swift */; };
+		D0C0A0010000000000000003 /* ViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C0A0010000000000000013 /* ViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +37,9 @@
 		C0DE00000000000000000001 /* AppLocalizationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLocalizationTests.swift; sourceTree = "<group>"; };
 		C729498F2FDB6B6A002A697B /* ShopwareApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShopwareApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DateRangeTests.swift; sourceTree = "<group>"; };
+		D0C0A0010000000000000011 /* MockURLProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
+		D0C0A0010000000000000012 /* ShopwareAdminClientIntegrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShopwareAdminClientIntegrationTests.swift; sourceTree = "<group>"; };
+		D0C0A0010000000000000013 /* ViewModelTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -76,8 +82,11 @@
 				5A9E2D8C1F734B6A90C2E412 /* AIChatModelsTests.swift */,
 				D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */,
 				AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */,
+				D0C0A0010000000000000011 /* MockURLProtocol.swift */,
+				D0C0A0010000000000000012 /* ShopwareAdminClientIntegrationTests.swift */,
 				A83B4FF94573AB265DF1BD32 /* ShopwareConnectionTests.swift */,
 				AF2B7A34E27E5F22B07E71E0 /* StateLocalizationTests.swift */,
+				D0C0A0010000000000000013 /* ViewModelTests.swift */,
 			);
 			path = ShopwareAppTests;
 			sourceTree = "<group>";
@@ -213,8 +222,11 @@
 				5A9E2D8C1F734B6A90C2E411 /* AIChatModelsTests.swift in Sources */,
 				164778662EBB0A11E394ACA8 /* DateRangeTests.swift in Sources */,
 				0E5C48E0BAE57E768E9C0A06 /* JSONParsingTests.swift in Sources */,
+				D0C0A0010000000000000001 /* MockURLProtocol.swift in Sources */,
+				D0C0A0010000000000000002 /* ShopwareAdminClientIntegrationTests.swift in Sources */,
 				86F698E5A025F513633D1C68 /* ShopwareConnectionTests.swift in Sources */,
 				17C945967E748D94790BBB02 /* StateLocalizationTests.swift in Sources */,
+				D0C0A0010000000000000003 /* ViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

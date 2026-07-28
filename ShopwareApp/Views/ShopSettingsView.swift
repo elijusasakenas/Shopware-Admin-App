@@ -13,9 +13,10 @@ struct ShopSettingsView: View {
     @State private var errorMessage: String?
     @State private var confirmSignOut = false
     @State private var showShopSwitcher = false
+    @State private var closeSettingsAfterSwitch = false
 
     var body: some View {
-        ScrollView {
+        ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 26) {
                 if let errorMessage {
                     ErrorBanner(message: errorMessage)
@@ -33,6 +34,8 @@ struct ShopSettingsView: View {
             .padding(.top, 14)
             .padding(.bottom, 34)
         }
+        .frame(maxWidth: .infinity)
+        .clipped()
         .background(Color.appBackground)
         .navigationTitle("")
         .toolbar {
@@ -56,29 +59,22 @@ struct ShopSettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
-        .confirmationDialog(
-            "Switch shop",
-            isPresented: $showShopSwitcher,
-            titleVisibility: .visible
-        ) {
-            ForEach(session.savedConnections) { shop in
-                Button {
-                    Task {
-                        await session.switchTo(shop)
-                        dismiss()
-                    }
-                } label: {
-                    if shop.id == session.connection?.id {
-                        Label(shop.displayName, systemImage: "checkmark")
-                    } else {
-                        Text(shop.displayName)
-                    }
-                }
-                .disabled(shop.id == session.connection?.id)
+        .sheet(isPresented: $showShopSwitcher, onDismiss: {
+            guard closeSettingsAfterSwitch else { return }
+            closeSettingsAfterSwitch = false
+            dismiss()
+        }) {
+            ShopSwitcherSheet(session: session) {
+                closeSettingsAfterSwitch = true
+                showShopSwitcher = false
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Choose a saved shop")
+            .appAppearance()
+            #if os(macOS)
+            .frame(minWidth: 420, idealWidth: 460, minHeight: 360, idealHeight: 440)
+            #else
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.hidden)
+            #endif
         }
     }
 
@@ -424,5 +420,143 @@ struct ShopSettingsView: View {
                 }
             }
         )
+    }
+}
+
+private struct ShopSwitcherSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var session: ShopwareDashboardViewModel
+    let onSwitched: () -> Void
+
+    @State private var switchingShopID: UUID?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider()
+
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 10) {
+                    ForEach(session.savedConnections) { shop in
+                        shopRow(shop)
+                    }
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity)
+            }
+            .frame(maxWidth: .infinity)
+            .clipped()
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.appBackground)
+        .interactiveDismissDisabled(switchingShopID != nil)
+    }
+
+    private var header: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Switch shop")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Color.primaryText)
+                Text("Choose a saved shop")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondaryText)
+            }
+
+            Spacer(minLength: 12)
+
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.primaryText)
+                    .frame(width: 34, height: 34)
+                    .background(Color.controlBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(Color.border, lineWidth: 1)
+                    }
+            }
+            .buttonStyle(.plain)
+            .disabled(switchingShopID != nil)
+            .accessibilityLabel("Cancel")
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        .background(Color.surface)
+    }
+
+    private func shopRow(_ shop: ShopwareConnection) -> some View {
+        let isActive = shop.id == session.connection?.id
+        let isSwitching = switchingShopID == shop.id
+
+        return Button {
+            guard !isActive, switchingShopID == nil else { return }
+            switchingShopID = shop.id
+            Task {
+                await session.switchTo(shop)
+                switchingShopID = nil
+                onSwitched()
+            }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "storefront")
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(isActive ? Color.inverseText : Color.shopwareBlue)
+                    .frame(width: 42, height: 42)
+                    .background(isActive ? Color.shopwareBlue : Color.shopwareBlue.opacity(0.10))
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(shop.displayName)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Color.primaryText)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text(shop.displayHost)
+                        .font(.caption)
+                        .foregroundStyle(Color.secondaryText)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
+
+                Spacer(minLength: 8)
+
+                if isSwitching {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(Color.shopwareBlue)
+                } else if isActive {
+                    Label("Active", systemImage: "checkmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.shopwareBlue)
+                        .labelStyle(.titleAndIcon)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.secondaryText)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading)
+            .background(isActive ? Color.shopwareBlue.opacity(0.08) : Color.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(
+                        isActive ? Color.shopwareBlue.opacity(0.55) : Color.border,
+                        lineWidth: 1
+                    )
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(isActive || switchingShopID != nil)
+        .opacity(switchingShopID != nil && !isSwitching ? 0.6 : 1)
+        .accessibilityHint(isActive ? Text("Active") : Text("Switch shop"))
     }
 }

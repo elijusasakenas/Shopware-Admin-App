@@ -354,6 +354,8 @@
 "NO PROMOTIONS" = "NO PROMOTIONS";
 "NO STOREFRONT DOMAINS" = "NO STOREFRONT DOMAINS";
 "Needs you" = "Needs you";
+"Things to review" = "Things to review";
+"Take a look when you have a moment." = "Take a look when you have a moment.";
 "Net · Derived" = "Net · Derived";
 "Nothing matches that search." = "Nothing matches that search.";
 "Nothing waiting on you. Queue is clear." = "Nothing waiting on you. Queue is clear.";
@@ -362,6 +364,8 @@
 "PRODUCT" = "PRODUCT";
 "RESTOCK" = "RESTOCK";
 "REVIEW" = "REVIEW";
+"Restock" = "Restock";
+"Review" = "Review";
 "Ranked by cost of waiting" = "Ranked by cost of waiting";
 "Registrations · Last 7 days" = "Registrations · Last 7 days";
 "Route AI requests through the included proxy, keep service secrets out of the app bundle, and use the narrowest Shopware integration permissions your workflow needs." = "Route AI requests through the included proxy, keep service secrets out of the app bundle, and use the narrowest Shopware integration permissions your workflow needs.";
@@ -384,6 +388,7 @@
 "%@ is out of stock" = "%@ is out of stock";
 "%@ is running low" = "%@ is running low";
 "%@ · %lld IN STOCK" = "%@ · %lld IN STOCK";
+"%lld in stock" = "%lld in stock";
 "%lld CONNECTED" = "%lld CONNECTED";
 "ACCOUNTS" = "ACCOUNTS";
 "GUESTS" = "GUESTS";
