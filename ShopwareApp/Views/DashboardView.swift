@@ -18,26 +18,28 @@ struct DashboardView: View {
                         .riseIn(0.06)
                 }
 
-                ScrollView(.vertical) {
-                    VStack(alignment: .leading, spacing: 26) {
-                        if let message = viewModel.errorMessage {
-                            ErrorBanner(message: message)
+                GeometryReader { geometry in
+                    ScrollView(.vertical) {
+                        VStack(alignment: .leading, spacing: 26) {
+                            if let message = viewModel.errorMessage {
+                                ErrorBanner(message: message)
+                            }
+                            heroPlate.riseIn(0.12)
+                            attentionSection.riseIn(0.18)
+                            trendSection.riseIn(0.24)
+                            ordersSection.riseIn(0.30)
+                            stockSection.riseIn(0.34)
+                            alsoSection
                         }
-                        heroPlate.riseIn(0.12)
-                        attentionSection.riseIn(0.18)
-                        trendSection.riseIn(0.24)
-                        ordersSection.riseIn(0.30)
-                        stockSection.riseIn(0.34)
-                        alsoSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 18)
+                        .padding(.bottom, 24)
+                        .frame(width: geometry.size.width, alignment: .leading)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 18)
-                    .padding(.bottom, 24)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(width: geometry.size.width)
+                    .clipped()
+                    .refreshable { await viewModel.refresh() }
                 }
-                .frame(maxWidth: .infinity)
-                .clipped()
-                .refreshable { await viewModel.refresh() }
 
                 AskBar(draft: $assistantDraft) {
                     showAssistant = true
@@ -404,6 +406,8 @@ struct DashboardView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
+        .clipped()
     }
 
     private var trendBuckets: [DashboardBucket] {
