@@ -55,4 +55,24 @@ final class DateRangeTests: XCTestCase {
         XCTAssertEqual(DateRange.hours24.rawValue, "24Hours")
         XCTAssertEqual(DateRange.yesterday.rawValue, "Yesterday")
     }
+
+    func testHalfOverHalfPercent_comparesTheTwoHalves() {
+        XCTAssertNil(TrendComparison.halfOverHalfPercent([10]))
+        XCTAssertEqual(TrendComparison.halfOverHalfPercent([10, 10, 20, 20]) ?? .nan, 100, accuracy: 0.01)
+        XCTAssertEqual(TrendComparison.halfOverHalfPercent([20, 10]) ?? .nan, -50, accuracy: 0.01)
+        XCTAssertNil(TrendComparison.halfOverHalfPercent([0, 8]))
+    }
+
+    func testDayOverDayPercent_usesYesterdayBucket() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let today = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_800_000_000))
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        let buckets = [
+            DashboardBucket(date: yesterday, count: 2, amount: 100),
+            DashboardBucket(date: today, count: 3, amount: 130)
+        ]
+        let change = TrendComparison.dayOverDayPercent(buckets: buckets, now: today, calendar: calendar)
+        XCTAssertEqual(change ?? 0, 30, accuracy: 0.01)
+    }
 }

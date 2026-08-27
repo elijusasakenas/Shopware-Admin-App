@@ -99,7 +99,8 @@ struct DashboardView: View {
     }
 
     private func channelRow(id: String?, name: String, share: String) -> some View {
-        Button {
+        let selected = viewModel.selectedChannelID == id
+        return Button {
             Task {
                 await viewModel.selectChannel(id)
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
@@ -110,25 +111,29 @@ struct DashboardView: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle().stroke(Color.shopwareBlue, lineWidth: 1.5).frame(width: 12, height: 12)
-                    if viewModel.selectedChannelID == id {
+                    if selected {
                         Circle().fill(Color.shopwareBlue).frame(width: 6, height: 6)
                     }
                 }
                 Text(name)
-                    .font(.body)
+                    .font(.body.weight(selected ? .semibold : .regular))
                     .foregroundStyle(Color.primaryText)
                     .lineLimit(1)
                 Spacer()
                 Text(share)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.secondaryText)
+                    .foregroundStyle(selected ? Color.shopwareBlue : Color.secondaryText)
             }
-            .frame(minHeight: 44)
+            .padding(.horizontal, 4)
+            .frame(minHeight: 48)
+            .background(selected ? Color.shopwareBlue.opacity(0.08) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay(alignment: .top) {
                 Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
             }
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private var heroPlate: some View {
@@ -169,12 +174,15 @@ struct DashboardView: View {
     }
 
     private var comparisonText: String {
-        guard viewModel.revenueBuckets.count > 1,
-              let latest = viewModel.revenueBuckets.last?.amount
-        else { return "LIVE" }
-        let previous = viewModel.revenueBuckets.dropLast().last?.amount ?? 0
-        guard previous > 0 else { return "LIVE" }
-        return String(format: "%+.0f%% VS. PREV.", ((latest - previous) / previous) * 100)
+        guard let change = TrendComparison.dayOverDayPercent(buckets: viewModel.revenueBuckets) else {
+            return "LIVE"
+        }
+        return "\(String(format: "%+.0f", change))% \(AppLocalization.string("VS. YDAY"))"
+    }
+
+    private var periodComparisonText: String {
+        guard let change = TrendComparison.halfOverHalfPercent(trendValues) else { return "—" }
+        return String(format: "%+.0f%%", change)
     }
 
     private var averageBasket: String {
@@ -438,7 +446,7 @@ struct DashboardView: View {
             HStack(spacing: 0) {
                 statCell("Best day", value: formatTrend(best))
                 Divider().frame(height: 43)
-                statCell("Vs. prev.", value: comparisonText, accent: true)
+                statCell("Vs. prev.", value: periodComparisonText, accent: true)
             }
         }
     }
@@ -464,9 +472,22 @@ struct DashboardView: View {
 
     private var ordersSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader(title: "Orders today", detail: "ALL ORDERS →")
+            if let client = viewModel.apiClient {
+                NavigationLink {
+                    RecentOrdersView(
+                        client: client,
+                        salesChannelID: viewModel.selectedChannelID,
+                        onRefresh: { await viewModel.refresh() }
+                    )
+                } label: {
+                    SectionHeader(title: "Orders today", detail: "ALL ORDERS →")
+                }
+                .buttonStyle(.plain)
+            } else {
+                SectionHeader(title: "Orders today", detail: "ALL ORDERS →")
+            }
             OrderList(
-                orders: viewModel.metrics?.latestOrders ?? [],
+                orders: viewModel.metrics?.todayOrders ?? [],
                 isLoading: viewModel.isLoading
             )
         }
@@ -519,14 +540,15 @@ struct DashboardView: View {
                 .foregroundStyle(Color.primaryText)
                 .padding(.bottom, 10)
             Divider()
-            alsoRow("Sales by language", value: "\(viewModel.languageStats.count) MARKETS")
+            alsoRow("Sales by language", value: "\(viewModel.languageStats.count) MARKETS", destination: .languages)
             alsoRow("Promotions", value: "MANAGE", destination: .promotions)
             alsoRow("Newsletter signups", value: "VIEW", destination: .newsletter)
             alsoRow(
                 "Shop status & log",
                 value: viewModel.shopStatusLabel,
                 accent: viewModel.hasMaintenanceChannel,
-                destination: .shopStatus
+                destination: .shopStatus,
+                isLast: true
             )
         }
         .shopwareCard()
@@ -537,17 +559,18 @@ struct DashboardView: View {
         _ label: LocalizedStringKey,
         value: String,
         accent: Bool = false,
-        destination: ShopShortcutDestination = .settings
+        destination: ShopShortcutDestination = .settings,
+        isLast: Bool = false
     ) -> some View {
         if let client = viewModel.apiClient {
             NavigationLink {
                 shortcutDestination(destination, client: client)
             } label: {
-                alsoRowLabel(label, value: value, accent: accent)
+                alsoRowLabel(label, value: value, accent: accent, isLast: isLast)
             }
             .buttonStyle(.plain)
         } else {
-            alsoRowLabel(label, value: value, accent: accent)
+            alsoRowLabel(label, value: value, accent: accent, isLast: isLast)
         }
     }
 
@@ -566,10 +589,12 @@ struct DashboardView: View {
             NewsletterSignupsView(settings: settings)
         case .shopStatus:
             ShopStatusView(settings: settings)
+        case .languages:
+            LanguageStatsView(session: viewModel)
         }
     }
 
-    private func alsoRowLabel(_ label: LocalizedStringKey, value: String, accent: Bool) -> some View {
+    private func alsoRowLabel(_ label: LocalizedStringKey, value: String, accent: Bool, isLast: Bool) -> some View {
         HStack {
             Text(label)
                 .font(.subheadline)
@@ -579,12 +604,15 @@ struct DashboardView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(accent ? Color.shopwareBlue : Color.secondaryText)
             Image(systemName: "chevron.right")
-                .font(.system(size: 10, weight: .light))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(Color.secondaryText)
         }
-        .frame(minHeight: 46)
+        .frame(minHeight: 48)
+        .contentShape(Rectangle())
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
+            if !isLast {
+                Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
+            }
         }
     }
 
@@ -611,4 +639,5 @@ private enum ShopShortcutDestination {
     case promotions
     case newsletter
     case shopStatus
+    case languages
 }

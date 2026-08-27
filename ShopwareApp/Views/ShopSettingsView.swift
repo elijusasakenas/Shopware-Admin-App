@@ -81,9 +81,12 @@ struct ShopSettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: "Appearance")
             HStack(spacing: 0) {
-                appearanceButton(.light)
-                Divider().frame(height: 44)
-                appearanceButton(.dark)
+                ForEach(AppAppearance.allCases) { option in
+                    appearanceButton(option)
+                    if option != AppAppearance.allCases.last {
+                        Divider().frame(height: 44)
+                    }
+                }
             }
             .background(Color.controlBackground)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -164,7 +167,8 @@ struct ShopSettingsView: View {
             } label: {
                 manageRow(
                     "Add another shop",
-                    value: AppLocalization.string("\(session.savedConnections.count) CONNECTED")
+                    value: AppLocalization.string("\(session.savedConnections.count) CONNECTED"),
+                    isLast: true
                 )
             }
             .buttonStyle(.plain)
@@ -180,7 +184,8 @@ struct ShopSettingsView: View {
     private func manageRow(
         _ title: LocalizedStringKey,
         value: String,
-        localizeValue: Bool = true
+        localizeValue: Bool = true,
+        isLast: Bool = false
     ) -> some View {
         HStack {
             Text(title)
@@ -197,13 +202,15 @@ struct ShopSettingsView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(Color.secondaryText)
             Image(systemName: "chevron.right")
-                .font(.system(size: 10, weight: .light))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(Color.secondaryText)
         }
         .frame(minHeight: 50)
         .contentShape(Rectangle())
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
+            if !isLast {
+                Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
+            }
         }
     }
 

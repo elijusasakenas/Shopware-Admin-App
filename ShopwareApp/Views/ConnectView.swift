@@ -42,10 +42,32 @@ struct ConnectView: View {
                     .padding(.top, isAddingAdditionalShop ? 8 : 34)
 
                     VStack(spacing: 14) {
-                        FormField(title: "Shop name (optional)", placeholder: "My store", text: $shopName)
-                        FormField(title: "Shop URL", placeholder: "https://your-shop.com", text: $shopURL)
-                        FormField(title: "Access key ID", placeholder: "SWIA...", text: $accessKey)
-                        FormField(title: "Secret access key", placeholder: "Secret", text: $secretKey, isSecure: true)
+                        FormField(
+                            title: "Shop name (optional)",
+                            placeholder: "My store",
+                            text: $shopName,
+                            submitLabel: .next
+                        )
+                        FormField(
+                            title: "Shop URL",
+                            placeholder: "https://your-shop.com",
+                            text: $shopURL,
+                            submitLabel: .next
+                        )
+                        FormField(
+                            title: "Access key ID",
+                            placeholder: "SWIA...",
+                            text: $accessKey,
+                            submitLabel: .next
+                        )
+                        FormField(
+                            title: "Secret access key",
+                            placeholder: "Secret",
+                            text: $secretKey,
+                            isSecure: true,
+                            submitLabel: .go,
+                            onSubmit: { if canConnect { connect() } }
+                        )
                     }
 
                     if let message = viewModel.errorMessage {
@@ -60,7 +82,7 @@ struct ConnectView: View {
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(!canConnect || viewModel.isLoading)
-                    .opacity(canConnect ? 1 : 0.45)
+                    .opacity(canConnect && !viewModel.isLoading ? 1 : 0.45)
 
                     BlueprintFrame(padding: 14) {
                         VStack(alignment: .leading, spacing: 8) {
@@ -77,6 +99,9 @@ struct ConnectView: View {
                 .padding(.horizontal, 18)
                 .padding(.bottom, 34)
             }
+            #if !os(macOS)
+            .scrollDismissesKeyboard(.interactively)
+            #endif
             .background(Color.appBackground)
             .navigationTitle("")
             .toolbar {
@@ -101,9 +126,9 @@ struct ConnectView: View {
             let trimmedName = shopName.trimmingCharacters(in: .whitespacesAndNewlines)
             await viewModel.connect(
                 ShopwareConnection(
-                    shopURL: shopURL,
-                    accessKey: accessKey,
-                    secretKey: secretKey,
+                    shopURL: shopURL.trimmingCharacters(in: .whitespacesAndNewlines),
+                    accessKey: accessKey.trimmingCharacters(in: .whitespacesAndNewlines),
+                    secretKey: secretKey.trimmingCharacters(in: .whitespacesAndNewlines),
                     label: trimmedName.isEmpty ? nil : trimmedName
                 )
             )
@@ -113,6 +138,6 @@ struct ConnectView: View {
     private var canConnect: Bool {
         ShopwareConnection.normalizedURL(from: shopURL) != nil &&
         !accessKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !secretKey.isEmpty
+        !secretKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

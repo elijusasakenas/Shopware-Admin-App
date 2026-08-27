@@ -227,3 +227,144 @@ struct NewsletterSignupsView: View {
         isLoading = false
     }
 }
+
+struct RecentOrdersView: View {
+    let client: ShopwareAdminClient
+    var salesChannelID: String?
+    var onRefresh: () async -> Void
+
+    @State private var orders: [LatestOrder] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                if let errorMessage {
+                    ErrorBanner(message: errorMessage)
+                }
+                OrderList(orders: orders, isLoading: isLoading, emptyMessage: "No orders yet.")
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 32)
+        }
+        .background(Color.appBackground)
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Orders")
+                    .font(.headline)
+                    .foregroundStyle(Color.primaryText)
+            }
+        }
+        #if !os(macOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+        .task { await load() }
+        .refreshable {
+            await load()
+            await onRefresh()
+        }
+        .navigationDestination(for: LatestOrder.self) { order in
+            OrderDetailView(
+                viewModel: OrderDetailViewModel(client: client) {
+                    await onRefresh()
+                },
+                order: order
+            )
+        }
+    }
+
+    private func load() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            var payload: [String: Any] = [
+                "limit": 50,
+                "sort": [["field": "orderDateTime", "order": "DESC"]],
+                "associations": ["currency": [:], "stateMachineState": [:]]
+            ]
+            if let salesChannelID {
+                payload["filter"] = [
+                    ["type": "equals", "field": "salesChannelId", "value": salesChannelID]
+                ]
+            }
+            orders = try await client.searchOrders(payload)
+        } catch {
+            errorMessage = error.shopwareDisplayMessage
+        }
+        isLoading = false
+    }
+}
+
+struct LanguageStatsView: View {
+    @ObservedObject var session: ShopwareDashboardViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                languageCard
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 32)
+        }
+        .background(Color.appBackground)
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Sales by language")
+                    .font(.headline)
+                    .foregroundStyle(Color.primaryText)
+            }
+        }
+        #if !os(macOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+    }
+
+    private var languageCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionHeader(title: "Sales by language · 30d")
+                .padding(.bottom, 10)
+            Divider()
+            if session.languageStats.isEmpty {
+                Text("No orders in this period")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(20)
+            } else {
+                let maximum = max(session.languageStats.map(\.count).max() ?? 1, 1)
+                ForEach(Array(session.languageStats.enumerated()), id: \.element.id) { index, stat in
+                    VStack(alignment: .leading, spacing: 7) {
+                        HStack {
+                            Text(stat.name)
+                                .font(.subheadline)
+                                .foregroundStyle(Color.primaryText)
+                            Spacer()
+                            Text("\(stat.count) ORDERS")
+                                .font(.caption)
+                                .foregroundStyle(Color.secondaryText)
+                            Text(stat.amount.formatted(
+                                .currency(code: session.metrics?.currencyCode ?? "EUR")
+                                    .precision(.fractionLength(0))
+                            ))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.primaryText)
+                        }
+                        TickBar(fraction: Double(stat.count) / Double(maximum))
+                    }
+                    .padding(.vertical, 10)
+                    .overlay(alignment: .bottom) {
+                        if index < session.languageStats.count - 1 {
+                            Rectangle().fill(Color.border.opacity(0.55)).frame(height: 1)
+                        }
+                    }
+                }
+            }
+        }
+        .shopwareCard()
+    }
+}
