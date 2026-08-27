@@ -27,7 +27,22 @@ export function validateMcpURL(value: unknown): string | null {
   }
 }
 
+/** Successful preflights are reused briefly so consecutive chat turns skip a shop RTT. */
+const PREFLIGHT_TTL_MS = 5 * 60_000;
+const PREFLIGHT_CACHE_LIMIT = 256;
+const preflightCache = new Map<string, number>();
+
+/** Test-only helper so Vitest cases do not share warm preflight entries. */
+export function clearMcpPreflightCacheForTests(): void {
+  preflightCache.clear();
+}
+
 export async function verifyMcpEndpoint(mcpURL: string, token: string): Promise<void> {
+  const cacheKey = `${mcpURL}\0${await sha256(token)}`;
+  const now = Date.now();
+  const cachedUntil = preflightCache.get(cacheKey);
+  if (cachedUntil !== undefined && cachedUntil > now) return;
+
   const response = await fetch(mcpURL, {
     method: "POST",
     headers: {
@@ -56,6 +71,12 @@ export async function verifyMcpEndpoint(mcpURL: string, token: string): Promise<
   if (!text.includes('"jsonrpc"') || !text.includes('"result"')) {
     throw new HTTPError(400, "The URL did not return a valid MCP initialize response.");
   }
+
+  if (preflightCache.size >= PREFLIGHT_CACHE_LIMIT) {
+    const oldest = preflightCache.keys().next().value;
+    if (oldest !== undefined) preflightCache.delete(oldest);
+  }
+  preflightCache.set(cacheKey, now + PREFLIGHT_TTL_MS);
 }
 
 export async function handleMcpGateway(request: Request, env: Env): Promise<Response> {

@@ -30,8 +30,12 @@ final class ShopSettingsViewModel: ObservableObject {
         try await client.fetchNewsletterRecipients()
     }
 
-    func recentCustomers() async throws -> [CustomerRegistration] {
-        try await client.fetchRecentCustomers()
+    func recentCustomers(since: Date? = nil) async throws -> [CustomerRegistration] {
+        try await client.fetchRecentCustomers(since: since)
+    }
+
+    func recentCustomerCount(since: Date) async throws -> Int {
+        try await client.countRecentCustomers(since: since)
     }
 
     func logEntries() async throws -> [LogEntry] {

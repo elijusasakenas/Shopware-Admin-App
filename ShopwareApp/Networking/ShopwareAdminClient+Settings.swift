@@ -31,11 +31,27 @@ extension ShopwareAdminClient {
         ])
     }
 
-    func fetchRecentCustomers() async throws -> [CustomerRegistration] {
-        let response = try await requestJSON(path: "/api/search/customer", method: "POST", body: [
-            "limit": 25,
+    func countRecentCustomers(since: Date) async throws -> Int {
+        try await countEntity("customer", filters: [[
+            "type": "range",
+            "field": "createdAt",
+            "parameters": ["gte": since.iso8601String]
+        ]])
+    }
+
+    func fetchRecentCustomers(since: Date? = nil) async throws -> [CustomerRegistration] {
+        var body: [String: Any] = [
+            "limit": since == nil ? 25 : 100,
             "sort": [["field": "createdAt", "order": "DESC"]]
-        ])
+        ]
+        if let since {
+            body["filter"] = [[
+                "type": "range",
+                "field": "createdAt",
+                "parameters": ["gte": since.iso8601String]
+            ]]
+        }
+        let response = try await requestJSON(path: "/api/search/customer", method: "POST", body: body)
         return (response["data"] as? [[String: Any]] ?? []).compactMap { row in
             guard let id = row["id"] as? String else { return nil }
             let attrs = entityAttributes(of: row)

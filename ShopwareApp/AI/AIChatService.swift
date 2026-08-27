@@ -35,7 +35,19 @@ enum AIProxyConfig {
     }
 }
 
-struct AIChatService {
+/// Injectable send surface so conversation-loop tests can skip the network.
+protocol AIChatSending {
+    func send(
+        messages: [AIMessage],
+        mcpURL: URL,
+        mcpToken: String,
+        entitlementJWS: String?,
+        credential: AIProviderCredential?,
+        approvalToken: String?
+    ) async throws -> AIChatResponse
+}
+
+struct AIChatService: AIChatSending {
     var session: URLSession = .shared
 
     enum Availability: Equatable {
@@ -44,8 +56,9 @@ struct AIChatService {
         case failed(String)
     }
 
-    static let anthropicModel = "claude-opus-4-8"
-    static let openAIModel = "gpt-5.6"
+    // Live provider API IDs. OpenAI is pinned to Sol; `gpt-5.6` is only an alias.
+    static let anthropicModel = "claude-sonnet-5"
+    static let openAIModel = "gpt-5.6-sol"
     static let geminiModel = "gemini-3.5-flash"
     static let directSystemPrompt = """
     You are the AI assistant inside a Shopware merchant app. Use the connected Shopware MCP server instead of guessing and look up entities before acting.

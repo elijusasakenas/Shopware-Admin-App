@@ -188,6 +188,8 @@
 "MCP server is disabled" = "El servidor MCP está desactivado";
 "Couldn't check your shop" = "No se pudo comprobar tu tienda";
 "Try again" = "Reintentar";
+"Important" = "Importante";
+"You need the latest Shopware version where MCP works (6.7.11 or newer) with the MCP_SERVER feature flag enabled. Older shops cannot use the AI assistant." = "Necesitas la última versión de Shopware donde funciona MCP (6.7.11 o superior) con el feature flag MCP_SERVER activado. Las tiendas más antiguas no pueden usar el asistente IA.";
 "The AI assistant needs Shopware %@ or newer. Your shop runs %@." = "El asistente IA necesita Shopware %@ o superior. Tu tienda usa %@.";
 "Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again." = "Tu versión de Shopware es compatible con el asistente IA, pero el servidor MCP está apagado. Activa el feature flag MCP_SERVER en tu tienda e inténtalo de nuevo.";
 "I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything." = "Trabajo a través del servidor MCP de tu tienda: productos, pedidos, promociones, ajustes y más. Siempre te pediré confirmación en el chat antes de cambiar nada.";
@@ -249,24 +251,6 @@
 "This conversation is too large. Start a new chat." = "Esta conversación es demasiado larga. Inicia un chat nuevo.";
 "Your AI usage limit was reached. Please try again later." = "Has alcanzado el límite de uso de IA. Inténtalo más tarde.";
 
-/* AI native approval review */
-"Review AI changes" = "Revisar cambios de IA";
-"Your approval is required" = "Se requiere tu aprobación";
-"Nothing will be changed in your shop until you review and approve the exact actions below." = "No se cambiará nada en tu tienda hasta que revises y apruebes las acciones exactas que aparecen a continuación.";
-"Approval expired" = "La aprobación ha caducado";
-"Expires in %lldm %llds" = "Caduca en %lld min %lld s";
-"Expires in %llds" = "Caduca en %lld s";
-"PROPOSED CHANGE" = "CAMBIO PROPUESTO";
-"PROPOSED CHANGES" = "CAMBIOS PROPUESTOS";
-"Destructive action" = "Acción destructiva";
-"Shop data change" = "Cambio en los datos de la tienda";
-"Exact details" = "Detalles exactos";
-"One-time, exact approval" = "Aprobación exacta de un solo uso";
-"This approval can be used once and only for the actions shown above. Any changed arguments or later action will require a new approval." = "Esta aprobación solo puede usarse una vez y para las acciones mostradas arriba. Cualquier cambio en los argumentos o acción posterior requerirá una nueva aprobación.";
-"Approve and apply" = "Aprobar y aplicar";
-"Approve %lld changes" = "Aprobar %lld cambios";
-"Do not apply" = "No aplicar";
-
 /* Complete UI coverage */
 "#%lld" = "#%lld";
 "%@ · %@" = "%@ · %@";
@@ -297,12 +281,16 @@
 "Shop log" = "Registro de la tienda";
 "Shop name (optional)" = "Nombre de la tienda (opcional)";
 "Sign out of all shops" = "Cerrar sesión en todas las tiendas";
+"Sign out of all shops?" = "¿Cerrar sesión en todas las tiendas?";
+"Sign out" = "Cerrar sesión";
+"You'll need to reconnect each shop to use the app again." = "Tendrás que volver a conectar cada tienda para usar la app otra vez.";
 "Switch shop" = "Cambiar de tienda";
 "The AI assistant is temporarily unavailable." = "El asistente de IA no está disponible temporalmente.";
 "The assistant could not complete that request." = "El asistente no pudo completar esa solicitud.";
 "The assistant stopped unexpectedly. Please try again." = "El asistente se detuvo inesperadamente. Inténtalo de nuevo.";
 "The response reached its length limit. Ask the assistant to continue more briefly." = "La respuesta alcanzó el límite de longitud. Pide al asistente que continúe de forma más breve.";
 "https://your-shop.com" = "https://tu-tienda.com";
+"Shop data change" = "Cambio en los datos de la tienda";
 "Product change" = "Cambio de producto";
 "Order change" = "Cambio de pedido";
 "Promotion change" = "Cambio de promoción";
@@ -310,7 +298,6 @@
 "Media change" = "Cambio de medios";
 "Settings change" = "Cambio de ajustes";
 "Maintenance-mode change" = "Cambio del modo de mantenimiento";
-"Technical action: %@" = "Acción técnica: %@";
 
 /* Rediseño industrial */
 "%@ ORDERS" = "%@ PEDIDOS";
@@ -331,16 +318,18 @@
 "Approval required · Write" = "Aprobación necesaria · Escritura";
 "Ask your shop assistant" = "Pregunta a tu asistente de tienda";
 "Ask, and it works the shop for you." = "Pregunta y gestionará la tienda por ti.";
-"Before you ship this publicly" = "Antes de publicarla";
 "CHANGE" = "CAMBIAR";
 "CODE %@" = "CÓDIGO %@";
 "COVER" = "PORTADA";
 "Create an integration in Shopware Administration and enter its access keys here. Credentials remain in the device keychain." = "Crea una integración en la Administración de Shopware e introduce aquí sus claves de acceso. Las credenciales permanecen en el llavero del dispositivo.";
+"Enter a valid shop URL, like https://your-shop.com." = "Introduce una URL de tienda válida, por ejemplo https://tu-tienda.com.";
 "DECLINE" = "RECHAZAR";
 "EDIT PRODUCT" = "EDITAR PRODUCTO";
 "Errors · 24h" = "Errores · 24 h";
 "Gross · %@" = "Bruto · %@";
 "HOW TO GET YOUR ACCESS KEYS" = "CÓMO OBTENER TUS CLAVES DE ACCESO";
+"Integration permissions" = "Permisos de la integración";
+"Give this integration only the Admin API permissions you want the app to use. You can revoke the keys in Shopware at any time." = "Concede a esta integración solo los permisos de la API de administración que quieras que use la app. Puedes revocar las claves en Shopware en cualquier momento.";
 "LIVE" = "ACTIVO";
 "LOADING…" = "CARGANDO…";
 "MARK %@" = "MARCAR %@";
@@ -368,7 +357,6 @@
 "Review" = "Revisar";
 "Ranked by cost of waiting" = "Ordenado por coste de espera";
 "Registrations · Last 7 days" = "Registros · Últimos 7 días";
-"Route AI requests through the included proxy, keep service secrets out of the app bundle, and use the narrowest Shopware integration permissions your workflow needs." = "Canaliza las solicitudes de IA mediante el proxy incluido, mantén los secretos del servicio fuera del paquete de la app y concede a la integración de Shopware solo los permisos imprescindibles.";
 "Runs through your shop's own MCP server — products, orders, promotions, settings. Reads are immediate. Every write stops at an approval gate with the exact arguments shown." = "Funciona mediante el servidor MCP de tu tienda: productos, pedidos, promociones y ajustes. Las lecturas son inmediatas. Cada escritura se detiene para pedir aprobación y muestra los argumentos exactos.";
 "SHOP & APP" = "TIENDA Y APP";
 "SHOP STATUS & LOG" = "ESTADO Y REGISTRO";
@@ -396,3 +384,8 @@
 "Choose a saved shop" = "Elige una tienda guardada";
 "Available" = "Disponible";
 "Unavailable" = "No disponible";
+"VIEW" = "VER";
+"MAINTENANCE" = "MANTENIMIENTO";
+"ISSUES" = "INCIDENCIAS";
+"+%lld / 7D" = "+%lld / 7D";
+"%lld ERRORS" = "%lld ERRORES";

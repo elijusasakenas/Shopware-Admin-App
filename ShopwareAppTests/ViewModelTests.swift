@@ -143,4 +143,46 @@ final class ViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.attentionItems.first { $0.id == "stock-product-1" })
         XCTAssertNotNil(viewModel.attentionItems.first { $0.id == "order-order-1" })
     }
+
+    @MainActor
+    func testDashboardChannelSharesUseOrderCountsAndHideWhenEmpty() {
+        let viewModel = ShopwareDashboardViewModel()
+        XCTAssertEqual(viewModel.channelShareLabel(for: nil), "100%")
+        XCTAssertEqual(viewModel.channelShareLabel(for: "storefront"), "—")
+
+        viewModel.channelOrderCounts = [
+            "storefront": 78,
+            "headless": 22
+        ]
+        XCTAssertEqual(viewModel.channelShareLabel(for: "storefront"), "78%")
+        XCTAssertEqual(viewModel.channelShareLabel(for: "headless"), "22%")
+        XCTAssertEqual(viewModel.channelShareLabel(for: "unused"), "0%")
+        XCTAssertEqual(viewModel.channelShareLabel(for: nil), "100%")
+    }
+
+    @MainActor
+    func testDashboardShopStatusUsesMaintenanceInsteadOfPlaceholder() {
+        let previousLanguage = UserDefaults.standard.object(forKey: "appLanguage")
+        UserDefaults.standard.set("en", forKey: "appLanguage")
+        defer {
+            if let previousLanguage {
+                UserDefaults.standard.set(previousLanguage, forKey: "appLanguage")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "appLanguage")
+            }
+        }
+
+        let viewModel = ShopwareDashboardViewModel()
+        viewModel.salesChannels = [
+            SalesChannel(id: "storefront", name: "Storefront", maintenance: false)
+        ]
+        XCTAssertEqual(viewModel.shopStatusLabel, "VIEW")
+        XCTAssertFalse(viewModel.hasMaintenanceChannel)
+
+        viewModel.salesChannels = [
+            SalesChannel(id: "storefront", name: "Storefront", maintenance: true)
+        ]
+        XCTAssertEqual(viewModel.shopStatusLabel, "MAINTENANCE")
+        XCTAssertTrue(viewModel.hasMaintenanceChannel)
+    }
 }

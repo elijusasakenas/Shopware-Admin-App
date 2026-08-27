@@ -1,6 +1,6 @@
 import { extractApprovalActions } from "./approvals";
 import { appAttestPayload, appAttestRequired, type AppAttestPurpose } from "./app-attest";
-import { verifyAppStoreTransaction } from "./app-store";
+import { formatVerificationError, verifyAppStoreTransaction } from "./app-store";
 import { openToken, sealToken, sha256 } from "./crypto-tokens";
 import { errorResponse, HTTPError, jsonResponse, logEvent, readJSON, readJSONWithBytes, readResponseText } from "./http";
 import { handleMcpGateway, validateMcpURL, verifyMcpEndpoint } from "./mcp-gateway";
@@ -157,7 +157,7 @@ async function handleChat(request: Request, env: Env, requestID: string): Promis
         "x-api-key": env.ANTHROPIC_API_KEY,
       },
       body: JSON.stringify({
-        model: env.ANTHROPIC_MODEL || "claude-opus-4-8",
+        model: env.ANTHROPIC_MODEL || "claude-sonnet-5",
         max_tokens: 4096,
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         mcp_servers: [{
@@ -305,7 +305,7 @@ async function entitlementSubject(request: Request, env: Env, clientID: string):
   try {
     return (await verifyAppStoreTransaction(jws, env)).subject;
   } catch (error) {
-    throw new HTTPError(401, `Subscription check failed: ${(error as Error).message}`);
+    throw new HTTPError(401, `Subscription check failed: ${formatVerificationError(error)}`);
   }
 }
 

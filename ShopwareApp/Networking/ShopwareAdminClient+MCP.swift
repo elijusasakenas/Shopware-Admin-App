@@ -9,8 +9,8 @@ import Foundation
 
 extension ShopwareAdminClient {
     /// The shop's built-in MCP endpoint, used by the AI assistant.
-    var mcpEndpointURL: URL {
-        connection.normalizedBaseURL.appending(path: "/api/_mcp")
+    func mcpEndpointURL() throws -> URL {
+        try connection.resolvedBaseURL().appending(path: "/api/_mcp")
     }
 
     /// A valid Admin API bearer token (cached until shortly before expiry).
@@ -33,11 +33,12 @@ extension ShopwareAdminClient {
     func mcpAvailability() async -> MCPAvailability {
         let requiredVersion = "6.7.11.0"
         do {
-            guard mcpEndpointURL.scheme == "https" else {
+            let endpoint = try mcpEndpointURL()
+            guard endpoint.scheme == "https" else {
                 return .failed("The AI assistant requires a Shopware connection secured with HTTPS.")
             }
             let accessToken = try await accessToken()
-            var request = URLRequest(url: mcpEndpointURL)
+            var request = URLRequest(url: endpoint)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.setValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")

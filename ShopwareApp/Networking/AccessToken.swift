@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AccessToken {
+struct AccessToken: Sendable {
     var value: String
     var expiresAt: Date
 }

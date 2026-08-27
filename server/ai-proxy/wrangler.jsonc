@@ -23,7 +23,7 @@
     "APP_ATTEST_REQUIRED": "true",
     "APP_ATTEST_ALLOW_DEVELOPMENT": "false",
     "SUBSCRIPTION_PRODUCT_ID": "com.asakenas.shopwareapp.ai.monthly",
-    "ANTHROPIC_MODEL": "claude-opus-4-8",
+    "ANTHROPIC_MODEL": "claude-sonnet-5",
     "AI_FEATURE_ENABLED": "true",
     "MAX_REQUESTS_PER_MINUTE": "20",
     "MAX_REQUESTS_PER_DAY": "500",
