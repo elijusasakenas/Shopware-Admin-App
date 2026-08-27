@@ -9,6 +9,7 @@ struct ShopSettingsView: View {
 
     @State private var promotions: [Promotion] = []
     @State private var recipients: [NewsletterRecipient] = []
+    @State private var recentCustomerCount: Int?
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var confirmSignOut = false
@@ -49,15 +50,13 @@ struct ShopSettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .task { await load() }
-        .confirmationDialog(
-            "Sign out of all shops?",
-            isPresented: $confirmSignOut,
-            titleVisibility: .visible
-        ) {
+        .alert("Sign out of all shops?", isPresented: $confirmSignOut) {
             Button("Sign out", role: .destructive) {
                 Task { await session.disconnect() }
             }
             Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You'll need to reconnect each shop to use the app again.")
         }
         .sheet(isPresented: $showShopSwitcher, onDismiss: {
             guard closeSettingsAfterSwitch else { return }
@@ -131,13 +130,21 @@ struct ShopSettingsView: View {
             NavigationLink {
                 NewCustomersView(settings: settings)
             } label: {
-                manageRow("New customer registrations", value: "+18 / 7D")
+                manageRow(
+                    "New customer registrations",
+                    value: recentCustomerLabel,
+                    localizeValue: false
+                )
             }
             .buttonStyle(.plain)
             NavigationLink {
                 ShopStatusView(settings: settings)
             } label: {
-                manageRow("Shop status & log", value: "ALL GREEN")
+                manageRow(
+                    "Shop status & log",
+                    value: session.shopStatusLabel,
+                    localizeValue: false
+                )
             }
             .buttonStyle(.plain)
             Button {
@@ -163,6 +170,11 @@ struct ShopSettingsView: View {
             .buttonStyle(.plain)
         }
         .shopwareCard()
+    }
+
+    private var recentCustomerLabel: String {
+        guard let recentCustomerCount else { return "—" }
+        return AppLocalization.string("+\(recentCustomerCount) / 7D")
     }
 
     private func manageRow(
@@ -373,8 +385,10 @@ struct ShopSettingsView: View {
         do {
             async let loadedPromotions = settings.promotions()
             async let loadedRecipients = settings.newsletterRecipients()
+            async let loadedCustomerCount = settings.recentCustomerCount(since: DateRange.days7.sinceDate)
             promotions = try await loadedPromotions
             recipients = try await loadedRecipients
+            recentCustomerCount = try await loadedCustomerCount
         } catch {
             errorMessage = error.shopwareDisplayMessage
         }

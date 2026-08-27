@@ -188,6 +188,8 @@
 "MCP server is disabled" = "MCP server is disabled";
 "Couldn't check your shop" = "Couldn't check your shop";
 "Try again" = "Try again";
+"Important" = "Important";
+"You need the latest Shopware version where MCP works (6.7.11 or newer) with the MCP_SERVER feature flag enabled. Older shops cannot use the AI assistant." = "You need the latest Shopware version where MCP works (6.7.11 or newer) with the MCP_SERVER feature flag enabled. Older shops cannot use the AI assistant.";
 "The AI assistant needs Shopware %@ or newer. Your shop runs %@." = "The AI assistant needs Shopware %@ or newer. Your shop runs %@.";
 "Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again." = "Your Shopware version supports the AI assistant, but the MCP server is off. Enable the MCP_SERVER feature flag on your shop, then try again.";
 "I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything." = "I work through your shop's own MCP server: products, orders, promotions, settings and more. I'll always check with you in chat before changing anything.";
@@ -279,6 +281,9 @@
 "Shop log" = "Shop log";
 "Shop name (optional)" = "Shop name (optional)";
 "Sign out of all shops" = "Sign out of all shops";
+"Sign out of all shops?" = "Sign out of all shops?";
+"Sign out" = "Sign out";
+"You'll need to reconnect each shop to use the app again." = "You'll need to reconnect each shop to use the app again.";
 "Switch shop" = "Switch shop";
 "The AI assistant is temporarily unavailable." = "The AI assistant is temporarily unavailable.";
 "The assistant could not complete that request." = "The assistant could not complete that request.";
@@ -287,15 +292,6 @@
 "https://your-shop.com" = "https://your-shop.com";
 
 /* AI native approval review */
-"Review AI changes" = "Review AI changes";
-"Your approval is required" = "Your approval is required";
-"Nothing will be changed in your shop until you review and approve the exact actions below." = "Nothing will be changed in your shop until you review and approve the exact actions below.";
-"Approval expired" = "Approval expired";
-"Expires in %lldm %llds" = "Expires in %lldm %llds";
-"Expires in %llds" = "Expires in %llds";
-"PROPOSED CHANGE" = "PROPOSED CHANGE";
-"PROPOSED CHANGES" = "PROPOSED CHANGES";
-"Destructive action" = "Destructive action";
 "Shop data change" = "Shop data change";
 "Product change" = "Product change";
 "Order change" = "Order change";
@@ -304,13 +300,6 @@
 "Media change" = "Media change";
 "Settings change" = "Settings change";
 "Maintenance-mode change" = "Maintenance-mode change";
-"Technical action: %@" = "Technical action: %@";
-"Exact details" = "Exact details";
-"One-time, exact approval" = "One-time, exact approval";
-"This approval can be used once and only for the actions shown above. Any changed arguments or later action will require a new approval." = "This approval can be used once and only for the actions shown above. Any changed arguments or later action will require a new approval.";
-"Approve and apply" = "Approve and apply";
-"Approve %lld changes" = "Approve %lld changes";
-"Do not apply" = "Do not apply";
 
 /* Industrial redesign */
 "%@ ORDERS" = "%@ ORDERS";
@@ -331,16 +320,17 @@
 "Approval required · Write" = "Approval required · Write";
 "Ask your shop assistant" = "Ask your shop assistant";
 "Ask, and it works the shop for you." = "Ask, and it works the shop for you.";
-"Before you ship this publicly" = "Before you ship this publicly";
 "CHANGE" = "CHANGE";
 "CODE %@" = "CODE %@";
 "COVER" = "COVER";
-"Create an integration in Shopware Administration and enter its access keys here. Credentials remain in the device keychain." = "Create an integration in Shopware Administration and enter its access keys here. Credentials remain in the device keychain.";
+"Enter a valid shop URL, like https://your-shop.com." = "Enter a valid shop URL, like https://your-shop.com.";
 "DECLINE" = "DECLINE";
 "EDIT PRODUCT" = "EDIT PRODUCT";
 "Errors · 24h" = "Errors · 24h";
 "Gross · %@" = "Gross · %@";
 "HOW TO GET YOUR ACCESS KEYS" = "HOW TO GET YOUR ACCESS KEYS";
+"Integration permissions" = "Integration permissions";
+"Give this integration only the Admin API permissions you want the app to use. You can revoke the keys in Shopware at any time." = "Give this integration only the Admin API permissions you want the app to use. You can revoke the keys in Shopware at any time.";
 "LIVE" = "LIVE";
 "LOADING…" = "LOADING…";
 "MARK %@" = "MARK %@";
@@ -368,7 +358,6 @@
 "Review" = "Review";
 "Ranked by cost of waiting" = "Ranked by cost of waiting";
 "Registrations · Last 7 days" = "Registrations · Last 7 days";
-"Route AI requests through the included proxy, keep service secrets out of the app bundle, and use the narrowest Shopware integration permissions your workflow needs." = "Route AI requests through the included proxy, keep service secrets out of the app bundle, and use the narrowest Shopware integration permissions your workflow needs.";
 "Runs through your shop's own MCP server — products, orders, promotions, settings. Reads are immediate. Every write stops at an approval gate with the exact arguments shown." = "Runs through your shop's own MCP server — products, orders, promotions, settings. Reads are immediate. Every write stops at an approval gate with the exact arguments shown.";
 "SHOP & APP" = "SHOP & APP";
 "SHOP STATUS & LOG" = "SHOP STATUS & LOG";
@@ -396,3 +385,8 @@
 "Choose a saved shop" = "Choose a saved shop";
 "Available" = "Available";
 "Unavailable" = "Unavailable";
+"VIEW" = "VIEW";
+"MAINTENANCE" = "MAINTENANCE";
+"ISSUES" = "ISSUES";
+"+%lld / 7D" = "+%lld / 7D";
+"%lld ERRORS" = "%lld ERRORS";

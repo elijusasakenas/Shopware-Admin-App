@@ -11,7 +11,25 @@ import Foundation
 final class ShopwareAdminClient {
     let connection: ShopwareConnection
     let session: URLSession
-    var token: AccessToken?
+
+    private let tokenLock = NSLock()
+    private var cachedToken: AccessToken?
+    private var refreshTask: Task<AccessToken, Error>?
+    private var refreshGeneration = 0
+
+    /// Testing seam for a cached OAuth token. Production callers use `accessToken()`.
+    var token: AccessToken? {
+        get {
+            tokenLock.lock()
+            defer { tokenLock.unlock() }
+            return cachedToken
+        }
+        set {
+            tokenLock.lock()
+            cachedToken = newValue
+            tokenLock.unlock()
+        }
+    }
 
     init(connection: ShopwareConnection, session: URLSession = .shared) {
         self.connection = connection
@@ -59,9 +77,9 @@ final class ShopwareAdminClient {
 
     /// `languageID`, when set, is sent as the Shopware `sw-language-id` header so
     /// translatable fields are read/written in that language.
-    func requestJSON(path: String, method: String, body: [String: Any]? = nil, queryItems: [URLQueryItem]? = nil, languageID: String? = nil, attempt: Int = 0) async throws -> [String: Any] {
-        let accessToken = try await accessToken()
-        var url = connection.normalizedBaseURL.appending(path: path)
+    func requestJSON(path: String, method: String, body: [String: Any]? = nil, queryItems: [URLQueryItem]? = nil, languageID: String? = nil, attempt: Int = 0, renewToken: Bool = false) async throws -> [String: Any] {
+        let accessToken = try await accessToken(forceRefresh: renewToken)
+        var url = try connection.resolvedBaseURL().appending(path: path)
         if let queryItems,
            var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
             components.queryItems = queryItems
@@ -79,8 +97,16 @@ final class ShopwareAdminClient {
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
 
         if status == 401 && attempt == 0 {
-            token = nil
-            return try await requestJSON(path: path, method: method, body: body, queryItems: queryItems, languageID: languageID, attempt: 1)
+            invalidateCachedToken()
+            return try await requestJSON(
+                path: path,
+                method: method,
+                body: body,
+                queryItems: queryItems,
+                languageID: languageID,
+                attempt: 1,
+                renewToken: true
+            )
         }
 
         if [408, 429, 500, 502, 503, 504].contains(status), attempt < 2 {
@@ -94,9 +120,9 @@ final class ShopwareAdminClient {
     /// Like `requestJSON` but sends a raw body (e.g. image bytes) with a custom
     /// content type. Used for the media upload action.
     @discardableResult
-    func requestRaw(path: String, method: String, body: Data, contentType: String, queryItems: [URLQueryItem]? = nil, attempt: Int = 0) async throws -> [String: Any] {
-        let accessToken = try await accessToken()
-        var url = connection.normalizedBaseURL.appending(path: path)
+    func requestRaw(path: String, method: String, body: Data, contentType: String, queryItems: [URLQueryItem]? = nil, attempt: Int = 0, renewToken: Bool = false) async throws -> [String: Any] {
+        let accessToken = try await accessToken(forceRefresh: renewToken)
+        var url = try connection.resolvedBaseURL().appending(path: path)
         if let queryItems,
            var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
             components.queryItems = queryItems
@@ -113,8 +139,16 @@ final class ShopwareAdminClient {
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
 
         if status == 401 && attempt == 0 {
-            token = nil
-            return try await requestRaw(path: path, method: method, body: body, contentType: contentType, queryItems: queryItems, attempt: 1)
+            invalidateCachedToken()
+            return try await requestRaw(
+                path: path,
+                method: method,
+                body: body,
+                contentType: contentType,
+                queryItems: queryItems,
+                attempt: 1,
+                renewToken: true
+            )
         }
 
         if [408, 429, 500, 502, 503, 504].contains(status), attempt < 2 {
@@ -125,10 +159,57 @@ final class ShopwareAdminClient {
         return try parseJSONResponse(data: data, status: status)
     }
 
-    func accessToken() async throws -> String {
-        if let token, token.expiresAt > Date().addingTimeInterval(30) { return token.value }
+    func accessToken(forceRefresh: Bool = false) async throws -> String {
+        if forceRefresh {
+            invalidateCachedToken()
+        }
 
-        var request = URLRequest(url: connection.normalizedBaseURL.appending(path: "/api/oauth/token"))
+        tokenLock.lock()
+        if let cachedToken, cachedToken.expiresAt > Date().addingTimeInterval(30) {
+            let value = cachedToken.value
+            tokenLock.unlock()
+            return value
+        }
+        if let refreshTask {
+            tokenLock.unlock()
+            return try await refreshTask.value.value
+        }
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        let task = Task { try await self.fetchAccessTokenFromNetwork() }
+        refreshTask = task
+        tokenLock.unlock()
+
+        do {
+            let next = try await task.value
+            tokenLock.lock()
+            if refreshGeneration == generation {
+                cachedToken = next
+                refreshTask = nil
+            }
+            tokenLock.unlock()
+            return next.value
+        } catch {
+            tokenLock.lock()
+            if refreshGeneration == generation {
+                refreshTask = nil
+            }
+            tokenLock.unlock()
+            throw error
+        }
+    }
+
+    private func invalidateCachedToken() {
+        tokenLock.lock()
+        cachedToken = nil
+        refreshGeneration += 1
+        refreshTask?.cancel()
+        refreshTask = nil
+        tokenLock.unlock()
+    }
+
+    private func fetchAccessTokenFromNetwork() async throws -> AccessToken {
+        var request = URLRequest(url: try connection.resolvedBaseURL().appending(path: "/api/oauth/token"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -147,8 +228,7 @@ final class ShopwareAdminClient {
         }
 
         let expiresIn = json["expires_in"] as? TimeInterval ?? 600
-        token = AccessToken(value: value, expiresAt: Date().addingTimeInterval(expiresIn))
-        return value
+        return AccessToken(value: value, expiresAt: Date().addingTimeInterval(expiresIn))
     }
 
     func parseJSONResponse(data: Data, status: Int) throws -> [String: Any] {

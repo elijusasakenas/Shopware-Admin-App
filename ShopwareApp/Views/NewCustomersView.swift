@@ -49,7 +49,7 @@ struct NewCustomersView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .task {
-            do { customers = try await settings.recentCustomers() }
+            do { customers = try await settings.recentCustomers(since: DateRange.days7.sinceDate) }
             catch { errorMessage = error.shopwareDisplayMessage }
             isLoading = false
         }

@@ -16,6 +16,7 @@
 		D0C0A0010000000000000001 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C0A0010000000000000011 /* MockURLProtocol.swift */; };
 		D0C0A0010000000000000002 /* ShopwareAdminClientIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C0A0010000000000000012 /* ShopwareAdminClientIntegrationTests.swift */; };
 		D0C0A0010000000000000003 /* ViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C0A0010000000000000013 /* ViewModelTests.swift */; };
+		E2A1B0010000000000000004 /* AIChatViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A1B0010000000000000014 /* AIChatViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +41,7 @@
 		D0C0A0010000000000000011 /* MockURLProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
 		D0C0A0010000000000000012 /* ShopwareAdminClientIntegrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShopwareAdminClientIntegrationTests.swift; sourceTree = "<group>"; };
 		D0C0A0010000000000000013 /* ViewModelTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ViewModelTests.swift; sourceTree = "<group>"; };
+		E2A1B0010000000000000014 /* AIChatViewModelTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIChatViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -80,6 +82,7 @@
 			children = (
 				C0DE00000000000000000001 /* AppLocalizationTests.swift */,
 				5A9E2D8C1F734B6A90C2E412 /* AIChatModelsTests.swift */,
+				E2A1B0010000000000000014 /* AIChatViewModelTests.swift */,
 				D3FE90FAE06D2195CC9AFFA4 /* DateRangeTests.swift */,
 				AC1D0C4CE34821A66951AD28 /* JSONParsingTests.swift */,
 				D0C0A0010000000000000011 /* MockURLProtocol.swift */,
@@ -220,6 +223,7 @@
 			files = (
 				C0DE00000000000000000002 /* AppLocalizationTests.swift in Sources */,
 				5A9E2D8C1F734B6A90C2E411 /* AIChatModelsTests.swift in Sources */,
+				E2A1B0010000000000000004 /* AIChatViewModelTests.swift in Sources */,
 				164778662EBB0A11E394ACA8 /* DateRangeTests.swift in Sources */,
 				0E5C48E0BAE57E768E9C0A06 /* JSONParsingTests.swift in Sources */,
 				D0C0A0010000000000000001 /* MockURLProtocol.swift in Sources */,
@@ -399,7 +403,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=xros*]" = ShopwareApp/ShopwareApp.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 21;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZHVUYJ68S9;
 				ENABLE_APP_SANDBOX = YES;
@@ -433,7 +437,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.2.1;
+				MARKETING_VERSION = 1.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.asakenas.shopwareapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -460,7 +464,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=xros*]" = ShopwareApp/ShopwareApp.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 21;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = ZHVUYJ68S9;
 				ENABLE_APP_SANDBOX = YES;
@@ -494,7 +498,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.2.1;
+				MARKETING_VERSION = 1.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.asakenas.shopwareapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

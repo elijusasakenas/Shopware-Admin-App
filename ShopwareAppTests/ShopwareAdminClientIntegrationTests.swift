@@ -119,4 +119,104 @@ final class ShopwareAdminClientIntegrationTests: XCTestCase {
             XCTAssertTrue(error.shopwareDisplayMessage.contains("Promotion does not exist"))
         }
     }
+
+    func testFetchChannelBreakdownMapsOrderShares() async throws {
+        MockURLProtocol.install { request in
+            XCTAssertEqual(request.url?.path, "/api/search/order")
+            return .json(
+                #"""
+                {
+                  "aggregations": {
+                    "channels": {
+                      "buckets": [
+                        { "key": "storefront", "count": 78 },
+                        { "key": "headless", "count": 22 }
+                      ]
+                    }
+                  }
+                }
+                """#
+            )
+        }
+
+        let client = TestHTTPFactory.client(cachedToken: "token")
+        let counts = try await client.fetchChannelBreakdown(since: DateRange.days30.sinceDate)
+
+        XCTAssertEqual(counts["storefront"], 78)
+        XCTAssertEqual(counts["headless"], 22)
+
+        let body = try TestHTTPFactory.jsonBody(of: MockURLProtocol.capturedRequests()[0])
+        let filters = body["filter"] as? [[String: Any]]
+        XCTAssertEqual(filters?.first?["field"] as? String, "orderDateTime")
+        let aggregations = body["aggregations"] as? [[String: Any]]
+        XCTAssertEqual(aggregations?.first?["field"] as? String, "salesChannelId")
+    }
+
+    func testCountRecentCustomersFiltersCreatedAtAndReadsTotal() async throws {
+        MockURLProtocol.install { request in
+            XCTAssertEqual(request.url?.path, "/api/search/customer")
+            return .json(#"{"meta":{"total":18},"data":[]}"#)
+        }
+
+        let since = DateRange.days7.sinceDate
+        let client = TestHTTPFactory.client(cachedToken: "token")
+        let count = try await client.countRecentCustomers(since: since)
+
+        XCTAssertEqual(count, 18)
+        let body = try TestHTTPFactory.jsonBody(of: MockURLProtocol.capturedRequests()[0])
+        let filters = body["filter"] as? [[String: Any]]
+        XCTAssertEqual(filters?.first?["field"] as? String, "createdAt")
+        XCTAssertEqual(filters?.first?["type"] as? String, "range")
+        let parameters = filters?.first?["parameters"] as? [String: Any]
+        XCTAssertEqual(parameters?["gte"] as? String, since.iso8601String)
+    }
+
+    func testFetchRecentCustomersAppliesSinceFilter() async throws {
+        MockURLProtocol.install { request in
+            XCTAssertEqual(request.url?.path, "/api/search/customer")
+            return .json(
+                #"""
+                {
+                  "data": [{
+                    "id": "customer-1",
+                    "attributes": {
+                      "firstName": "Ada",
+                      "lastName": "Lovelace",
+                      "email": "ada@example.test",
+                      "guest": false
+                    }
+                  }]
+                }
+                """#
+            )
+        }
+
+        let since = DateRange.days7.sinceDate
+        let client = TestHTTPFactory.client(cachedToken: "token")
+        let customers = try await client.fetchRecentCustomers(since: since)
+
+        XCTAssertEqual(customers.count, 1)
+        XCTAssertEqual(customers[0].name, "Ada Lovelace")
+        let body = try TestHTTPFactory.jsonBody(of: MockURLProtocol.capturedRequests()[0])
+        XCTAssertEqual(body["limit"] as? Int, 100)
+        let filters = body["filter"] as? [[String: Any]]
+        XCTAssertEqual(filters?.first?["field"] as? String, "createdAt")
+    }
+
+    func testConcurrentAccessTokenFetchesOAuthOnce() async throws {
+        MockURLProtocol.install { request in
+            XCTAssertEqual(request.url?.path, "/api/oauth/token")
+            return .json(#"{"access_token":"shared-token","expires_in":600}"#)
+        }
+
+        let client = TestHTTPFactory.client()
+        async let first = client.accessToken()
+        async let second = client.accessToken()
+        async let third = client.accessToken()
+        let tokens = try await [first, second, third]
+
+        XCTAssertEqual(Set(tokens), ["shared-token"])
+        let oauthCalls = MockURLProtocol.capturedRequests().filter { $0.url?.path == "/api/oauth/token" }
+        XCTAssertEqual(oauthCalls.count, 1)
+    }
 }

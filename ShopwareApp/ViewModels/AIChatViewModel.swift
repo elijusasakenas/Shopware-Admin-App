@@ -18,7 +18,7 @@ final class AIChatViewModel: ObservableObject {
     @Published var pendingApproval: AIApprovalChallenge?
 
     private var apiMessages: [AIMessage] = []
-    private let service: AIChatService
+    private let service: any AIChatSending
     private let client: ShopwareAdminClient
     /// Returns the signed App Store transaction proving the subscription.
     private let entitlementProvider: () async -> String?
@@ -35,7 +35,7 @@ final class AIChatViewModel: ObservableObject {
         client: ShopwareAdminClient,
         entitlementProvider: @escaping () async -> String?,
         credentialProvider: @escaping () -> AIProviderCredential? = { nil },
-        service: AIChatService? = nil
+        service: (any AIChatSending)? = nil
     ) {
         self.client = client
         self.entitlementProvider = entitlementProvider
@@ -44,6 +44,22 @@ final class AIChatViewModel: ObservableObject {
     }
 
     var canSend: Bool { !isThinking && pendingApproval == nil }
+
+    /// Prefetches App Attest challenges so the first subscription send skips a network RTT.
+    func prepareSession() {
+        guard credentialProvider() == nil else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            guard let jws = await entitlementProvider(),
+                  let baseURL = AIProxyConfig.baseURL else { return }
+            AppAttestManager.shared.prepare(
+                baseURL: baseURL,
+                entitlementJWS: jws,
+                clientID: AIProxyConfig.clientID,
+                session: .shared
+            )
+        }
+    }
 
     func send(_ text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -117,17 +133,20 @@ final class AIChatViewModel: ObservableObject {
         for _ in 0..<maxTurns {
             let response: AIChatResponse
             do {
-                // A fresh Admin API token per round trip; Shopware's MCP
-                // server accepts standard bearer tokens (~10 min lifetime).
-                let mcpToken = try await client.currentAccessToken()
                 let credential = credentialProvider()
-                // The subscription proof is only needed on the proxy path.
-                let jws = credential == nil ? await entitlementProvider() : nil
+                // Overlap Admin API token + subscription proof; both are
+                // independent of each other on the hot path.
+                async let mcpTokenTask = client.currentAccessToken()
+                async let jwsTask: String? = {
+                    credential == nil ? await entitlementProvider() : nil
+                }()
+                let mcpToken = try await mcpTokenTask
+                let jws = await jwsTask
                 try Task.checkCancellation()
                 guard conversationID == id else { return }
                 response = try await service.send(
                     messages: apiMessages,
-                    mcpURL: client.mcpEndpointURL,
+                    mcpURL: try client.mcpEndpointURL(),
                     mcpToken: mcpToken,
                     entitlementJWS: jws,
                     credential: credential,

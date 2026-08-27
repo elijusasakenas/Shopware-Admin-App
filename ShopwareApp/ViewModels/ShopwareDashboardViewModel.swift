@@ -34,12 +34,34 @@ final class ShopwareDashboardViewModel: ObservableObject {
     @Published var lowStockProducts: [LowStockProduct] = []
     @Published var topProducts: [TopProduct] = []
     @Published var languageStats: [LanguageStat] = []
+    /// 30-day order counts keyed by sales-channel ID, for the picker shares.
+    @Published var channelOrderCounts: [String: Int] = [:]
     @Published var versionString = ""
     @Published private(set) var dismissedAttentionIDs: Set<String> = []
 
     var selectedChannelName: String {
         guard let id = selectedChannelID else { return AppLocalization.string("All sales channels") }
         return salesChannels.first { $0.id == id }?.name ?? AppLocalization.string("Sales channel")
+    }
+
+    var shopStatusLabel: String {
+        if salesChannels.contains(where: \.maintenance) {
+            return AppLocalization.string("MAINTENANCE")
+        }
+        return AppLocalization.string("VIEW")
+    }
+
+    var hasMaintenanceChannel: Bool {
+        salesChannels.contains(where: \.maintenance)
+    }
+
+    func channelShareLabel(for channelID: String?) -> String {
+        guard let channelID else { return "100%" }
+        let total = channelOrderCounts.values.reduce(0, +)
+        guard total > 0 else { return "—" }
+        let count = channelOrderCounts[channelID] ?? 0
+        let percent = Int((Double(count) / Double(total) * 100).rounded())
+        return "\(percent)%"
     }
 
     var attentionItems: [AttentionItem] {
@@ -116,6 +138,7 @@ final class ShopwareDashboardViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do {
+            _ = try nextConnection.resolvedBaseURL()
             let client = ShopwareAdminClient(connection: nextConnection)
             try await client.testConnection()
             try credentialStore.save(nextConnection)
@@ -201,12 +224,14 @@ final class ShopwareDashboardViewModel: ObservableObject {
             async let ls = client.fetchLowStockProducts(salesChannelID: selectedChannelID)
             async let tp = client.fetchTopProducts(since: DateRange.days30.sinceDate, salesChannelID: selectedChannelID)
             async let lang = client.fetchLanguageBreakdown(since: DateRange.days30.sinceDate, salesChannelID: selectedChannelID)
+            async let channels = client.fetchChannelBreakdown(since: DateRange.days30.sinceDate)
             metrics = try await m
             orderBuckets = try await ob
             revenueBuckets = try await rb
             lowStockProducts = (try? await ls) ?? []
             topProducts = (try? await tp) ?? []
             languageStats = (try? await lang) ?? []
+            channelOrderCounts = (try? await channels) ?? [:]
         } catch {
             if !error.isCancellation {
                 errorMessage = error.shopwareDisplayMessage
@@ -336,6 +361,7 @@ final class ShopwareDashboardViewModel: ObservableObject {
         lowStockProducts = []
         topProducts = []
         languageStats = []
+        channelOrderCounts = [:]
         dismissedAttentionIDs = []
         versionString = ""
         errorMessage = nil

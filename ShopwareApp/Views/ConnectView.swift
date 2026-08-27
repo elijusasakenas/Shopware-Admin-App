@@ -64,10 +64,10 @@ struct ConnectView: View {
 
                     BlueprintFrame(padding: 14) {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Before you ship this publicly")
+                            Text("Integration permissions")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Color.shopwareBlue)
-                            Text("Route AI requests through the included proxy, keep service secrets out of the app bundle, and use the narrowest Shopware integration permissions your workflow needs.")
+                            Text("Give this integration only the Admin API permissions you want the app to use. You can revoke the keys in Shopware at any time.")
                                 .font(.caption)
                                 .foregroundStyle(Color.secondaryText)
                                 .lineSpacing(4)
@@ -111,7 +111,7 @@ struct ConnectView: View {
     }
 
     private var canConnect: Bool {
-        !shopURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        ShopwareConnection.normalizedURL(from: shopURL) != nil &&
         !accessKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !secretKey.isEmpty
     }

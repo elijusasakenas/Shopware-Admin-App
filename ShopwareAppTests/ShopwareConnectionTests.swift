@@ -13,21 +13,47 @@ final class ShopwareConnectionTests: XCTestCase {
 
     // MARK: - URL normalization
 
-    func testNormalizedBaseURL_addsHTTPSWhenSchemeMissing() {
+    func testNormalizedBaseURL_addsHTTPSWhenSchemeMissing() throws {
         let c = ShopwareConnection(shopURL: "shop.example.com", accessKey: "k", secretKey: "s")
-        XCTAssertEqual(c.normalizedBaseURL.scheme, "https")
-        XCTAssertEqual(c.normalizedBaseURL.host, "shop.example.com")
+        XCTAssertEqual(try c.resolvedBaseURL().scheme, "https")
+        XCTAssertEqual(try c.resolvedBaseURL().host, "shop.example.com")
     }
 
-    func testNormalizedBaseURL_preservesExistingScheme() {
+    func testNormalizedBaseURL_preservesExistingScheme() throws {
         let c = ShopwareConnection(shopURL: "http://localhost:8000", accessKey: "k", secretKey: "s")
-        XCTAssertEqual(c.normalizedBaseURL.scheme, "http")
-        XCTAssertEqual(c.normalizedBaseURL.host, "localhost")
+        XCTAssertEqual(try c.resolvedBaseURL().scheme, "http")
+        XCTAssertEqual(try c.resolvedBaseURL().host, "localhost")
     }
 
-    func testNormalizedBaseURL_trimsWhitespaceAndTrailingSlash() {
+    func testNormalizedBaseURL_trimsWhitespaceAndTrailingSlash() throws {
         let c = ShopwareConnection(shopURL: "  https://shop.example.com/  ", accessKey: "k", secretKey: "s")
-        XCTAssertEqual(c.normalizedBaseURL.absoluteString, "https://shop.example.com")
+        XCTAssertEqual(try c.resolvedBaseURL().absoluteString, "https://shop.example.com")
+    }
+
+    func testNormalizedURL_rejectsInvalidValues() {
+        XCTAssertNil(ShopwareConnection.normalizedURL(from: ""))
+        XCTAssertNil(ShopwareConnection.normalizedURL(from: "   "))
+        XCTAssertNil(ShopwareConnection.normalizedURL(from: "https://"))
+        XCTAssertNil(ShopwareConnection.normalizedURL(from: "ftp://shop.example.com"))
+        XCTAssertNil(ShopwareConnection.normalizedURL(from: "not a url"))
+    }
+
+    func testResolvedBaseURL_throwsInsteadOfUsingExampleDotCom() {
+        let previousLanguage = UserDefaults.standard.object(forKey: "appLanguage")
+        UserDefaults.standard.set("en", forKey: "appLanguage")
+        defer {
+            if let previousLanguage {
+                UserDefaults.standard.set(previousLanguage, forKey: "appLanguage")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "appLanguage")
+            }
+        }
+
+        let c = ShopwareConnection(shopURL: "not a url", accessKey: "k", secretKey: "s")
+        XCTAssertEqual(c.displayHost, "not a url")
+        XCTAssertThrowsError(try c.resolvedBaseURL()) { error in
+            XCTAssertTrue(error.shopwareDisplayMessage.contains("valid shop URL"))
+        }
     }
 
     // MARK: - displayName / displayHost

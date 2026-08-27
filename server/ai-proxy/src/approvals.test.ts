@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { actionFingerprint, extractApprovalActions, isExplicitDryRun, isWriteTool, stableStringify } from "./approvals";
 import { validateMcpURL } from "./mcp-gateway";
-import { productionAppID } from "./app-store";
+import { formatVerificationError, productionAppID } from "./app-store";
 
 describe("write approval policy", () => {
   it("fails closed for writes and unknown custom tools", () => {
@@ -57,5 +57,11 @@ describe("App Store environment binding", () => {
     expect(() => productionAppID("Production", "not-a-number")).toThrow();
     expect(productionAppID("Production", "1234567890")).toBe(1_234_567_890);
     expect(productionAppID("Sandbox", undefined)).toBeUndefined();
+  });
+
+  it("surfaces Apple VerificationException status when message is empty", () => {
+    expect(formatVerificationError({ status: 4 })).toBe("Apple verification failed (INVALID_ENVIRONMENT)");
+    expect(formatVerificationError(new Error("wrong product"))).toBe("wrong product");
+    expect(formatVerificationError({})).toBe("Apple verification failed");
   });
 });

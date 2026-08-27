@@ -154,6 +154,38 @@ extension ShopwareAdminClient {
         .sorted { $0.count > $1.count }
     }
 
+    /// Order counts per sales channel for the channel picker shares.
+    /// Unfiltered by the selected channel so every row stays comparable.
+    func fetchChannelBreakdown(since: Date) async throws -> [String: Int] {
+        let response = try await requestJSON(path: "/api/search/order", method: "POST", body: [
+            "limit": 1,
+            "includes": ["order": ["id"]],
+            "filter": [[
+                "type": "range",
+                "field": "orderDateTime",
+                "parameters": ["gte": since.iso8601String]
+            ]],
+            "aggregations": [[
+                "name": "channels",
+                "type": "terms",
+                "field": "salesChannelId"
+            ]]
+        ])
+
+        guard let aggregations = response["aggregations"] as? [String: Any],
+              let terms = aggregations["channels"] as? [String: Any],
+              let buckets = terms["buckets"] as? [[String: Any]] else {
+            return [:]
+        }
+
+        var counts: [String: Int] = [:]
+        for bucket in buckets {
+            guard let channelID = bucket["key"] as? String else { continue }
+            counts[channelID] = bucket["count"] as? Int ?? 0
+        }
+        return counts
+    }
+
     private func fetchLanguageNames() async throws -> [String: String] {
         let response = try await requestJSON(path: "/api/search/language", method: "POST", body: ["limit": 50])
         var names: [String: String] = [:]

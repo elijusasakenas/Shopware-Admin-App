@@ -28,15 +28,42 @@ export interface VerifiedTransaction {
 
 export async function verifyAppStoreTransaction(jws: string, env: Env): Promise<VerifiedTransaction> {
   if (jws.length > MAX_JWS_LENGTH) throw new Error("transaction is too large");
-  const environment = (env.APPLE_ENVIRONMENT as "Production" | "Sandbox" | undefined) ?? "Production";
+  const preferred = (env.APPLE_ENVIRONMENT as "Production" | "Sandbox" | undefined) ?? "Production";
+  const alternate: "Production" | "Sandbox" = preferred === "Production" ? "Sandbox" : "Production";
+
+  try {
+    return await verifyInEnvironment(jws, env, preferred);
+  } catch (error) {
+    // TestFlight and StoreKit testing always mint Sandbox transactions, even
+    // when talking to a Production-configured Worker. Retry once in the other
+    // environment when Apple reports an environment mismatch.
+    if (!isInvalidEnvironment(error)) throw new Error(formatVerificationError(error));
+    try {
+      return await verifyInEnvironment(jws, env, alternate);
+    } catch (retryError) {
+      throw new Error(formatVerificationError(retryError));
+    }
+  }
+}
+
+async function verifyInEnvironment(
+  jws: string,
+  env: Env,
+  environment: "Production" | "Sandbox",
+): Promise<VerifiedTransaction> {
   const appAppleID = productionAppID(environment, env.APPLE_APP_ID);
-  const cacheKey = `${environment}:${env.APPLE_BUNDLE_ID}:${appAppleID ?? "sandbox"}`;
+  // Cache key includes online-check mode so flipping it does not reuse a stale verifier.
+  const cacheKey = `${environment}:${env.APPLE_BUNDLE_ID}:${appAppleID ?? "sandbox"}:offline`;
   let verifier = verifierCache.get(cacheKey);
   if (!verifier) {
     const { Environment, SignedDataVerifier } = await appleLibrary();
+    // Online OCSP revocation checks are unreliable in Cloudflare Workers
+    // (fetch/OCSP parsing surfaces as RETRYABLE_VERIFICATION_FAILURE). Chain
+    // signature verification against Apple Root CA G3 still runs; subscription
+    // expiry is enforced below with Date.now().
     verifier = new SignedDataVerifier(
       [Buffer.from(APPLE_ROOT_CA_G3_BASE64, "base64")],
-      true,
+      false,
       environment === "Production" ? Environment.PRODUCTION : Environment.SANDBOX,
       env.APPLE_BUNDLE_ID,
       appAppleID,
@@ -60,4 +87,32 @@ export function productionAppID(environment: "Production" | "Sandbox", value: st
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed)) throw new Error("invalid App Store app ID");
   return parsed;
+}
+
+/** Apple's VerificationException calls `super()` with no message. */
+export function formatVerificationError(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === "object" && "status" in error) {
+    const status = Number((error as { status: unknown }).status);
+    const names: Record<number, string> = {
+      1: "VERIFICATION_FAILURE",
+      2: "RETRYABLE_VERIFICATION_FAILURE",
+      3: "INVALID_APP_IDENTIFIER",
+      4: "INVALID_ENVIRONMENT",
+      5: "INVALID_CHAIN_LENGTH",
+      6: "INVALID_CERTIFICATE",
+      7: "FAILURE",
+    };
+    return `Apple verification failed (${names[status] ?? `status ${status}`})`;
+  }
+  return "Apple verification failed";
+}
+
+function isInvalidEnvironment(error: unknown): boolean {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "status" in error &&
+      Number((error as { status: unknown }).status) === 4,
+  );
 }

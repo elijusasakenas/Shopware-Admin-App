@@ -19,6 +19,10 @@ is never sent to this Worker.
 
 - Production StoreKit JWS claims must match the Apple environment, bundle ID,
   App Store app ID, product, active expiry, and original transaction ID.
+  TestFlight purchases are Sandbox-signed; the Worker retries verification in
+  the alternate environment when Apple reports an environment mismatch.
+  Certificate chain verification anchors to Apple Root CA G3; OCSP online
+  revocation checks are disabled because they fail unreliably on Workers.
 - Paid chat requests require a fresh, one-time server challenge and an Apple
   App Attest assertion over the exact request body. App Attest keys, assertion
   counters, and challenges are bound to the verified subscription's Durable

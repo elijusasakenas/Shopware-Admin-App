@@ -80,12 +80,12 @@ struct DashboardView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(Color.secondaryText)
                 .padding(.bottom, 10)
-            channelRow(id: nil, name: "All sales channels", share: "100%")
-            ForEach(Array(viewModel.salesChannels.enumerated()), id: \.element.id) { index, channel in
+            channelRow(id: nil, name: "All sales channels", share: viewModel.channelShareLabel(for: nil))
+            ForEach(viewModel.salesChannels) { channel in
                 channelRow(
                     id: channel.id,
                     name: channel.name,
-                    share: viewModel.salesChannels.count == 2 ? (index == 0 ? "78%" : "22%") : "—"
+                    share: viewModel.channelShareLabel(for: channel.id)
                 )
             }
         }
@@ -524,8 +524,8 @@ struct DashboardView: View {
             alsoRow("Newsletter signups", value: "VIEW", destination: .newsletter)
             alsoRow(
                 "Shop status & log",
-                value: "ALL GREEN",
-                accent: true,
+                value: viewModel.shopStatusLabel,
+                accent: viewModel.hasMaintenanceChannel,
                 destination: .shopStatus
             )
         }

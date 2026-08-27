@@ -19,6 +19,7 @@ struct AIPaywallView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
+                shopwareRequirementNotice
 
                 VStack(alignment: .leading, spacing: 14) {
                     feature(icon: "chart.bar.xaxis", title: "Ask about your numbers",
@@ -184,6 +185,26 @@ struct AIPaywallView: View {
                 .font(.subheadline)
                 .foregroundStyle(Color.secondaryText)
         }
+    }
+
+    private var shopwareRequirementNotice: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(Color.orange)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Important")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Color.primaryText)
+                Text("You need the latest Shopware version where MCP works (6.7.11 or newer) with the MCP_SERVER feature flag enabled. Older shops cannot use the AI assistant.")
+                    .font(.footnote)
+                    .foregroundStyle(Color.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.orange.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private func feature(icon: String, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {

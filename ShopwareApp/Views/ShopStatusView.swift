@@ -41,7 +41,9 @@ struct ShopStatusView: View {
                 HStack {
                     Text("Shopware version").font(.subheadline).foregroundStyle(Color.secondaryText)
                     Spacer()
-                    Text("Up to date").font(.caption.weight(.semibold)).foregroundStyle(Color.shopwareBlue)
+                    Text(healthLabel)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(healthAccent ? Color.shopwareBlue : Color.secondaryText)
                 }
                 Text(version.isEmpty ? "—" : version)
                     .font(.largeTitle.weight(.semibold))
@@ -50,7 +52,7 @@ struct ShopStatusView: View {
                 HStack(spacing: 0) {
                     statusCell("Storefront", value: averageResponse)
                     Divider().frame(height: 40)
-                    statusCell("Admin API", value: "LIVE")
+                    statusCell("Admin API", value: adminAPILabel)
                     Divider().frame(height: 40)
                     statusCell("Errors · 24h", value: errorCount.formatted())
                 }
@@ -68,6 +70,31 @@ struct ShopStatusView: View {
         .padding(.horizontal, 8)
     }
 
+    private var adminAPILabel: String {
+        if isLoading { return "—" }
+        if version.isEmpty || version == "Unknown" { return "—" }
+        return AppLocalization.string("LIVE")
+    }
+
+    private var healthLabel: String {
+        if isLoading { return "—" }
+        if domains.contains(where: { !$0.isHealthy }) {
+            return AppLocalization.string("ISSUES")
+        }
+        if errorCount > 0 {
+            return AppLocalization.string("\(errorCount) ERRORS")
+        }
+        if domains.contains(where: \.isHealthy) {
+            return AppLocalization.string("ALL GREEN")
+        }
+        if version.isEmpty || version == "Unknown" { return "—" }
+        return AppLocalization.string("LIVE")
+    }
+
+    private var healthAccent: Bool {
+        !isLoading && (domains.contains(where: { !$0.isHealthy }) || errorCount > 0 || domains.contains(where: \.isHealthy))
+    }
+
     private var averageResponse: String {
         let responses = domains.compactMap(\.responseMs)
         guard !responses.isEmpty else { return "—" }
@@ -75,7 +102,11 @@ struct ShopStatusView: View {
     }
 
     private var errorCount: Int {
-        logEntries.filter { $0.level >= 400 }.count
+        let cutoff = Date().addingTimeInterval(-24 * 60 * 60)
+        return logEntries.filter { entry in
+            guard entry.level >= 400, let createdAt = entry.createdAt else { return false }
+            return createdAt >= cutoff
+        }.count
     }
 
     private var domainSection: some View {

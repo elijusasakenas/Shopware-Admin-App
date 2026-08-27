@@ -64,10 +64,50 @@ final class AppAttestManager {
         let error: Detail
     }
 
+    private struct CachedChallenge {
+        let value: String
+        let keyID: String
+        let clientID: String
+        let fetchedAt: Date
+    }
+
     private let service = DCAppAttestService.shared
     private let storedKeyID = "aiProxyAppAttestKeyID"
+    /// Server challenges expire after 5 minutes; refresh a bit earlier.
+    private let challengeMaxAge: TimeInterval = 4 * 60
+    private var cachedChatChallenge: CachedChallenge?
+    private var prepareTask: Task<Void, Never>?
 
     private init() {}
+
+    /// Prefetches a chat challenge so the next send only needs a local assertion.
+    func prepare(
+        baseURL: URL,
+        entitlementJWS: String,
+        clientID: String,
+        session: URLSession
+    ) {
+        guard service.isSupported else { return }
+        if let cached = cachedChatChallenge,
+           cached.clientID == clientID,
+           Date().timeIntervalSince(cached.fetchedAt) < challengeMaxAge {
+            return
+        }
+        prepareTask?.cancel()
+        prepareTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                _ = try await self.ensureReadyChallenge(
+                    baseURL: baseURL,
+                    entitlementJWS: entitlementJWS,
+                    clientID: clientID,
+                    session: session
+                )
+            } catch {
+                // Best-effort warmup; send will fetch a fresh challenge.
+            }
+        }
+    }
 
     func headers(
         baseURL: URL,
@@ -80,6 +120,65 @@ final class AppAttestManager {
             throw ShopwareAPIError.message(
                 "Secure app verification is not available on this device. You can still use the assistant with your own AI provider key."
             )
+        }
+
+        let ready = try await ensureReadyChallenge(
+            baseURL: baseURL,
+            entitlementJWS: entitlementJWS,
+            clientID: clientID,
+            session: session
+        )
+
+        let payload = Self.assertionPayload(
+            method: "POST",
+            path: "/v1/chat",
+            challenge: ready.value,
+            body: body
+        )
+        let assertion = try await service.generateAssertion(
+            ready.keyID,
+            clientDataHash: Data(SHA256.hash(data: payload))
+        )
+        // Consume only after a successful assertion so a local failure can retry.
+        if cachedChatChallenge?.value == ready.value {
+            cachedChatChallenge = nil
+        }
+
+        // Warm the next challenge while the chat request is in flight.
+        prepare(
+            baseURL: baseURL,
+            entitlementJWS: entitlementJWS,
+            clientID: clientID,
+            session: session
+        )
+
+        return Headers(
+            keyID: ready.keyID,
+            challenge: ready.value,
+            assertion: assertion.base64EncodedString()
+        )
+    }
+
+    static func assertionPayload(
+        method: String,
+        path: String,
+        challenge: String,
+        body: Data
+    ) -> Data {
+        let bodyHash = Data(SHA256.hash(data: body)).base64URLEncodedString()
+        return Data("shopware-ai-app-attest-v1\n\(method.uppercased())\n\(path)\n\(challenge)\n\(bodyHash)".utf8)
+    }
+
+    private func ensureReadyChallenge(
+        baseURL: URL,
+        entitlementJWS: String,
+        clientID: String,
+        session: URLSession
+    ) async throws -> CachedChallenge {
+        if let cached = cachedChatChallenge,
+           cached.clientID == clientID,
+           Date().timeIntervalSince(cached.fetchedAt) < challengeMaxAge {
+            return cached
         }
 
         var keyID = UserDefaults.standard.string(forKey: storedKeyID)
@@ -112,31 +211,15 @@ final class AppAttestManager {
         guard let keyID, challenge.keyRegistered == true, let challengeValue = challenge.challenge else {
             throw ShopwareAPIError.message("The app could not establish a secure AI session.")
         }
-        let payload = Self.assertionPayload(
-            method: "POST",
-            path: "/v1/chat",
-            challenge: challengeValue,
-            body: body
-        )
-        let assertion = try await service.generateAssertion(
-            keyID,
-            clientDataHash: Data(SHA256.hash(data: payload))
-        )
-        return Headers(
-            keyID: keyID,
-            challenge: challengeValue,
-            assertion: assertion.base64EncodedString()
-        )
-    }
 
-    static func assertionPayload(
-        method: String,
-        path: String,
-        challenge: String,
-        body: Data
-    ) -> Data {
-        let bodyHash = Data(SHA256.hash(data: body)).base64URLEncodedString()
-        return Data("shopware-ai-app-attest-v1\n\(method.uppercased())\n\(path)\n\(challenge)\n\(bodyHash)".utf8)
+        let ready = CachedChallenge(
+            value: challengeValue,
+            keyID: keyID,
+            clientID: clientID,
+            fetchedAt: Date()
+        )
+        cachedChatChallenge = ready
+        return ready
     }
 
     private func registerKey(
