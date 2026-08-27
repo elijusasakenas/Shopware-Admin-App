@@ -5,6 +5,8 @@ struct FormField: View {
     let placeholder: LocalizedStringKey
     @Binding var text: String
     var isSecure = false
+    var submitLabel: SubmitLabel = .next
+    var onSubmit: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -16,9 +18,14 @@ struct FormField: View {
                 else { TextField(placeholder, text: $text) }
             }
             .autocorrectionDisabled()
+            #if !os(macOS)
+            .textInputAutocapitalization(.never)
+            #endif
             .font(.body)
             .foregroundStyle(Color.primaryText)
             .tint(Color.shopwareBlue)
+            .submitLabel(submitLabel)
+            .onSubmit { onSubmit?() }
             .padding(.horizontal, 14)
             .frame(minHeight: 52)
             .background(Color.surface)
@@ -161,6 +168,11 @@ struct AskBar: View {
     var onSubmit: () -> Void
     @FocusState private var fieldFocused: Bool
 
+    private var hasText: Bool {
+        guard let draft else { return true }
+        return !draft.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         HStack(spacing: 8) {
             HStack(spacing: 10) {
@@ -192,27 +204,28 @@ struct AskBar: View {
                 }
             }
             .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, minHeight: 44)
+            .frame(maxWidth: .infinity, minHeight: 46)
             .background(Color.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(fieldFocused ? Color.shopwareBlue.opacity(0.55) : Color.border, lineWidth: 1)
             )
             Button(action: submit) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.inverseText)
-                    .frame(width: 44, height: 44)
-                    .background(Color.shopwareBlue)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .frame(width: 46, height: 46)
+                    .background(hasText ? Color.shopwareBlue : Color.shopwareBlue.opacity(0.45))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableButtonStyle())
+            .accessibilityLabel("Ask")
         }
         .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
-        .background(Color.appBackground)
+        .padding(.top, 10)
+        .padding(.bottom, 10)
+        .background(Color.surface)
         .overlay(alignment: .top) {
             Rectangle().fill(Color.border.opacity(0.7)).frame(height: 1)
         }
@@ -232,17 +245,18 @@ struct AskBar: View {
 struct OrderList: View {
     let orders: [LatestOrder]
     let isLoading: Bool
+    var emptyMessage: LocalizedStringKey = "No orders today."
 
     var body: some View {
         VStack(spacing: 0) {
             if orders.isEmpty {
-                Text(isLoading ? "Loading…" : "No orders today.")
+                Text(isLoading ? "Loading..." : emptyMessage)
                     .font(.subheadline)
                     .foregroundStyle(Color.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(22)
             } else {
-                ForEach(orders) { order in
+                ForEach(Array(orders.enumerated()), id: \.element.id) { index, order in
                     NavigationLink(value: order) {
                         HStack(spacing: 10) {
                             Text(order.orderNumber)
@@ -265,25 +279,25 @@ struct OrderList: View {
                                 .foregroundStyle(Color.primaryText)
                                 .lineLimit(1)
                             Image(systemName: "chevron.right")
-                                .font(.caption.weight(.bold))
+                                .font(.caption.weight(.semibold))
                                 .foregroundStyle(Color.secondaryText)
                         }
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 11)
+                        .frame(minHeight: 56)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
-                    if order.id != orders.last?.id {
+                    .buttonStyle(PressableButtonStyle())
+                    if index < orders.count - 1 {
                         Divider().padding(.leading, 14)
                     }
                 }
             }
         }
         .background(Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.border.opacity(0.7), lineWidth: 1)
         )
     }
 }

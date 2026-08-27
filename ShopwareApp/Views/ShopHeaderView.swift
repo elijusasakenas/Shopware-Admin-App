@@ -36,18 +36,19 @@ struct ShopHeaderView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityHint(viewModel.isChannelPickerExpanded ? "Hide sales channels" : "Show sales channels")
 
             Spacer(minLength: 4)
 
             Button {
-                let current = AppAppearance(rawValue: appearance) ?? .system
-                appearance = current == .dark ? AppAppearance.light.rawValue : AppAppearance.dark.rawValue
+                cycleAppearance()
             } label: {
-                Image(systemName: "sun.max")
+                Image(systemName: appearanceIcon)
                     .font(.system(size: 17, weight: .medium))
             }
             .buttonStyle(IconButtonStyle())
-            .accessibilityLabel("Toggle appearance")
+            .accessibilityLabel("Appearance")
+            .accessibilityValue(Text(currentAppearance.title))
 
             if let client = viewModel.apiClient {
                 NavigationLink {
@@ -74,5 +75,23 @@ struct ShopHeaderView: View {
     private var statusLine: String {
         let version = viewModel.versionString.isEmpty ? "Administration" : viewModel.versionString
         return "\(viewModel.connection?.displayName ?? "Shopware") · \(version)"
+    }
+
+    private var currentAppearance: AppAppearance {
+        AppAppearance(rawValue: appearance) ?? .system
+    }
+
+    private var appearanceIcon: String {
+        switch currentAppearance {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max"
+        case .dark: return "moon"
+        }
+    }
+
+    private func cycleAppearance() {
+        let all = AppAppearance.allCases
+        let index = all.firstIndex(of: currentAppearance) ?? 0
+        appearance = all[(index + 1) % all.count].rawValue
     }
 }

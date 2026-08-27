@@ -58,7 +58,8 @@ extension ShopwareAdminClient {
             customerCount: try await customerCount,
             todayRevenue: resolvedToday.reduce(Decimal(0)) { $0 + $1.amountTotal },
             currencyCode: currency,
-            latestOrders: resolvedLatest
+            latestOrders: resolvedLatest,
+            todayOrders: Array(resolvedToday.prefix(8))
         )
     }
 

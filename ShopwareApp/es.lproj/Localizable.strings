@@ -3,6 +3,11 @@
 "All sales channels" = "Todos los canales de venta";
 "App language" = "Idioma de la app";
 "Appearance" = "Apariencia";
+"No orders today." = "No hay pedidos hoy.";
+"No orders yet." = "Todavía no hay pedidos.";
+"VS. YDAY" = "VS. AYER";
+"Hide sales channels" = "Ocultar canales de venta";
+"Show sales channels" = "Mostrar canales de venta";
 "Change" = "Cambiar";
 "Connect" = "Conectar";
 "Connect your shop" = "Conecta tu tienda";

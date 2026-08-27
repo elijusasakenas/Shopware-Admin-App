@@ -3,6 +3,11 @@
 "All sales channels" = "Alle Vertriebskanäle";
 "App language" = "App-Sprache";
 "Appearance" = "Darstellung";
+"No orders today." = "Heute keine Bestellungen.";
+"No orders yet." = "Noch keine Bestellungen.";
+"VS. YDAY" = "GG. GESTERN";
+"Hide sales channels" = "Vertriebskanäle ausblenden";
+"Show sales channels" = "Vertriebskanäle anzeigen";
 "Change" = "Ändern";
 "Connect" = "Verbinden";
 "Connect your shop" = "Shop verbinden";
