@@ -19,5 +19,15 @@
   "dependencies": {
     "@apple/app-store-server-library": "^3.1.0",
     "node-app-attest": "^1.0.1"
+  },
+  "optionalDependencies": {
+    "@emnapi/core": "1.11.3",
+    "@emnapi/runtime": "1.11.3",
+    "@emnapi/wasi-threads": "1.2.3"
+  },
+  "overrides": {
+    "@emnapi/core": "1.11.3",
+    "@emnapi/runtime": "1.11.3",
+    "@emnapi/wasi-threads": "1.2.3"
   }
 }
