@@ -15,7 +15,7 @@ import SwiftUI
 struct AIChatScreen: View {
     @ObservedObject var viewModel: ShopwareDashboardViewModel
     let initialDraft: String
-    @StateObject private var subscriptions = AISubscriptionManager()
+    @ObservedObject private var subscriptions = AISubscriptionManager.shared
     @StateObject private var aiKey = AIKeyStore()
     @State private var mcpAvailability: ShopwareAdminClient.MCPAvailability?
     @State private var serviceAvailability: AIChatService.Availability?
@@ -227,10 +227,10 @@ struct AIChatView: View {
                 }
                 .padding(16)
             }
-            .onChange(of: chat.entries) { _ in
+            .onValueChange(of: chat.entries) { _ in
                 withAnimation { proxy.scrollTo(chat.entries.last?.id, anchor: .bottom) }
             }
-            .onChange(of: chat.isThinking) { thinking in
+            .onValueChange(of: chat.isThinking) { thinking in
                 if thinking { withAnimation { proxy.scrollTo("thinking", anchor: .bottom) } }
             }
         }

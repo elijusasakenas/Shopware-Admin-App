@@ -11,7 +11,7 @@ import StoreKit
 import SwiftUI
 
 struct AIAssistantSettingsCard: View {
-    @StateObject private var subscriptions = AISubscriptionManager()
+    @ObservedObject private var subscriptions = AISubscriptionManager.shared
     @StateObject private var aiKey = AIKeyStore()
     @State private var usage = AIUsage.snapshot()
     @State private var showManageSubscriptions = false

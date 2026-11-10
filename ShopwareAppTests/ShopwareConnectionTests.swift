@@ -9,6 +9,7 @@
 import XCTest
 @testable import ShopwareApp
 
+@MainActor
 final class ShopwareConnectionTests: XCTestCase {
 
     // MARK: - URL normalization

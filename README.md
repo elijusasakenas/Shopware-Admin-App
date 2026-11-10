@@ -45,7 +45,7 @@ Open-source native iOS/macOS dashboard for the Shopware 6 Admin API, styled afte
 
 ## Requirements
 
-- iOS 16+ / macOS 13+ (Swift Charts)
+- iOS 16+ / macOS 14+ (Swift Charts)
 - Shopware 6.5+ (developed against 6.7)
 
 ## Shopware Setup

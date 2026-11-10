@@ -164,48 +164,61 @@ final class ShopwareAdminClient {
             invalidateCachedToken()
         }
 
-        tokenLock.lock()
-        if let cachedToken, cachedToken.expiresAt > Date().addingTimeInterval(30) {
-            let value = cachedToken.value
-            tokenLock.unlock()
+        switch beginTokenLookup() {
+        case .cached(let value):
             return value
+        case .joining(let task):
+            return try await task.value.value
+        case .started(let task, let generation):
+            do {
+                let next = try await task.value
+                finishRefresh(generation: generation, token: next)
+                return next.value
+            } catch {
+                finishRefresh(generation: generation, token: nil)
+                throw error
+            }
+        }
+    }
+
+    private enum TokenLookup {
+        case cached(String)
+        case joining(Task<AccessToken, Error>)
+        case started(Task<AccessToken, Error>, generation: Int)
+    }
+
+    /// Synchronous critical section: NSLock must not be held across an await.
+    private func beginTokenLookup() -> TokenLookup {
+        tokenLock.lock()
+        defer { tokenLock.unlock() }
+        if let cachedToken, cachedToken.expiresAt > Date().addingTimeInterval(30) {
+            return .cached(cachedToken.value)
         }
         if let refreshTask {
-            tokenLock.unlock()
-            return try await refreshTask.value.value
+            return .joining(refreshTask)
         }
         refreshGeneration += 1
-        let generation = refreshGeneration
         let task = Task { try await self.fetchAccessTokenFromNetwork() }
         refreshTask = task
-        tokenLock.unlock()
+        return .started(task, generation: refreshGeneration)
+    }
 
-        do {
-            let next = try await task.value
-            tokenLock.lock()
-            if refreshGeneration == generation {
-                cachedToken = next
-                refreshTask = nil
-            }
-            tokenLock.unlock()
-            return next.value
-        } catch {
-            tokenLock.lock()
-            if refreshGeneration == generation {
-                refreshTask = nil
-            }
-            tokenLock.unlock()
-            throw error
-        }
+    /// Stores the refreshed token unless the refresh was invalidated meanwhile.
+    private func finishRefresh(generation: Int, token: AccessToken?) {
+        tokenLock.lock()
+        defer { tokenLock.unlock() }
+        guard refreshGeneration == generation else { return }
+        if let token { cachedToken = token }
+        refreshTask = nil
     }
 
     private func invalidateCachedToken() {
         tokenLock.lock()
+        defer { tokenLock.unlock() }
         cachedToken = nil
         refreshGeneration += 1
         refreshTask?.cancel()
         refreshTask = nil
-        tokenLock.unlock()
     }
 
     private func fetchAccessTokenFromNetwork() async throws -> AccessToken {

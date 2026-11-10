@@ -57,9 +57,11 @@ struct AIChatService: AIChatSending {
     }
 
     // Live provider API IDs. OpenAI is pinned to Sol; `gpt-5.6` is only an alias.
-    static let anthropicModel = "claude-sonnet-5"
+    static let anthropicModel = "claude-sonnet-5-5"
     static let openAIModel = "gpt-5.6-sol"
     static let geminiModel = "gemini-3.5-flash"
+    /// Turns with several server-side MCP tool calls can run for minutes.
+    static let chatTimeout: TimeInterval = 300
     static let directSystemPrompt = """
     You are the AI assistant inside a Shopware merchant app. Use the connected Shopware MCP server instead of guessing and look up entities before acting.
 
@@ -244,16 +246,19 @@ struct AIChatService: AIChatSending {
         )
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
         request.httpMethod = "POST"
-        request.timeoutInterval = 120
+        request.timeoutInterval = Self.chatTimeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        request.setValue("mcp-client-2025-11-20", forHTTPHeaderField: "anthropic-beta")
+        request.setValue("mcp-client-2025-11-20,server-side-fallback-2026-07-01", forHTTPHeaderField: "anthropic-beta")
 
         let messagesJSON = try JSONSerialization.jsonObject(with: JSONEncoder().encode(messages))
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "model": Self.anthropicModel,
-            "max_tokens": 4096,
+            // Thinking counts against max_tokens; 4096 truncated multi-tool turns.
+            "max_tokens": 16_000,
+            // On a safety decline, re-run on the provider's default fallback model.
+            "fallbacks": "default",
             "system": [[
                 "type": "text",
                 "text": Self.directSystemPrompt,
@@ -301,7 +306,7 @@ struct AIChatService: AIChatSending {
         )
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
         request.httpMethod = "POST"
-        request.timeoutInterval = 120
+        request.timeoutInterval = Self.chatTimeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
@@ -343,7 +348,7 @@ struct AIChatService: AIChatSending {
         )
         var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/interactions")!)
         request.httpMethod = "POST"
-        request.timeoutInterval = 120
+        request.timeoutInterval = Self.chatTimeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
@@ -480,7 +485,7 @@ struct AIChatService: AIChatSending {
         }
         var request = URLRequest(url: baseURL.appending(path: path))
         request.httpMethod = "POST"
-        request.timeoutInterval = 120
+        request.timeoutInterval = Self.chatTimeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         return request
