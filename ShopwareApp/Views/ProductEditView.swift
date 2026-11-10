@@ -70,7 +70,7 @@ struct ProductEditView: View {
             }
         }
         .task { await load() }
-        .onChange(of: pickedItem) { item in
+        .onValueChange(of: pickedItem) { item in
             Task { await uploadPicked(item) }
         }
     }

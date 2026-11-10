@@ -137,8 +137,9 @@ final class AIChatViewModel: ObservableObject {
                 // Overlap Admin API token + subscription proof; both are
                 // independent of each other on the hot path.
                 async let mcpTokenTask = client.currentAccessToken()
+                let needsEntitlement = credential == nil
                 async let jwsTask: String? = {
-                    credential == nil ? await entitlementProvider() : nil
+                    needsEntitlement ? await entitlementProvider() : nil
                 }()
                 let mcpToken = try await mcpTokenTask
                 let jws = await jwsTask

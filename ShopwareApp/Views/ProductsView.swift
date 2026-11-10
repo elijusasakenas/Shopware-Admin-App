@@ -87,7 +87,7 @@ struct ProductsView: View {
         #if !os(macOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
-        .onChange(of: searchText) { term in scheduleSearch(term: term) }
+        .onValueChange(of: searchText) { term in scheduleSearch(term: term) }
         .task {
             if products.isEmpty { await runSearch(term: "") }
         }

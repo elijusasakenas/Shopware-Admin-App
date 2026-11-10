@@ -13,6 +13,10 @@ import StoreKit
 
 @MainActor
 final class AISubscriptionManager: ObservableObject {
+    /// Shared instance so only one `Transaction.updates` listener is registered
+    /// across chat and settings.
+    static let shared = AISubscriptionManager()
+
     /// Auto-renewable subscription; create the same product in App Store
     /// Connect. The local StoreKit configuration (ShopwareApp/Configuration/
     /// ShopwareAI.storekit, selected in the scheme's Run options) provides it
@@ -29,15 +33,15 @@ final class AISubscriptionManager: ObservableObject {
     /// validates against Apple's certificate chain.
     private var latestTransactionJWS: String?
     private var updatesTask: Task<Void, Never>?
+    /// Avoids calling `finish()` more than once when purchase success and
+    /// `Transaction.updates` both deliver the same transaction.
+    private var finishedTransactionIDs = Set<UInt64>()
 
-    init() {
+    private init() {
         updatesTask = Task { [weak self] in
             // Apply renewals, revocations, and Ask-to-Buy approvals as they land.
             for await update in Transaction.updates {
-                if case .verified(let transaction) = update {
-                    await transaction.finish()
-                }
-                await self?.refreshEntitlement()
+                await self?.handle(update)
             }
         }
         Task { await refresh() }
@@ -60,11 +64,7 @@ final class AISubscriptionManager: ObservableObject {
         do {
             switch try await product.purchase() {
             case .success(let verification):
-                if case .verified(let transaction) = verification {
-                    await transaction.finish()
-                    latestTransactionJWS = verification.jwsRepresentation
-                }
-                await refreshEntitlement()
+                await handle(verification)
             case .userCancelled, .pending:
                 break
             @unknown default:
@@ -85,6 +85,20 @@ final class AISubscriptionManager: ObservableObject {
     func entitlementJWS() async -> String? {
         if latestTransactionJWS == nil { await refreshEntitlement() }
         return latestTransactionJWS
+    }
+
+    private func handle(_ result: VerificationResult<Transaction>) async {
+        if case .verified(let transaction) = result, transaction.productID == Self.productID {
+            await finishIfNeeded(transaction)
+        }
+        // Always re-read entitlements: revocations and unverified updates
+        // must still clear a stale subscription.
+        await refreshEntitlement()
+    }
+
+    private func finishIfNeeded(_ transaction: Transaction) async {
+        guard finishedTransactionIDs.insert(transaction.id).inserted else { return }
+        await transaction.finish()
     }
 
     private func refreshEntitlement() async {

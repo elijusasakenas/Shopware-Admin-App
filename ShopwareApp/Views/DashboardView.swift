@@ -60,7 +60,7 @@ struct DashboardView: View {
             .navigationDestination(isPresented: $showAssistant) {
                 AIChatScreen(viewModel: viewModel, initialDraft: assistantDraft)
             }
-            .onChange(of: showAssistant) { isShowing in
+            .onValueChange(of: showAssistant) { isShowing in
                 if !isShowing {
                     assistantDraft = ""
                 }

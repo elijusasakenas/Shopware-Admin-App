@@ -151,14 +151,18 @@ async function handleChat(request: Request, env: Env, requestID: string): Promis
     const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "anthropic-beta": "mcp-client-2025-11-20",
+        "anthropic-beta": "mcp-client-2025-11-20,server-side-fallback-2026-07-01",
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
         "x-api-key": env.ANTHROPIC_API_KEY,
       },
       body: JSON.stringify({
-        model: env.ANTHROPIC_MODEL || "claude-sonnet-5",
-        max_tokens: 4096,
+        model: env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
+        // Thinking counts against max_tokens; 4096 truncated multi-tool turns.
+        max_tokens: 16_000,
+        // On a safety decline, re-run on Anthropic's default fallback model
+        // instead of failing the turn.
+        fallbacks: "default",
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         mcp_servers: [{
           type: "url",

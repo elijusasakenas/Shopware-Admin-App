@@ -1,6 +1,7 @@
 import XCTest
 @testable import ShopwareApp
 
+@MainActor
 final class ShopwareAdminClientIntegrationTests: XCTestCase {
     override func tearDown() {
         MockURLProtocol.reset()
