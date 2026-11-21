@@ -8,16 +8,35 @@
 import Foundation
 
 extension ShopwareAdminClient {
-    /// Search products by name or product number. An empty `term` returns the
-    /// most recently updated products so the list is populated before typing.
-    func searchProducts(term: String, salesChannelID: String?, limit: Int = 50) async throws -> [ProductSummary] {
+    /// Search products by name or product number, one page at a time. An empty
+    /// `term` returns the most recently updated products so the list is
+    /// populated before typing. `total` counts every matching row, so callers
+    /// can keep loading pages until they have all of them.
+    func searchProducts(
+        term: String,
+        salesChannelID: String?,
+        stockFilter: ProductStockFilter = .all,
+        page: Int = 1,
+        limit: Int = 50
+    ) async throws -> ProductPage {
         var filters: [[String: Any]] = []
         if let salesChannelID {
             filters.append(["type": "equals", "field": "visibilities.salesChannelId", "value": salesChannelID])
         }
+        switch stockFilter {
+        case .all:
+            break
+        case .low:
+            filters.append(["type": "range", "field": "stock", "parameters": ["lte": ProductStockFilter.lowStockThreshold]])
+        case .out:
+            // Negative stock (overselling) is out of stock too.
+            filters.append(["type": "range", "field": "stock", "parameters": ["lte": 0]])
+        }
 
         var body: [String: Any] = [
+            "page": max(1, page),
             "limit": limit,
+            "total-count-mode": 1,
             "filter": filters,
             "associations": ["cover": ["associations": ["media": [:]]]]
         ]
@@ -29,7 +48,7 @@ extension ShopwareAdminClient {
         }
 
         let response = try await requestJSON(path: "/api/search/product", method: "POST", body: body)
-        return (response["data"] as? [[String: Any]] ?? []).compactMap { row in
+        let products: [ProductSummary] = (response["data"] as? [[String: Any]] ?? []).compactMap { row in
             guard let id = row["id"] as? String else { return nil }
             let attrs = entityAttributes(of: row)
             let name = translatedName(from: attrs) ?? attrs["name"] as? String ?? AppLocalization.string("Unnamed product")
@@ -43,6 +62,26 @@ extension ShopwareAdminClient {
                 coverURL: coverURL(from: attrs)
             )
         }
+        return ProductPage(products: products, total: total(from: response) ?? products.count)
+    }
+
+    /// Number of active main products, matching the product count merchants
+    /// see in the Shopware Administration. Variants are excluded: they inherit
+    /// `active` from their parent, which the Admin API does not resolve.
+    func countActiveProducts(salesChannelID: String?) async throws -> Int {
+        var filters: [[String: Any]] = [
+            ["type": "equals", "field": "active", "value": true],
+            ["type": "equals", "field": "parentId", "value": NSNull()]
+        ]
+        if let salesChannelID {
+            filters.append(["type": "equals", "field": "visibilities.salesChannelId", "value": salesChannelID])
+        }
+        return try await countEntity("product", filters: filters)
+    }
+
+    private func total(from response: [String: Any]) -> Int? {
+        if let meta = response["meta"] as? [String: Any], let total = meta["total"] as? Int { return total }
+        return response["total"] as? Int
     }
 
     /// Load a single product's full editable state for the edit sheet.

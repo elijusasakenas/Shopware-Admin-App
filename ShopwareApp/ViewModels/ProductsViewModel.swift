@@ -22,8 +22,35 @@ final class ProductsViewModel: ObservableObject {
         self.currencyCode = currencyCode
     }
 
-    func searchProducts(term: String) async throws -> [ProductSummary] {
-        try await client.searchProducts(term: term, salesChannelID: salesChannelID)
+    /// Rows per "Load more" step.
+    nonisolated static let pageSize = 50
+
+    /// Loads one page of products. `limit` is a multiple of `pageSize` when the
+    /// list reloads everything already shown (for example after an edit).
+    func loadProducts(
+        term: String,
+        stockFilter: ProductStockFilter = .all,
+        page: Int = 1,
+        limit: Int = ProductsViewModel.pageSize
+    ) async throws -> ProductPage {
+        try await client.searchProducts(
+            term: term,
+            salesChannelID: salesChannelID,
+            stockFilter: stockFilter,
+            page: page,
+            limit: limit
+        )
+    }
+
+    func activeProductCount() async throws -> Int {
+        try await client.countActiveProducts(salesChannelID: salesChannelID)
+    }
+
+    /// Appends a page while skipping rows already shown, so items that moved
+    /// between pages (e.g. after a stock edit) are not listed twice.
+    static func merge(_ existing: [ProductSummary], with next: [ProductSummary]) -> [ProductSummary] {
+        let known = Set(existing.map(\.id))
+        return existing + next.filter { !known.contains($0.id) }
     }
 
     func setStock(productID: String, to stock: Int) async throws {

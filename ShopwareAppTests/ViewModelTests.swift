@@ -42,7 +42,7 @@ final class ViewModelTests: XCTestCase {
             currencyCode: "EUR"
         )
 
-        let products = try await viewModel.searchProducts(term: " mug ")
+        let products = try await viewModel.loadProducts(term: " mug ").products
         XCTAssertEqual(products.count, 1)
         XCTAssertEqual(products[0].name, "Shopware mug")
         XCTAssertEqual(products[0].productNumber, "SW-MUG")
@@ -60,6 +60,90 @@ final class ViewModelTests: XCTestCase {
 
         let updateBody = try TestHTTPFactory.jsonBody(of: requests[1])
         XCTAssertEqual(updateBody["stock"] as? Int, 0)
+    }
+
+    @MainActor
+    func testProductsViewModelRequestsPagesWithTotalAndStockFilter() async throws {
+        MockURLProtocol.install { _ in
+            .json(
+                #"""
+                {
+                  "meta": {"total": 530},
+                  "data": [{"id": "product-51", "attributes": {"name": "Cap", "productNumber": "SW-CAP", "stock": 3}}]
+                }
+                """#
+            )
+        }
+
+        let viewModel = ProductsViewModel(
+            client: TestHTTPFactory.client(cachedToken: "token"),
+            salesChannelID: nil,
+            currencyCode: "EUR"
+        )
+
+        let page = try await viewModel.loadProducts(term: "", stockFilter: .low, page: 2)
+        XCTAssertEqual(page.total, 530)
+        XCTAssertEqual(page.products.map(\.id), ["product-51"])
+
+        let body = try TestHTTPFactory.jsonBody(of: MockURLProtocol.capturedRequests()[0])
+        XCTAssertEqual(body["page"] as? Int, 2)
+        XCTAssertEqual(body["limit"] as? Int, ProductsViewModel.pageSize)
+        XCTAssertEqual(body["total-count-mode"] as? Int, 1)
+        let filters = body["filter"] as? [[String: Any]] ?? []
+        XCTAssertEqual(filters.count, 1)
+        XCTAssertEqual(filters.first?["field"] as? String, "stock")
+        XCTAssertEqual(filters.first?["type"] as? String, "range")
+        XCTAssertEqual((filters.first?["parameters"] as? [String: Any])?["lte"] as? Int, 10)
+    }
+
+    @MainActor
+    func testProductsViewModelOutOfStockFilterIncludesNegativeStock() async throws {
+        MockURLProtocol.install { _ in .json(#"{"meta":{"total":0},"data":[]}"#) }
+        let viewModel = ProductsViewModel(
+            client: TestHTTPFactory.client(cachedToken: "token"),
+            salesChannelID: nil,
+            currencyCode: "EUR"
+        )
+
+        let page = try await viewModel.loadProducts(term: "", stockFilter: .out)
+        XCTAssertEqual(page.total, 0)
+
+        let body = try TestHTTPFactory.jsonBody(of: MockURLProtocol.capturedRequests()[0])
+        let filter = (body["filter"] as? [[String: Any]])?.first
+        XCTAssertEqual((filter?["parameters"] as? [String: Any])?["lte"] as? Int, 0)
+    }
+
+    @MainActor
+    func testProductsViewModelCountsActiveMainProductsInChannel() async throws {
+        MockURLProtocol.install { request in
+            XCTAssertEqual(request.url?.path, "/api/search/product")
+            return .json(#"{"meta":{"total":530},"data":[]}"#)
+        }
+        let viewModel = ProductsViewModel(
+            client: TestHTTPFactory.client(cachedToken: "token"),
+            salesChannelID: "storefront-channel",
+            currencyCode: "EUR"
+        )
+
+        let count = try await viewModel.activeProductCount()
+        XCTAssertEqual(count, 530)
+
+        let body = try TestHTTPFactory.jsonBody(of: MockURLProtocol.capturedRequests()[0])
+        let filters = body["filter"] as? [[String: Any]] ?? []
+        XCTAssertTrue(filters.contains { $0["field"] as? String == "active" && $0["value"] as? Bool == true })
+        XCTAssertTrue(filters.contains { $0["field"] as? String == "parentId" && $0["value"] is NSNull })
+        XCTAssertTrue(filters.contains {
+            $0["field"] as? String == "visibilities.salesChannelId" && $0["value"] as? String == "storefront-channel"
+        })
+    }
+
+    @MainActor
+    func testProductsMergeSkipsRowsAlreadyShown() {
+        func product(_ id: String) -> ProductSummary {
+            ProductSummary(id: id, name: id, productNumber: id, stock: 1, active: true, price: nil, coverURL: nil)
+        }
+        let merged = ProductsViewModel.merge([product("a"), product("b")], with: [product("b"), product("c")])
+        XCTAssertEqual(merged.map(\.id), ["a", "b", "c"])
     }
 
     @MainActor

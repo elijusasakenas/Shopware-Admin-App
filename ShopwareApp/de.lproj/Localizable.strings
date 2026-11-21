@@ -394,3 +394,11 @@
 "ISSUES" = "STÖRUNGEN";
 "+%lld / 7D" = "+%lld / 7T";
 "%lld ERRORS" = "%lld FEHLER";
+
+/* Products list paging */
+"Showing %lld of %lld" = "%lld von %lld angezeigt";
+"%lld active products in your shop" = "%lld aktive Produkte in deinem Shop";
+"Counting active products…" = "Aktive Produkte werden gezählt…";
+"Load more (%lld remaining)" = "Mehr laden (noch %lld)";
+"LOW STOCK" = "NIEDRIGER BESTAND";
+"OUT OF STOCK" = "AUSVERKAUFT";
