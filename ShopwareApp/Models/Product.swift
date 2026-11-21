@@ -33,6 +33,25 @@ struct ProductSummary: Identifiable {
     var coverURL: URL?
 }
 
+/// One page of the products list plus the total number of matching rows, so
+/// the list can offer "Load more" until everything is loaded.
+struct ProductPage {
+    var products: [ProductSummary]
+    var total: Int
+}
+
+/// Stock filters for the products list. Applied server-side so they cover the
+/// whole catalog, not just the rows loaded so far.
+enum ProductStockFilter: String, CaseIterable, Identifiable {
+    case all
+    case low
+    case out
+
+    var id: String { rawValue }
+    /// Products at or below this stock count as low stock (matches the dashboard).
+    static let lowStockThreshold = 10
+}
+
 /// Full editable state of a single product, loaded when opening the edit sheet.
 struct ProductDetail: Identifiable {
     var id: String

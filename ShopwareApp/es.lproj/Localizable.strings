@@ -394,3 +394,11 @@
 "ISSUES" = "INCIDENCIAS";
 "+%lld / 7D" = "+%lld / 7D";
 "%lld ERRORS" = "%lld ERRORES";
+
+/* Products list paging */
+"Showing %lld of %lld" = "Mostrando %lld de %lld";
+"%lld active products in your shop" = "%lld productos activos en tu tienda";
+"Counting active products…" = "Contando productos activos…";
+"Load more (%lld remaining)" = "Cargar más (quedan %lld)";
+"LOW STOCK" = "STOCK BAJO";
+"OUT OF STOCK" = "SIN STOCK";

@@ -395,3 +395,11 @@
 "ISSUES" = "ISSUES";
 "+%lld / 7D" = "+%lld / 7D";
 "%lld ERRORS" = "%lld ERRORS";
+
+/* Products list paging */
+"Showing %lld of %lld" = "Showing %lld of %lld";
+"%lld active products in your shop" = "%lld active products in your shop";
+"Counting active products…" = "Counting active products…";
+"Load more (%lld remaining)" = "Load more (%lld remaining)";
+"LOW STOCK" = "LOW STOCK";
+"OUT OF STOCK" = "OUT OF STOCK";

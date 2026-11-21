@@ -1,44 +1,41 @@
 import SwiftUI
 
 struct ProductsView: View {
-    enum StockFilter: String, CaseIterable, Identifiable {
-        case all = "ALL"
-        case low = "LOW STOCK"
-        case out = "OUT OF STOCK"
-        var id: String { rawValue }
-    }
-
     @ObservedObject var viewModel: ProductsViewModel
     @State private var searchText = ""
     @State private var products: [ProductSummary] = []
-    @State private var filter: StockFilter = .all
+    /// Rows matching the current search and filter on the server.
+    @State private var totalCount = 0
+    /// Active main products in the shop (or selected channel), shown at the top.
+    @State private var activeProductCount: Int?
+    @State private var loadedPages = 0
+    @State private var filter: ProductStockFilter = .all
     @State private var isLoading = false
+    @State private var isLoadingMore = false
     @State private var busyProductIDs: Set<String> = []
     @State private var errorMessage: String?
     @State private var searchTask: Task<Void, Never>?
+    /// Bumped on every reload so a slow, outdated response cannot overwrite newer results.
+    @State private var queryGeneration = 0
 
-    private var filteredProducts: [ProductSummary] {
-        products.filter {
-            switch filter {
-            case .all: return true
-            case .low: return $0.stock <= 10
-            case .out: return $0.stock == 0
-            }
-        }
-    }
+    private var hasMore: Bool { products.count < totalCount }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                HStack {
+                HStack(alignment: .firstTextBaseline) {
                     Text("Products")
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Color.primaryText)
                     Spacer()
-                    Text("\(filteredProducts.count) items")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.secondaryText)
+                    if !products.isEmpty {
+                        Text(String(format: AppLocalization.string("Showing %lld of %lld"), products.count, totalCount))
+                            .font(.subheadline)
+                            .foregroundStyle(Color.secondaryText)
+                    }
                 }
+
+                activeProductsSummary
 
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
@@ -68,7 +65,7 @@ struct ProductsView: View {
                         .tint(.shopwareBlue)
                         .frame(maxWidth: .infinity)
                         .padding(30)
-                } else if filteredProducts.isEmpty {
+                } else if products.isEmpty {
                     Text("Nothing matches that search.")
                         .font(.subheadline)
                         .foregroundStyle(Color.secondaryText)
@@ -76,6 +73,9 @@ struct ProductsView: View {
                         .padding(30)
                 } else {
                     productList
+                    if hasMore {
+                        loadMoreButton
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -88,18 +88,76 @@ struct ProductsView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .onValueChange(of: searchText) { term in scheduleSearch(term: term) }
-        .task {
-            if products.isEmpty { await runSearch(term: "") }
+        .onValueChange(of: filter) { _ in
+            searchTask?.cancel()
+            Task { await reload() }
         }
+        .task {
+            if products.isEmpty { await reload() }
+            if activeProductCount == nil { await refreshActiveCount() }
+        }
+    }
+
+    private var activeProductsSummary: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "shippingbox.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.shopwareBlue)
+            if let activeProductCount {
+                Text(String(format: AppLocalization.string("%lld active products in your shop"), activeProductCount))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.primaryText)
+            } else {
+                Text("Counting active products…")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondaryText)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .frame(minHeight: 44)
+        .background(Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.border, lineWidth: 1)
+        )
+    }
+
+    private var loadMoreButton: some View {
+        Button {
+            Task { await loadMore() }
+        } label: {
+            HStack(spacing: 8) {
+                if isLoadingMore {
+                    ProgressView().tint(.shopwareBlue)
+                }
+                Text(String(
+                    format: AppLocalization.string("Load more (%lld remaining)"),
+                    max(0, totalCount - products.count)
+                ))
+                .font(.subheadline.weight(.semibold))
+            }
+            .foregroundStyle(Color.shopwareBlue)
+            .frame(maxWidth: .infinity, minHeight: 46)
+            .background(Color.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(isLoadingMore)
     }
 
     private var filterControl: some View {
         HStack(spacing: 6) {
-            ForEach(StockFilter.allCases) { candidate in
+            ForEach(ProductStockFilter.allCases) { candidate in
                 Button {
                     filter = candidate
                 } label: {
-                    Text(candidate.rawValue)
+                    Text(filterTitle(candidate))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(filter == candidate ? Color.inverseText : Color.secondaryText)
                         .padding(.horizontal, 12)
@@ -119,11 +177,14 @@ struct ProductsView: View {
 
     private var productList: some View {
         VStack(spacing: 0) {
-            ForEach(filteredProducts) { product in
+            ForEach(products) { product in
                 HStack(spacing: 12) {
                     NavigationLink {
                         ProductEditView(viewModel: viewModel, productID: product.id) {
-                            Task { await runSearch(term: searchText) }
+                            Task {
+                                await reload(keepingLoadedRows: true)
+                                await refreshActiveCount()
+                            }
                         }
                     } label: {
                         HStack(spacing: 12) {
@@ -150,7 +211,7 @@ struct ProductsView: View {
                     }
                 }
                 .padding(.vertical, 10)
-                if product.id != filteredProducts.last?.id {
+                if product.id != products.last?.id {
                     Divider().padding(.leading, 52)
                 }
             }
@@ -163,6 +224,14 @@ struct ProductsView: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(Color.border, lineWidth: 1)
         )
+    }
+
+    private func filterTitle(_ filter: ProductStockFilter) -> String {
+        switch filter {
+        case .all: return AppLocalization.string("ALL")
+        case .low: return AppLocalization.string("LOW STOCK")
+        case .out: return AppLocalization.string("OUT OF STOCK")
+        }
     }
 
     private func productMeta(_ product: ProductSummary) -> String {
@@ -195,23 +264,68 @@ struct ProductsView: View {
         searchTask = Task {
             try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled else { return }
-            await runSearch(term: term)
+            await reload(term: term)
         }
     }
 
-    private func runSearch(term: String) async {
+    /// Loads the first page again. With `keepingLoadedRows`, reloads as many
+    /// rows as are already shown so an edit does not collapse a long list.
+    private func reload(term: String? = nil, keepingLoadedRows: Bool = false) async {
+        queryGeneration += 1
+        let generation = queryGeneration
+        let pageSize = ProductsViewModel.pageSize
+        let pages = keepingLoadedRows ? max(1, loadedPages) : 1
         isLoading = true
         errorMessage = nil
         do {
-            let results = try await viewModel.searchProducts(term: term)
-            guard !Task.isCancelled else { return }
-            products = results
+            let page = try await viewModel.loadProducts(
+                term: term ?? searchText,
+                stockFilter: filter,
+                page: 1,
+                limit: pages * pageSize
+            )
+            guard generation == queryGeneration, !Task.isCancelled else { return }
+            products = page.products
+            totalCount = page.total
+            loadedPages = pages
+        } catch {
+            if generation == queryGeneration, !error.isCancellation {
+                errorMessage = error.shopwareDisplayMessage
+            }
+        }
+        if generation == queryGeneration { isLoading = false }
+    }
+
+    private func loadMore() async {
+        guard hasMore, !isLoadingMore, !isLoading else { return }
+        let generation = queryGeneration
+        isLoadingMore = true
+        errorMessage = nil
+        do {
+            let page = try await viewModel.loadProducts(
+                term: searchText,
+                stockFilter: filter,
+                page: loadedPages + 1
+            )
+            // A new search or filter started meanwhile; this page belongs to the old one.
+            guard generation == queryGeneration else { isLoadingMore = false; return }
+            products = ProductsViewModel.merge(products, with: page.products)
+            totalCount = page.total
+            loadedPages += 1
         } catch {
             if !error.isCancellation {
                 errorMessage = error.shopwareDisplayMessage
             }
         }
-        isLoading = false
+        isLoadingMore = false
+    }
+
+    private func refreshActiveCount() async {
+        // The count is informational; a failure keeps the previous value
+        // instead of covering the list with an error.
+        if let count = try? await viewModel.activeProductCount() {
+            activeProductCount = count
+        }
     }
 }
 
