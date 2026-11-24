@@ -34,11 +34,17 @@ final class ShopSettingsViewModel: ObservableObject {
         try await client.setPaymentMethodActive(paymentMethodID: paymentMethodID, active: active)
     }
 
-    /// True when turning this method off would leave customers with no active
-    /// payment method, which blocks every checkout.
-    static func wouldDisableLastActiveMethod(_ methodID: String, in methods: [PaymentMethod]) -> Bool {
-        let active = methods.filter(\.active)
-        return active.count == 1 && active.first?.id == methodID
+    /// Sales channels that would have no active payment method left if this
+    /// method were turned off. Customers in those channels could not check out.
+    static func channelsLeftWithoutPayment(
+        turningOff methodID: String,
+        in methods: [PaymentMethod]
+    ) -> [String] {
+        guard let method = methods.first(where: { $0.id == methodID }), method.active else { return [] }
+        let others = methods.filter { $0.active && $0.id != methodID }
+        return method.salesChannelIDs.filter { channelID in
+            !others.contains { $0.salesChannelIDs.contains(channelID) }
+        }
     }
 
     func newsletterRecipients() async throws -> [NewsletterRecipient] {

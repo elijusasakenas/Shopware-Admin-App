@@ -251,15 +251,22 @@ final class ViewModelTests: XCTestCase {
     }
 
     @MainActor
-    func testLastActivePaymentMethodIsDetected() {
-        func method(_ id: String, active: Bool) -> PaymentMethod {
-            PaymentMethod(id: id, name: id, description: nil, active: active, position: 0, flow: .direct, salesChannelIDs: [])
+    func testTurningOffWarnsOnlyForChannelsLeftWithoutPayment() {
+        func method(_ id: String, active: Bool, _ channels: [String]) -> PaymentMethod {
+            PaymentMethod(id: id, name: id, description: nil, active: active, position: 0, flow: .direct, salesChannelIDs: channels)
         }
-        let oneActive = [method("a", active: true), method("b", active: false)]
-        XCTAssertTrue(ShopSettingsViewModel.wouldDisableLastActiveMethod("a", in: oneActive))
-        XCTAssertFalse(ShopSettingsViewModel.wouldDisableLastActiveMethod("b", in: oneActive))
-        let twoActive = [method("a", active: true), method("b", active: true)]
-        XCTAssertFalse(ShopSettingsViewModel.wouldDisableLastActiveMethod("a", in: twoActive))
+        let methods = [
+            method("invoice", active: true, ["de", "at"]),
+            method("paypal", active: true, ["de"]),
+            method("prepayment", active: true, []),        // active but offered nowhere
+            method("cod", active: false, ["at"])            // offered in AT but off
+        ]
+        // AT relies on invoice alone; DE still has PayPal. An active method
+        // with no sales channel does not count.
+        XCTAssertEqual(ShopSettingsViewModel.channelsLeftWithoutPayment(turningOff: "invoice", in: methods), ["at"])
+        XCTAssertEqual(ShopSettingsViewModel.channelsLeftWithoutPayment(turningOff: "paypal", in: methods), [])
+        XCTAssertEqual(ShopSettingsViewModel.channelsLeftWithoutPayment(turningOff: "prepayment", in: methods), [])
+        XCTAssertEqual(ShopSettingsViewModel.channelsLeftWithoutPayment(turningOff: "cod", in: methods), [])
     }
 
     @MainActor

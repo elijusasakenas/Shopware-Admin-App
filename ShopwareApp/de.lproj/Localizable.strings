@@ -408,9 +408,7 @@
 "MANAGE" = "VERWALTEN";
 "Unnamed payment method" = "Unbenannte Zahlungsart";
 "Turning a method off hides it at checkout in every sales channel. Orders already placed are not changed." = "Eine deaktivierte Zahlungsart wird im Checkout aller Verkaufskanäle ausgeblendet. Bestehende Bestellungen bleiben unverändert.";
-"Turn off the last payment method?" = "Letzte Zahlungsart deaktivieren?";
 "Turn off" = "Deaktivieren";
-"Customers will not be able to complete any order until another payment method is active." = "Kunden können keine Bestellung abschließen, bis eine andere Zahlungsart aktiv ist.";
 "%lld methods · %lld active" = "%lld Zahlungsarten · %lld aktiv";
 "NO PAYMENT METHODS" = "KEINE ZAHLUNGSARTEN";
 "ACTIVE" = "AKTIV";
@@ -421,3 +419,5 @@
 "No sales channel" = "Kein Verkaufskanal";
 "1 sales channel" = "1 Verkaufskanal";
 "%lld sales channels" = "%lld Verkaufskanäle";
+"Turn off this payment method?" = "Diese Zahlungsart deaktivieren?";
+"No other active payment method is offered in %@. Customers there will not be able to complete an order." = "In %@ wird dann keine andere aktive Zahlungsart angeboten. Kunden dort können keine Bestellung abschließen.";

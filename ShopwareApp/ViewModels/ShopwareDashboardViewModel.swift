@@ -206,7 +206,10 @@ final class ShopwareDashboardViewModel: ObservableObject {
         }
         // Re-checked on every refresh so activating the extension in the shop
         // shows the screen after a pull-to-refresh. Failures hide it.
-        isShopwarePaymentsActive = (try? await client.isShopwarePaymentsActive()) ?? false
+        let paymentsActive = (try? await client.isShopwarePaymentsActive()) ?? false
+        // The user may have switched shops while the check was running.
+        guard self.client === client else { return }
+        isShopwarePaymentsActive = paymentsActive
         await loadAll()
     }
 

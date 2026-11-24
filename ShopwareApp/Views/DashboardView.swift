@@ -592,7 +592,8 @@ struct DashboardView: View {
             PaymentMethodsView(
                 settings: settings,
                 selectedChannelID: viewModel.selectedChannelID,
-                selectedChannelName: viewModel.selectedChannelID == nil ? nil : viewModel.selectedChannelName
+                selectedChannelName: viewModel.selectedChannelID == nil ? nil : viewModel.selectedChannelName,
+                salesChannels: viewModel.salesChannels
             )
         case .newsletter:
             NewsletterSignupsView(settings: settings)

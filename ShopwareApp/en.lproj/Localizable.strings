@@ -409,9 +409,7 @@
 "MANAGE" = "MANAGE";
 "Unnamed payment method" = "Unnamed payment method";
 "Turning a method off hides it at checkout in every sales channel. Orders already placed are not changed." = "Turning a method off hides it at checkout in every sales channel. Orders already placed are not changed.";
-"Turn off the last payment method?" = "Turn off the last payment method?";
 "Turn off" = "Turn off";
-"Customers will not be able to complete any order until another payment method is active." = "Customers will not be able to complete any order until another payment method is active.";
 "%lld methods · %lld active" = "%lld methods · %lld active";
 "NO PAYMENT METHODS" = "NO PAYMENT METHODS";
 "ACTIVE" = "ACTIVE";
@@ -422,3 +420,5 @@
 "No sales channel" = "No sales channel";
 "1 sales channel" = "1 sales channel";
 "%lld sales channels" = "%lld sales channels";
+"Turn off this payment method?" = "Turn off this payment method?";
+"No other active payment method is offered in %@. Customers there will not be able to complete an order." = "No other active payment method is offered in %@. Customers there will not be able to complete an order.";

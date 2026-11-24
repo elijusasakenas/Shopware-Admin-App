@@ -376,12 +376,15 @@ struct PaymentMethodsView: View {
     /// The dashboard's selected sales channel, used to flag methods it does not offer.
     var selectedChannelID: String?
     var selectedChannelName: String?
+    /// All sales channels, to name the ones a change would leave without payment.
+    var salesChannels: [SalesChannel] = []
 
     @State private var methods: [PaymentMethod] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var busyIDs: Set<String> = []
-    @State private var pendingLastMethod: PaymentMethod?
+    /// A switch-off waiting for confirmation, with the channels it would leave without payment.
+    @State private var pendingDisable: (method: PaymentMethod, channelIDs: [String])?
 
     private var activeCount: Int { methods.filter(\.active).count }
 
@@ -416,17 +419,20 @@ struct PaymentMethodsView: View {
         .task { await load() }
         .refreshable { await load() }
         .alert(
-            "Turn off the last payment method?",
+            "Turn off this payment method?",
             isPresented: Binding(
-                get: { pendingLastMethod != nil },
-                set: { if !$0 { pendingLastMethod = nil } }
+                get: { pendingDisable != nil },
+                set: { if !$0 { pendingDisable = nil } }
             ),
-            presenting: pendingLastMethod
-        ) { method in
-            Button("Turn off", role: .destructive) { setActive(method, false) }
+            presenting: pendingDisable
+        ) { pending in
+            Button("Turn off", role: .destructive) { setActive(pending.method, false) }
             Button("Cancel", role: .cancel) {}
-        } message: { _ in
-            Text("Customers will not be able to complete any order until another payment method is active.")
+        } message: { pending in
+            Text(String(
+                format: AppLocalization.string("No other active payment method is offered in %@. Customers there will not be able to complete an order."),
+                channelNames(pending.channelIDs)
+            ))
         }
     }
 
@@ -533,13 +539,21 @@ struct PaymentMethodsView: View {
         Binding(
             get: { methods.first { $0.id == method.id }?.active ?? false },
             set: { enabled in
-                if !enabled, ShopSettingsViewModel.wouldDisableLastActiveMethod(method.id, in: methods) {
-                    pendingLastMethod = method
+                let stranded = enabled ? [] : ShopSettingsViewModel.channelsLeftWithoutPayment(
+                    turningOff: method.id, in: methods
+                )
+                if !stranded.isEmpty {
+                    pendingDisable = (method, stranded)
                 } else {
                     setActive(method, enabled)
                 }
             }
         )
+    }
+
+    private func channelNames(_ ids: [String]) -> String {
+        let names = ids.map { id in salesChannels.first { $0.id == id }?.name ?? id }
+        return ListFormatter.localizedString(byJoining: names)
     }
 
     private func setActive(_ method: PaymentMethod, _ enabled: Bool) {
