@@ -542,6 +542,7 @@ struct DashboardView: View {
             Divider()
             alsoRow("Sales by language", value: "\(viewModel.languageStats.count) MARKETS", destination: .languages)
             alsoRow("Promotions", value: "MANAGE", destination: .promotions)
+            alsoRow("Payment methods", value: "MANAGE", destination: .paymentMethods)
             alsoRow("Newsletter signups", value: "VIEW", destination: .newsletter)
             alsoRow(
                 "Shop status & log",
@@ -585,6 +586,12 @@ struct DashboardView: View {
             ShopSettingsView(session: viewModel, settings: settings)
         case .promotions:
             PromotionsView(settings: settings)
+        case .paymentMethods:
+            PaymentMethodsView(
+                settings: settings,
+                selectedChannelID: viewModel.selectedChannelID,
+                selectedChannelName: viewModel.selectedChannelID == nil ? nil : viewModel.selectedChannelName
+            )
         case .newsletter:
             NewsletterSignupsView(settings: settings)
         case .shopStatus:
@@ -637,6 +644,7 @@ struct DashboardView: View {
 private enum ShopShortcutDestination {
     case settings
     case promotions
+    case paymentMethods
     case newsletter
     case shopStatus
     case languages

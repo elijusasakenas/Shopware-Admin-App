@@ -403,3 +403,22 @@
 "Load more (%lld remaining)" = "Load more (%lld remaining)";
 "LOW STOCK" = "LOW STOCK";
 "OUT OF STOCK" = "OUT OF STOCK";
+
+/* Payment methods */
+"Payment methods" = "Payment methods";
+"MANAGE" = "MANAGE";
+"Unnamed payment method" = "Unnamed payment method";
+"Turning a method off hides it at checkout in every sales channel. Orders already placed are not changed." = "Turning a method off hides it at checkout in every sales channel. Orders already placed are not changed.";
+"Turn off the last payment method?" = "Turn off the last payment method?";
+"Turn off" = "Turn off";
+"Customers will not be able to complete any order until another payment method is active." = "Customers will not be able to complete any order until another payment method is active.";
+"%lld methods · %lld active" = "%lld methods · %lld active";
+"NO PAYMENT METHODS" = "NO PAYMENT METHODS";
+"ACTIVE" = "ACTIVE";
+"OFF" = "OFF";
+"DIRECT" = "DIRECT";
+"REDIRECT" = "REDIRECT";
+"Not offered in %@" = "Not offered in %@";
+"No sales channel" = "No sales channel";
+"1 sales channel" = "1 sales channel";
+"%lld sales channels" = "%lld sales channels";

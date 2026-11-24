@@ -31,6 +31,54 @@ extension ShopwareAdminClient {
         ])
     }
 
+    /// All payment methods with the sales channels that offer them, in the
+    /// order customers see them at checkout.
+    func fetchPaymentMethods() async throws -> [PaymentMethod] {
+        let response = try await requestJSON(path: "/api/search/payment-method", method: "POST", body: [
+            "limit": 100,
+            "sort": [["field": "position", "order": "ASC"], ["field": "name", "order": "ASC"]],
+            "associations": ["salesChannels": [:]]
+        ])
+        return (response["data"] as? [[String: Any]] ?? []).compactMap { row in
+            guard let id = row["id"] as? String else { return nil }
+            let attrs = entityAttributes(of: row)
+            let translated = attrs["translated"] as? [String: Any]
+            let description = (translated?["description"] as? String ?? attrs["description"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return PaymentMethod(
+                id: id,
+                name: translatedName(from: attrs) ?? attrs["name"] as? String
+                    ?? AppLocalization.string("Unnamed payment method"),
+                description: description?.isEmpty == false ? description : nil,
+                active: attrs["active"] as? Bool ?? false,
+                position: attrs["position"] as? Int ?? 0,
+                flow: paymentFlow(from: attrs),
+                salesChannelIDs: relationshipIDs(from: (row["relationships"] as? [String: Any])?["salesChannels"])
+                    ?? (attrs["salesChannels"] as? [[String: Any]])?.compactMap { $0["id"] as? String }
+                    ?? []
+            )
+        }
+    }
+
+    func setPaymentMethodActive(paymentMethodID: String, active: Bool) async throws {
+        _ = try await requestJSON(path: "/api/payment-method/\(paymentMethodID)", method: "PATCH", body: [
+            "active": active
+        ])
+    }
+
+    /// Shopware adds runtime `synchronous` / `asynchronous` flags derived from
+    /// the payment handler. Older or customized shops may omit them.
+    private func paymentFlow(from attrs: [String: Any]) -> PaymentMethod.Flow {
+        if attrs["asynchronous"] as? Bool == true { return .redirect }
+        if attrs["synchronous"] as? Bool == true { return .direct }
+        return .unknown
+    }
+
+    private func relationshipIDs(from relationship: Any?) -> [String]? {
+        guard let rel = relationship as? [String: Any], let data = rel["data"] as? [[String: Any]] else { return nil }
+        return data.compactMap { $0["id"] as? String }
+    }
+
     func countRecentCustomers(since: Date) async throws -> Int {
         try await countEntity("customer", filters: [[
             "type": "range",

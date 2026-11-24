@@ -26,6 +26,21 @@ final class ShopSettingsViewModel: ObservableObject {
         try await client.setPromotionActive(promotionID: promotionID, active: active)
     }
 
+    func paymentMethods() async throws -> [PaymentMethod] {
+        try await client.fetchPaymentMethods()
+    }
+
+    func setPaymentMethodActive(paymentMethodID: String, active: Bool) async throws {
+        try await client.setPaymentMethodActive(paymentMethodID: paymentMethodID, active: active)
+    }
+
+    /// True when turning this method off would leave customers with no active
+    /// payment method, which blocks every checkout.
+    static func wouldDisableLastActiveMethod(_ methodID: String, in methods: [PaymentMethod]) -> Bool {
+        let active = methods.filter(\.active)
+        return active.count == 1 && active.first?.id == methodID
+    }
+
     func newsletterRecipients() async throws -> [NewsletterRecipient] {
         try await client.fetchNewsletterRecipients()
     }

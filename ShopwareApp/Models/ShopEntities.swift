@@ -22,6 +22,29 @@ struct Promotion: Identifiable {
     var code: String?
 }
 
+/// A shop payment method. Shopware runs each method through a payment
+/// handler: synchronous handlers settle in the checkout, asynchronous ones
+/// redirect the customer to the payment provider and come back afterwards.
+struct PaymentMethod: Identifiable, Equatable {
+    enum Flow: Equatable {
+        /// Settled during checkout (invoice, prepayment, cash on delivery…).
+        case direct
+        /// Customer is redirected to the provider (PayPal, card gateways…).
+        case redirect
+        /// Shopware did not report the handler type.
+        case unknown
+    }
+
+    var id: String
+    var name: String
+    var description: String?
+    var active: Bool
+    var position: Int
+    var flow: Flow
+    /// Sales channels that offer this method at checkout.
+    var salesChannelIDs: [String]
+}
+
 struct NewsletterRecipient: Identifiable {
     var id: String
     var email: String

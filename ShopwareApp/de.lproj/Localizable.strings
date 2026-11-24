@@ -402,3 +402,22 @@
 "Load more (%lld remaining)" = "Mehr laden (noch %lld)";
 "LOW STOCK" = "NIEDRIGER BESTAND";
 "OUT OF STOCK" = "AUSVERKAUFT";
+
+/* Payment methods */
+"Payment methods" = "Zahlungsarten";
+"MANAGE" = "VERWALTEN";
+"Unnamed payment method" = "Unbenannte Zahlungsart";
+"Turning a method off hides it at checkout in every sales channel. Orders already placed are not changed." = "Eine deaktivierte Zahlungsart wird im Checkout aller Verkaufskanäle ausgeblendet. Bestehende Bestellungen bleiben unverändert.";
+"Turn off the last payment method?" = "Letzte Zahlungsart deaktivieren?";
+"Turn off" = "Deaktivieren";
+"Customers will not be able to complete any order until another payment method is active." = "Kunden können keine Bestellung abschließen, bis eine andere Zahlungsart aktiv ist.";
+"%lld methods · %lld active" = "%lld Zahlungsarten · %lld aktiv";
+"NO PAYMENT METHODS" = "KEINE ZAHLUNGSARTEN";
+"ACTIVE" = "AKTIV";
+"OFF" = "AUS";
+"DIRECT" = "DIREKT";
+"REDIRECT" = "WEITERLEITUNG";
+"Not offered in %@" = "Nicht angeboten in %@";
+"No sales channel" = "Kein Verkaufskanal";
+"1 sales channel" = "1 Verkaufskanal";
+"%lld sales channels" = "%lld Verkaufskanäle";

@@ -147,6 +147,75 @@ final class ViewModelTests: XCTestCase {
     }
 
     @MainActor
+    func testPaymentMethodsParseFlowChannelsAndToggle() async throws {
+        MockURLProtocol.install { request in
+            switch (request.httpMethod, request.url?.path) {
+            case ("POST", "/api/search/payment-method"):
+                return .json(
+                    #"""
+                    {
+                      "data": [
+                        {
+                          "id": "pm-invoice",
+                          "attributes": {"name": "Invoice", "translated": {"name": "Rechnung", "description": " Pay later "},
+                                         "active": true, "position": 1, "synchronous": true, "asynchronous": false},
+                          "relationships": {"salesChannels": {"data": [{"type": "sales_channel", "id": "sc-1"}, {"type": "sales_channel", "id": "sc-2"}]}}
+                        },
+                        {
+                          "id": "pm-paypal",
+                          "attributes": {"name": "PayPal", "active": false, "position": 2, "asynchronous": true},
+                          "relationships": {"salesChannels": {"data": []}}
+                        },
+                        {
+                          "id": "pm-custom",
+                          "attributes": {"name": "Custom", "active": true, "position": 3}
+                        }
+                      ]
+                    }
+                    """#
+                )
+            case ("PATCH", "/api/payment-method/pm-paypal"):
+                return .empty()
+            default:
+                return .json("{}", statusCode: 404)
+            }
+        }
+
+        let settings = ShopSettingsViewModel(client: TestHTTPFactory.client(cachedToken: "token"))
+        let methods = try await settings.paymentMethods()
+
+        XCTAssertEqual(methods.map(\.id), ["pm-invoice", "pm-paypal", "pm-custom"])
+        XCTAssertEqual(methods[0].name, "Rechnung")
+        XCTAssertEqual(methods[0].description, "Pay later")
+        XCTAssertEqual(methods[0].flow, .direct)
+        XCTAssertEqual(methods[0].salesChannelIDs, ["sc-1", "sc-2"])
+        XCTAssertEqual(methods[1].flow, .redirect)
+        XCTAssertFalse(methods[1].active)
+        XCTAssertEqual(methods[1].salesChannelIDs, [])
+        XCTAssertEqual(methods[2].flow, .unknown)
+
+        try await settings.setPaymentMethodActive(paymentMethodID: "pm-paypal", active: true)
+
+        let requests = MockURLProtocol.capturedRequests()
+        let searchBody = try TestHTTPFactory.jsonBody(of: requests[0])
+        XCTAssertNotNil((searchBody["associations"] as? [String: Any])?["salesChannels"])
+        let patchBody = try TestHTTPFactory.jsonBody(of: requests[1])
+        XCTAssertEqual(patchBody["active"] as? Bool, true)
+    }
+
+    @MainActor
+    func testLastActivePaymentMethodIsDetected() {
+        func method(_ id: String, active: Bool) -> PaymentMethod {
+            PaymentMethod(id: id, name: id, description: nil, active: active, position: 0, flow: .direct, salesChannelIDs: [])
+        }
+        let oneActive = [method("a", active: true), method("b", active: false)]
+        XCTAssertTrue(ShopSettingsViewModel.wouldDisableLastActiveMethod("a", in: oneActive))
+        XCTAssertFalse(ShopSettingsViewModel.wouldDisableLastActiveMethod("b", in: oneActive))
+        let twoActive = [method("a", active: true), method("b", active: true)]
+        XCTAssertFalse(ShopSettingsViewModel.wouldDisableLastActiveMethod("a", in: twoActive))
+    }
+
+    @MainActor
     func testOrderDetailViewModelRefreshesAfterSuccessfulTransition() async throws {
         MockURLProtocol.install { request in
             XCTAssertEqual(request.httpMethod, "POST")
