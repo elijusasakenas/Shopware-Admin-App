@@ -26,6 +26,27 @@ final class ShopSettingsViewModel: ObservableObject {
         try await client.setPromotionActive(promotionID: promotionID, active: active)
     }
 
+    func paymentMethods() async throws -> [PaymentMethod] {
+        try await client.fetchPaymentMethods()
+    }
+
+    func setPaymentMethodActive(paymentMethodID: String, active: Bool) async throws {
+        try await client.setPaymentMethodActive(paymentMethodID: paymentMethodID, active: active)
+    }
+
+    /// Sales channels that would have no active payment method left if this
+    /// method were turned off. Customers in those channels could not check out.
+    static func channelsLeftWithoutPayment(
+        turningOff methodID: String,
+        in methods: [PaymentMethod]
+    ) -> [String] {
+        guard let method = methods.first(where: { $0.id == methodID }), method.active else { return [] }
+        let others = methods.filter { $0.active && $0.id != methodID }
+        return method.salesChannelIDs.filter { channelID in
+            !others.contains { $0.salesChannelIDs.contains(channelID) }
+        }
+    }
+
     func newsletterRecipients() async throws -> [NewsletterRecipient] {
         try await client.fetchNewsletterRecipients()
     }
