@@ -37,6 +37,9 @@ final class ShopwareDashboardViewModel: ObservableObject {
     /// 30-day order counts keyed by sales-channel ID, for the picker shares.
     @Published var channelOrderCounts: [String: Int] = [:]
     @Published var versionString = ""
+    /// The Payment methods screen is offered only when the shop runs the
+    /// Shopware Payments extension.
+    @Published var isShopwarePaymentsActive = false
     @Published private(set) var dismissedAttentionIDs: Set<String> = []
 
     var selectedChannelName: String {
@@ -201,6 +204,9 @@ final class ShopwareDashboardViewModel: ObservableObject {
         if salesChannels.isEmpty {
             salesChannels = (try? await client.fetchSalesChannels()) ?? []
         }
+        // Re-checked on every refresh so activating the extension in the shop
+        // shows the screen after a pull-to-refresh. Failures hide it.
+        isShopwarePaymentsActive = (try? await client.isShopwarePaymentsActive()) ?? false
         await loadAll()
     }
 
@@ -358,6 +364,7 @@ final class ShopwareDashboardViewModel: ObservableObject {
         revenueBuckets = []
         salesChannels = []
         selectedChannelID = nil
+        isShopwarePaymentsActive = false
         lowStockProducts = []
         topProducts = []
         languageStats = []

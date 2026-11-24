@@ -68,6 +68,7 @@ Permissions used:
 | Status changes | Orders: edit, state machine transitions |
 | Maintenance toggle | Sales channels: edit |
 | Promotions | Promotions: read/edit |
+| Payment methods (shown only when Shopware Payments is active) | Payment methods: read/edit, Apps/Plugins: read |
 | Newsletter | Newsletter recipients: read |
 | Shop log | Log entries: read |
 

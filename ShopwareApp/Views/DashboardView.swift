@@ -542,7 +542,9 @@ struct DashboardView: View {
             Divider()
             alsoRow("Sales by language", value: "\(viewModel.languageStats.count) MARKETS", destination: .languages)
             alsoRow("Promotions", value: "MANAGE", destination: .promotions)
-            alsoRow("Payment methods", value: "MANAGE", destination: .paymentMethods)
+            if viewModel.isShopwarePaymentsActive {
+                alsoRow("Payment methods", value: "MANAGE", destination: .paymentMethods)
+            }
             alsoRow("Newsletter signups", value: "VIEW", destination: .newsletter)
             alsoRow(
                 "Shop status & log",

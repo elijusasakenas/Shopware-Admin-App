@@ -60,6 +60,41 @@ extension ShopwareAdminClient {
         }
     }
 
+    /// Whether the Shopware Payments extension is installed and active.
+    ///
+    /// Shopware ships it as an app on 6.5.7–6.6 and as a Shopware Service
+    /// (also installed as an app) on 6.7.1+. Its technical name is not
+    /// documented, so both the `app` and `plugin` entities are searched and
+    /// an active entry matches when its technical name or label reads
+    /// "Shopware Payments" (ignoring case, spaces, dashes and underscores).
+    func isShopwarePaymentsActive() async throws -> Bool {
+        let body: [String: Any] = [
+            "limit": 100,
+            "filter": [["type": "equals", "field": "active", "value": true]]
+        ]
+        async let apps = requestJSON(path: "/api/search/app", method: "POST", body: body)
+        async let plugins = requestJSON(path: "/api/search/plugin", method: "POST", body: body)
+        // Either list may be forbidden for the integration; one readable list is enough.
+        let rows = ((try? await apps)?["data"] as? [[String: Any]] ?? [])
+            + ((try? await plugins)?["data"] as? [[String: Any]] ?? [])
+        return rows.contains { row in
+            let attrs = entityAttributes(of: row)
+            guard attrs["active"] as? Bool ?? true else { return false }
+            let candidates = [
+                attrs["name"] as? String,
+                attrs["label"] as? String,
+                (attrs["translated"] as? [String: Any])?["label"] as? String
+            ]
+            return candidates.contains { Self.isShopwarePaymentsName($0) }
+        }
+    }
+
+    static func isShopwarePaymentsName(_ value: String?) -> Bool {
+        guard let value else { return false }
+        let normalized = value.lowercased().filter { $0.isLetter || $0.isNumber }
+        return normalized.contains("shopwarepayments")
+    }
+
     func setPaymentMethodActive(paymentMethodID: String, active: Bool) async throws {
         _ = try await requestJSON(path: "/api/payment-method/\(paymentMethodID)", method: "PATCH", body: [
             "active": active

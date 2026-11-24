@@ -203,6 +203,53 @@ final class ViewModelTests: XCTestCase {
         XCTAssertEqual(patchBody["active"] as? Bool, true)
     }
 
+    func testShopwarePaymentsNameMatching() {
+        XCTAssertTrue(ShopwareAdminClient.isShopwarePaymentsName("Shopware Payments"))
+        XCTAssertTrue(ShopwareAdminClient.isShopwarePaymentsName("SwagShopwarePayments"))
+        XCTAssertTrue(ShopwareAdminClient.isShopwarePaymentsName("shopware-payments"))
+        XCTAssertFalse(ShopwareAdminClient.isShopwarePaymentsName("SwagPayPal"))
+        XCTAssertFalse(ShopwareAdminClient.isShopwarePaymentsName("Mollie Payments"))
+        XCTAssertFalse(ShopwareAdminClient.isShopwarePaymentsName(nil))
+    }
+
+    func testShopwarePaymentsDetectedFromActiveApp() async throws {
+        MockURLProtocol.install { request in
+            switch request.url?.path {
+            case "/api/search/app":
+                return .json(#"{"data":[{"id":"app-1","attributes":{"name":"SomeApp","label":"Shopware Payments","active":true}}]}"#)
+            case "/api/search/plugin":
+                return .json(#"{"data":[{"id":"pl-1","attributes":{"name":"SwagPayPal","active":true}}]}"#)
+            default:
+                return .json("{}", statusCode: 404)
+            }
+        }
+        let client = TestHTTPFactory.client(cachedToken: "token")
+        let active = try await client.isShopwarePaymentsActive()
+        XCTAssertTrue(active)
+
+        let appRequest = MockURLProtocol.capturedRequests().first { $0.url?.path == "/api/search/app" }
+        let body = try TestHTTPFactory.jsonBody(of: try XCTUnwrap(appRequest))
+        let filter = (body["filter"] as? [[String: Any]])?.first
+        XCTAssertEqual(filter?["field"] as? String, "active")
+        XCTAssertEqual(filter?["value"] as? Bool, true)
+    }
+
+    func testShopwarePaymentsNotDetectedWhenMissingOrForbidden() async throws {
+        MockURLProtocol.install { request in
+            switch request.url?.path {
+            case "/api/search/app":
+                return .json(#"{"errors":[{"status":"403","detail":"Forbidden"}]}"#, statusCode: 403)
+            case "/api/search/plugin":
+                return .json(#"{"data":[{"id":"pl-1","attributes":{"name":"SwagPayPal","active":true}}]}"#)
+            default:
+                return .json("{}", statusCode: 404)
+            }
+        }
+        let client = TestHTTPFactory.client(cachedToken: "token")
+        let active = try await client.isShopwarePaymentsActive()
+        XCTAssertFalse(active)
+    }
+
     @MainActor
     func testLastActivePaymentMethodIsDetected() {
         func method(_ id: String, active: Bool) -> PaymentMethod {
